@@ -22,7 +22,10 @@ Cursor-only dev stack. Phases 1–29 implemented at infrastructure level.
 
 ```powershell
 ~\cursor-kit\install.ps1
+~\cursor-kit\install-skills.ps1   # mattpocock skills + book rules + find-skills
 ```
+
+Then in Cursor (once per repo): run skill **`setup-matt-pocock-skills`**.
 
 ## Global config
 
