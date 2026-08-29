@@ -1,0 +1,39 @@
+# PROJECT.md
+
+Project brain — semi-static. Update when stack or architecture changes.
+
+## Stack
+
+- Language:
+- Framework:
+- Package manager:
+
+## Commands
+
+```bash
+# install
+# test
+# run
+```
+
+## Architecture
+
+(one paragraph or diagram)
+
+## Conventions
+
+- 
+
+## Decisions
+
+| Date | Decision | Rationale |
+|------|----------|-----------|
+| | | |
+
+## Known issues
+
+- 
+
+## Current work
+
+See `.cursor/state/checkpoint.json` for live task state.

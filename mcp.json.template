@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"]
+    },
+    "token-engine": {
+      "command": "C:\\Users\\enzo.bossmann\\token-engine\\.venv\\Scripts\\python.exe",
+      "args": ["-m", "token_engine.mcp.server"]
+    },
+    "codebase-memory": {
+      "command": "npx",
+      "args": ["-y", "codebase-memory-mcp@latest"]
+    },
+    "notion": {
+      "url": "https://mcp.notion.com/mcp"
+    }
+  }
+}
