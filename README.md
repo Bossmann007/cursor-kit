@@ -1,4 +1,6 @@
-# My Ultimate Cursor Environment — complete
+# My Ultimate Cursor Environment
+
+**Repo:** [github.com/Bossmann007/cursor-kit](https://github.com/Bossmann007/cursor-kit) · pairs with [token-engine](https://github.com/Bossmann007/token-engine)
 
 Cursor-only dev stack. Phases 1–29 implemented at infrastructure level.
 
