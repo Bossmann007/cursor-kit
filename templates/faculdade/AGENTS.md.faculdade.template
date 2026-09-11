@@ -1,0 +1,20 @@
+# AGENTS.md
+
+Durable memory for this workspace. Maintained by Continual Learning plugin + manual edits.
+
+## Learned User Preferences
+
+- Portuguese OK for chat; keep code/identifiers in English unless this discipline is PT-first (match enunciado/slide names)
+- Prefer Matt `/teach` for multi-session study in this folder (`MISSION.md` / lessons); use pstack `/how` or pstack `/teach` to explain code — they are different skills
+- Teach step-by-step; do not finish PBLs/listas/provas or write the full solution for the student
+- Student iterates (e.g. pastes partial source, says `pronto`) — advance one pedagogical step at a time
+- Ground teaching in professor materials (`Modulos/`, `Slides/`, enunciados) before inventing patterns; re-read sources if the student says a slide was missed
+- Before coursework zip/hand-in: verify sources are real files not folders; flatten when required; compile/check when asked
+
+## Learned Workspace Facts
+
+- Discipline: (name)
+- Official sources: (Modulos/ | Slides/ | Plano-de-Ensino* paths)
+- Deliverables root: (PBLs/ | Listas/ | Projeto/ | …)
+- Toolchain: (e.g. C + gcc | modeling/SQL notes | web stack)
+- Exam/scope notes: (only user-confirmed; e.g. topics in/out)

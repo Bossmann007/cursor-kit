@@ -1,0 +1,84 @@
+# COURSE.md
+
+Course brain — semi-static. Update when ementa paths, toolchain, or exam scope change.
+
+## Discipline
+
+- Name:
+- Institution: PUCPR (or …)
+- Parent path:
+- Work focus: PBL | lista | prova-prep | projeto
+
+## Official sources (do not invent)
+
+| Kind | Path | Notes |
+|------|------|-------|
+| Plano / ementa | | |
+| Slides / módulos | | |
+| Enunciados | | |
+| Formativa / gabarito (if any) | | only if present on disk |
+
+## Stack
+
+- Language / paradigm:
+- Tools: (gcc, IDE, LMS, …)
+
+## Commands
+
+```bash
+# build / check (examples — adapt to discipline)
+# gcc -o prog *.c
+# hand-in: zip flat files; verify not directories
+```
+
+## Deliverables layout
+
+- Active dirs:
+- Naming conventions:
+
+## Pedagogical contract
+
+- Step-by-step teaching; no full PBL/prova solutions
+- Iterate with student (`pronto` / partial files)
+- Ground in official sources above
+
+## Agent skills (filled by setup-pucpr)
+
+| Trigger (examples) | Skill | Notes |
+|--------------------|-------|-------|
+| estudar / missão / lição nesta pasta | Matt `/teach` | Primary multi-session teach workspace |
+| explica este código / este exemplo | pstack `/teach` or `/how` (+ `/why` se pedir) | Not the same as Matt teach |
+| stress-test plano / abordagem PBL | `/grilling` | Do not grill for the solution dump |
+| modelagem / glossário (ex. BD) | `/domain-modeling` (+ `/grill-with-docs`) | Only if relevant |
+| pesquisa com citação | `/research` | Professor PDFs still first |
+| não compila / bug no meu código | `/diagnosing-bugs` | |
+| não entendi a última explicação | `/wait-what` | |
+| onde parei nesta disciplina | pstack `/recall` | |
+| roadmap de prova | `/create-learning-path` | If teaching plugin installed |
+| (other detected) | | |
+
+Teach workspace paths (if any): `MISSION.md`, `learning-records/`, `lessons/`, `RESOURCES.md`, `NOTES.md`
+
+## Exam / assessment scope
+
+| In scope | Out of scope | Source of truth |
+|----------|--------------|-----------------|
+| | | (formativa / professor / user) |
+
+## Decisions
+
+| Date | Decision | Rationale |
+|------|----------|-----------|
+| | | |
+
+## Hand-in checklist
+
+- [ ] Deliverable paths are files, not folder shells
+- [ ] Flattened if LMS requires flat zip
+- [ ] Compile/check ran when applicable
+- [ ] Enunciado/PDF not modified as “solution”
+
+## Current work
+
+Optional: `.cursor/state/checkpoint.json` if this folder is also a full agent repo (`/setup-project`).
+Otherwise track in NOTES.md / learning-records / chat.

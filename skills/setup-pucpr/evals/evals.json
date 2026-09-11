@@ -1,0 +1,23 @@
+{
+  "skill_name": "setup-pucpr",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Quero setar a pasta existente ~/PUCPR/Programação Imperativa como workspace de disciplina. Depth 1 (minimal). Trabalho atual: PBL. Não rode setup-project completo a menos que falte o mínimo acadêmico — só scaffold acadêmico + perguntar onde estão os slides se não achar Modulos/.",
+      "expected_output": "Interview answers respected (existing + depth 1 + PBL). Idempotent scaffold: AGENTS/COURSE/README only if missing; PBLs/ preserved; pedagogical bullets; maps Modulos/ if present; Done report; does not solve any PBL.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Cria uma disciplina nova 'Calculo Numerico' sob ~/PUCPR, depth 2 completo, tipo prova-prep. Detecta skills de ensino instaladas e oferece create-learning-path se existir. Não inventa enunciado nem gabarito.",
+      "expected_output": "Asks/uses new-folder mode; move_agent_to_root before writes (or stops if fail); depth-2 mapping + smoke offers; teaching skills listed; COURSE.md exam section empty/honest; no fake Canvas skill.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Setup faculdade na pasta atual de Arquitetura de Banco de Dados: já tenho Slides/ e LEARNING-PATH-PROVA-RA1.md. Depth 2. Tipo prova-prep. Lembra: não substituir /setup-project; se AGENTS/.cursor/state faltarem, oferece setup-project OU academic-only.",
+      "expected_output": "Composes with setup-project offer; maps Slides/ + existing learning path; seeds pedagogical + BD scope only from user/files; no SQL/minimundo invention; Done checklist.",
+      "files": []
+    }
+  ]
+}

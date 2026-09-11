@@ -1,0 +1,28 @@
+# (Discipline name)
+
+Pasta de estudo / entregas para esta disciplina.
+
+## Fontes oficiais
+
+- Plano: `Plano-de-Ensino*` (se existir)
+- Slides/módulos: `Modulos/` ou `Slides/`
+- Enunciados: `PBLs/` (ou `Listas/`, `Projeto/`)
+
+## Como estudar com o agente
+
+- **`/teach` (Matt)** — loop principal de estudo multi-sessão (`MISSION.md`, lições, learning-records)
+- Pedir o **próximo passo**, não a solução completa de PBL/prova
+- Colar código parcial e dizer `pronto` para avançar
+- Apontar o PDF/slide quando o padrão do professor importar
+- **Explicar código** (exemplo do professor / seu `.c`): pstack `/how` ou pstack `/teach` (é outra skill homônima)
+- Plano de estudo sob pressão: `/grilling` — sem pedir a solução pronta
+
+## Arquivos de memória
+
+- `AGENTS.md` — preferências e fatos (continual-learning)
+- `COURSE.md` — stack, paths, escopo, checklist de entrega, tabela de skills
+- `MISSION.md` / `learning-records/` — se o workspace `/teach` estiver ativo
+
+## Setup
+
+Scaffold via skill `setup-pucpr`. Stack Cursor genérico: `/setup-project` (opcional).
