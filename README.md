@@ -1,66 +1,46 @@
-# My Ultimate Cursor Environment
+# Cursor Kit
 
-**Repo:** [github.com/Bossmann007/cursor-kit](https://github.com/Bossmann007/cursor-kit) · pairs with [token-engine](https://github.com/Bossmann007/token-engine)
+**Repo:** [Bossmann007/cursor-kit](https://github.com/Bossmann007/cursor-kit) · pares com [token-engine](https://github.com/Bossmann007/token-engine)
 
-Cursor-only dev stack. Phases 1–29 implemented at infrastructure level.
+Stack **Cursor-native** para desenvolvimento com agentes. Templates, hooks, memória e o orquestrador `/setup-project`. A compressão fail-closed vive no token-engine (MCP), não neste repo.
 
-## Quick reference
+## Comece aqui
 
-| Doc | Topic |
-|-----|-------|
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Layers, hooks, memory types |
-| [docs/MEMORY.md](docs/MEMORY.md) | AGENTS.md, checkpoint, failures |
-| [docs/PROJECT-BRAIN.md](docs/PROJECT-BRAIN.md) | PROJECT.md |
-| [docs/CONTEXT.md](docs/CONTEXT.md) | Context pipeline |
-| [docs/WORKFLOWS.md](docs/WORKFLOWS.md) | PLAN→MEMORIZE, continue |
-| [docs/MIGRATION.md](docs/MIGRATION.md) | From Hermes/Claude/dotagents |
-| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Fixes |
-| [docs/BENCHMARKS.md](docs/BENCHMARKS.md) | token-engine benchmarks |
-| [DECISIONS.md](DECISIONS.md) | Locked user decisions |
+1. Leia a [visão geral (pilares)](docs/00-overview.md).
+2. Siga a [instalação](docs/01-installation.md) (kit + token-engine + MCP + hooks).
+3. Faça o [playbook de onboarding](docs/02-playbook-onboarding.md) até o smoke A/B/C.
 
-## Install new project
+Critério de sucesso. Um estranho clona os dois repos e, em cerca de 1–2h, tem fluxo disciplinado no Cursor.
 
-**Preferred (orchestrator):** in Cursor, run **`/setup-project`** (skill in this repo / plugin). It scaffolds kit files, repairs global gaps (MCP/hooks/pstack), runs Matt Pocock setup, and checks team-kit + continual-learning.
+## O que este kit é (e não é)
 
-Manual fallback:
+É runtime e embalagem para **Cursor**. Hooks globais, `.cursor/state`, `AGENTS.md` / `PROJECT.md`, skill `/setup-project`.
 
-```bash
-# macOS / Linux
-~/cursor-kit/install.sh
+Não é um clone do Claude Code. Não inclui Obsidian, Graphify visual, agent-browser nem proxy CLI tipo RTK. Para tokens use [token-engine](https://github.com/Bossmann007/token-engine). Limitações honestas estão no [overview](docs/00-overview.md#limites).
 
-# Windows
-~\cursor-kit\install.ps1
-~\cursor-kit\install-skills.ps1   # mattpocock skills + book rules + find-skills
-```
+## Atalhos depois do onboarding
 
-Then (if not using `/setup-project`): run **`setup-matt-pocock-skills`** once per repo.
+| Precisa | Vá em |
+|---------|--------|
+| Orquestrar um repo | `/setup-project` (skill neste plugin) |
+| Prompt colável | [docs/prompts/](docs/prompts/) |
+| Quality gates (JS/TS) | [templates/quality-gates/](templates/quality-gates/) + [prompt medir](docs/prompts/05-quality-gates-install.md) |
+| Card de ferramenta | [docs/tools/](docs/tools/) |
+| Referência profunda | [ARCHITECTURE](docs/ARCHITECTURE.md), [MEMORY](docs/MEMORY.md), [WORKFLOWS](docs/WORKFLOWS.md), [TROUBLESHOOTING](docs/TROUBLESHOOTING.md) |
 
-### Use as Cursor plugin
-
-This repo ships `.cursor-plugin/plugin.json` + `skills/setup-project/`. Install from GitHub or symlink:
+## Plugin local
 
 ```bash
 ln -sfn ~/cursor-kit ~/.cursor/plugins/local/cursor-kit
+# ou: ln -sfn /ABS/PATH/TO/cursor-kit ~/.cursor/plugins/local/cursor-kit
 ```
 
-## Global config
-
-Already in `~/.cursor/` — rules, hooks, MCP, skills.
-
-## Tests
+## Testes do kit
 
 ```bash
-# macOS / Linux
 python -m unittest discover -s ~/cursor-kit/tests
-
-# Windows
-python -m unittest discover -s "$env:USERPROFILE\cursor-kit\tests"
 ```
 
-## Manual validation (Test A/B/C)
+## Licença
 
-**A — Continue:** set checkpoint task → close Cursor → `continue` → agent reads checkpoint.
-
-**B — Decision:** add row to PROJECT.md Decisions → return later → agent cites it.
-
-**C — Failure:** fail tool twice → check failures.jsonl → retry uses different approach.
+MIT. Ver [LICENSE](LICENSE).

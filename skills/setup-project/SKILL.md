@@ -41,7 +41,7 @@ Ask two questions up front (one answer each; lead with the recommended default):
 
 2. **Interview depth**
    - **1 — Minimal**: issue tracker (via Matt Pocock setup) + "fill PROJECT.md now?"
-   - **2 — Completo**: everything in 1, plus confirm stack summary, offer codebase-memory index, note poteto/pstack as default for non-trivial work
+   - **2 — Completo**: everything in 1, plus confirm stack summary, offer codebase-memory index, note poteto/pstack as default for non-trivial work, **offer quality gates** for JS/TS (measure-only; point at kit playbook + `docs/prompts/05-quality-gates-install.md`), and point at `docs/02-playbook-onboarding.md` for the stranger path
 
 If the user already stated mode/depth in the trigger message, skip the matching question.
 
@@ -112,13 +112,24 @@ Do not invent learned bullets during setup.
 - pstack: only invoke `/setup-pstack` when phase 1 found the rule missing; otherwise one line that models already apply to new sessions
 - Depth **2** only: note that non-trivial engineering should prefer `/poteto-mode` when that skill is installed
 
+### 6b. Quality gates offer (depth 2 only)
+
+If interview depth is **2** and the repo looks JS/TS (`package.json` with js/ts tooling, or `*.ts`/`*.tsx` dominant):
+
+1. Ask whether to install **measure-only** quality gates from `templates/quality-gates/` (recommended default when no ESLint max-lines rule exists).
+2. If yes, follow kit `docs/prompts/05-quality-gates-install.md` (copy templates, adapt paths, run measure, **do not autofix**).
+3. Always point to kit `docs/02-playbook-onboarding.md` and `docs/tools/05-quality-gates.md`.
+4. If not JS/TS, one line: quality-gates templates are N/A; document whatever gate the stack uses in `PROJECT.md`.
+
+Do not reinvent matt-pocock or pstack here.
+
 ### 7. Optional smoke (depth 2 or when user asks)
 
 Offer, do not force:
 
 1. Ping token-engine (`caveman_stats` or a tiny compress) if MCP is up
 2. `codebase-memory` `index_repository` / `list_projects` for this root
-3. Point at kit manual checks (continue / PROJECT decision / failure retry) from cursor-kit README
+3. Point at kit smoke A/B/C in `docs/02-playbook-onboarding.md` (continue / PROJECT decision / failure retry)
 
 ### 8. Done report
 
@@ -132,7 +143,9 @@ Always end with a compact checklist:
 - Global: OK | repaired (list)
 - Created/updated: (file list)
 - Matt Pocock: issue tracker = …
+- Quality gates: offered | installed (measure) | N/A | declined
 - Plugins: team-kit / continual-learning / pstack = present | action needed
+- Playbook: docs/02-playbook-onboarding.md
 - Next: reload window if MCP/plugins changed; then normal work (or `/poteto-mode` for non-trivial)
 ```
 

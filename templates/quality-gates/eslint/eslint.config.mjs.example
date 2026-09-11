@@ -1,0 +1,26 @@
+// Example ESLint 9 flat config for cursor-kit quality gates.
+// Copy into your repo and adapt ignores/files. Do not keep /ABS machine paths.
+//
+// Usage:
+//   MAX_LINES=350 npx eslint .
+//
+// Start with "warn" for max-file-lines. Promote to "error" only after the count hits zero.
+
+import js from '@eslint/js';
+import cursorKitGates from './eslint-rules/index.cjs';
+
+export default [
+  js.configs.recommended,
+  {
+    ignores: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/.next/**', '**/coverage/**'],
+  },
+  {
+    files: ['**/*.{js,mjs,cjs,jsx,ts,tsx}'],
+    plugins: {
+      'cursor-kit-gates': cursorKitGates,
+    },
+    rules: {
+      'cursor-kit-gates/max-file-lines': ['warn', { max: 350, skipBlankLines: true, skipComments: false }],
+    },
+  },
+];
