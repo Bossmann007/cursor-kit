@@ -1,12 +1,14 @@
 {
   "mcpServers": {
     "context7": {
-      "command": "npx",
-      "args": ["-y", "@upstash/context7-mcp"]
+      "url": "https://mcp.context7.com/mcp"
     },
     "token-engine": {
-      "command": "C:\\Users\\enzo.bossmann\\token-engine\\.venv\\Scripts\\python.exe",
-      "args": ["-m", "token_engine.mcp.server"]
+      "command": "/Users/bossmann/.cursor/repos/token-engine/.venv/bin/python",
+      "args": ["-m", "token_engine.mcp.server"],
+      "env": {
+        "PYTHONPATH": "/Users/bossmann/.cursor/repos/token-engine/src"
+      }
     },
     "codebase-memory": {
       "command": "npx",

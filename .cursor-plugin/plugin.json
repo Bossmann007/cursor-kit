@@ -1,0 +1,27 @@
+{
+  "name": "cursor-kit",
+  "displayName": "Cursor Kit",
+  "version": "0.1.0",
+  "description": "Orchestrates per-repo setup for the Bossmann Cursor stack: cursor-kit templates, token-engine, pstack, Matt Pocock skills, team-kit, and continual-learning.",
+  "author": {
+    "name": "Bossmann007"
+  },
+  "homepage": "https://github.com/Bossmann007/cursor-kit",
+  "repository": "https://github.com/Bossmann007/cursor-kit",
+  "license": "MIT",
+  "keywords": [
+    "setup",
+    "cursor-kit",
+    "token-engine",
+    "pstack",
+    "agents-md",
+    "project-brain"
+  ],
+  "category": "developer-tools",
+  "tags": [
+    "setup",
+    "orchestration",
+    "memory"
+  ],
+  "skills": "./skills/"
+}

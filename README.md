@@ -20,12 +20,28 @@ Cursor-only dev stack. Phases 1–29 implemented at infrastructure level.
 
 ## Install new project
 
-```powershell
+**Preferred (orchestrator):** in Cursor, run **`/setup-project`** (skill in this repo / plugin). It scaffolds kit files, repairs global gaps (MCP/hooks/pstack), runs Matt Pocock setup, and checks team-kit + continual-learning.
+
+Manual fallback:
+
+```bash
+# macOS / Linux
+~/cursor-kit/install.sh
+
+# Windows
 ~\cursor-kit\install.ps1
 ~\cursor-kit\install-skills.ps1   # mattpocock skills + book rules + find-skills
 ```
 
-Then in Cursor (once per repo): run skill **`setup-matt-pocock-skills`**.
+Then (if not using `/setup-project`): run **`setup-matt-pocock-skills`** once per repo.
+
+### Use as Cursor plugin
+
+This repo ships `.cursor-plugin/plugin.json` + `skills/setup-project/`. Install from GitHub or symlink:
+
+```bash
+ln -sfn ~/cursor-kit ~/.cursor/plugins/local/cursor-kit
+```
 
 ## Global config
 
