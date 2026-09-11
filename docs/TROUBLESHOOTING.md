@@ -2,14 +2,18 @@
 
 ## MCP token-engine not loading
 
-- Verify: `C:\Users\enzo.bossmann\token-engine\.venv\Scripts\python.exe` exists
-- Run: `pip install -e "C:\Users\enzo.bossmann\token-engine[cursor,dev]"`
+- Clone/install [token-engine](https://github.com/Bossmann007/token-engine) and create a venv:
+  - macOS/Linux: `~/token-engine/.venv/bin/python`
+  - Windows: `~\token-engine\.venv\Scripts\python.exe`
+- Run: `pip install -e "~/token-engine[cursor,dev]"` (adjust path)
+- Point `~/.cursor/mcp.json` `token-engine.command` at that Python; set `PYTHONPATH` to `…/token-engine/src`
 - Reload Cursor window
 
 ## Hooks not firing
 
 - Check Cursor Settings → Hooks tab
-- Paths in `~/.cursor/hooks.json` must be absolute on Windows
+- Prefer global hooks from this kit (`sync-hooks.sh` / `sync-hooks.ps1`)
+- On Windows, paths in `~/.cursor/hooks.json` may need to be absolute
 - Restart Cursor after editing hooks.json
 
 ## Checkpoint empty on continue
@@ -27,7 +31,7 @@
 
 - Plugin must be enabled
 - Needs min turns/minutes before stop hook triggers
-- Check `.cursor/hooks/state/continual-learning.json`
+- Check `.cursor/hooks/state/continual-learning-index.json` (or legacy `continual-learning.json`)
 
 ## Compression not helping
 

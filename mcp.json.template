@@ -4,10 +4,10 @@
       "url": "https://mcp.context7.com/mcp"
     },
     "token-engine": {
-      "command": "/Users/bossmann/.cursor/repos/token-engine/.venv/bin/python",
+      "command": "/ABS/PATH/TO/token-engine/.venv/bin/python",
       "args": ["-m", "token_engine.mcp.server"],
       "env": {
-        "PYTHONPATH": "/Users/bossmann/.cursor/repos/token-engine/src"
+        "PYTHONPATH": "/ABS/PATH/TO/token-engine/src"
       }
     },
     "codebase-memory": {

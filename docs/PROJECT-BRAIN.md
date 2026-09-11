@@ -19,6 +19,8 @@ Avoid rediscovering stack, commands, and decisions every session.
 
 ```powershell
 Copy-Item "$env:USERPROFILE\cursor-kit\PROJECT.md.template" .\PROJECT.md
+# macOS / Linux: cp ~/cursor-kit/PROJECT.md.template ./PROJECT.md
+# Or run /setup-project / project-brain
 ```
 
 Then run `project-brain` skill once to fill from repo manifests.

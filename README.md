@@ -49,7 +49,11 @@ Already in `~/.cursor/` — rules, hooks, MCP, skills.
 
 ## Tests
 
-```powershell
+```bash
+# macOS / Linux
+python -m unittest discover -s ~/cursor-kit/tests
+
+# Windows
 python -m unittest discover -s "$env:USERPROFILE\cursor-kit\tests"
 ```
 
