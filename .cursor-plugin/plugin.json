@@ -1,8 +1,8 @@
 {
   "name": "cursor-kit",
   "displayName": "Cursor Kit",
-  "version": "0.1.0",
-  "description": "Orchestrates per-repo setup for the Bossmann Cursor stack: cursor-kit templates, token-engine, pstack, Matt Pocock skills, team-kit, and continual-learning.",
+  "version": "0.2.0",
+  "description": "Enzo Bossmann Cursor stack: templates, hooks, rules (ponytail/caveman/token-engine/cbm), /setup-project, pstack seed, continual-learning-ready AGENTS.md. Pairs with token-engine.",
   "author": {
     "name": "Bossmann007"
   },
@@ -14,14 +14,20 @@
     "cursor-kit",
     "token-engine",
     "pstack",
+    "poteto",
     "agents-md",
-    "project-brain"
+    "project-brain",
+    "continual-learning"
   ],
   "category": "developer-tools",
   "tags": [
     "setup",
     "orchestration",
-    "memory"
+    "memory",
+    "hooks",
+    "rules"
   ],
-  "skills": "./skills/"
+  "skills": "./skills/",
+  "rules": "./rules/",
+  "hooks": "./hooks/hooks.json"
 }
