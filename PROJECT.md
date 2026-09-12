@@ -12,8 +12,9 @@ Project brain — cursor-kit (Enzo Bossmann working configuration).
 ## Commands
 
 ```bash
-# link plugin
-ln -sfn "$(pwd)" ~/.cursor/plugins/local/cursor-kit
+# install plugin (Cursor rejects outside symlinks — sync or clone in-place)
+rsync -a --delete --exclude '.git/' --exclude '__pycache__/' \
+  "$(pwd)/" ~/.cursor/plugins/local/cursor-kit/
 
 # global hooks + hooks.json
 ./sync-hooks.sh          # Windows: .\sync-hooks.ps1

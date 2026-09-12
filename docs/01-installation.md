@@ -44,11 +44,26 @@ Isto copia `hooks/*.py` para `~/.cursor/hooks/` **e** gera `~/.cursor/hooks.json
 
 ## 4. Plugin cursor-kit + rules + skills
 
+Cursor **rejeita** symlink em `~/.cursor/plugins/local/` cujo target fica **fora** dessa pasta (log: `loadUserLocalPlugin cursor-kit rejected: symlink target … is outside …/plugins/local`). Não use `ln -sfn ~/cursor-kit ~/.cursor/plugins/local/cursor-kit` se o clone vive em `~/.cursor/repos/` ou similar.
+
+Opção A — sync (clone fica onde está; re-rode após mudar skills/rules/hooks):
+
 ```bash
-ln -sfn ~/cursor-kit ~/.cursor/plugins/local/cursor-kit
+mkdir -p ~/.cursor/plugins/local
+rsync -a --delete \
+  --exclude '.git/' --exclude '__pycache__/' --exclude 'node_modules/' \
+  ~/cursor-kit/ ~/.cursor/plugins/local/cursor-kit/
 ```
 
-O plugin declara `skills/`, `rules/` e `hooks/hooks.json`. Rules do kit (ponytail, caveman, token-engine, cbm-first, session-continuity, memory-security) aplicam com o plugin ligado.
+Opção B — desenvolver o plugin in-place (target dentro de `plugins/local`):
+
+```bash
+# clone (ou move) o repo para cá, depois atalho opcional:
+#   ~/.cursor/plugins/local/cursor-kit   ← git checkout real
+ln -sfn ~/.cursor/plugins/local/cursor-kit ~/cursor-kit
+```
+
+O plugin declara `skills/`, `rules/` e `hooks/hooks.json`. Rules do kit (ponytail, caveman, token-engine, cbm-first, session-continuity, memory-security) aplicam com o plugin ligado. Depois: **Developer: Reload Window**.
 
 Opcional (espelho global, se preferir rules fora do plugin):
 

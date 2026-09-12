@@ -33,6 +33,14 @@
 - Needs min turns/minutes before stop hook triggers
 - Check `.cursor/hooks/state/continual-learning-index.json` (or legacy `continual-learning.json`)
 
+## Local plugin cursor-kit not loading / skills missing
+
+- Check Cursor Plugins log for:
+  `loadUserLocalPlugin cursor-kit rejected: symlink target … is outside …/plugins/local`
+- Fix: real directory under `~/.cursor/plugins/local/cursor-kit` (rsync or clone in-place). See [01-installation](01-installation.md) §4.
+- Fallback (desktop only): `~/.cursor/skills/setup-project` + `setup-pucpr` symlinks still work without the plugin.
+- Reload Window after fixing. Projects/Cloud: laptop skills do not appear unless environment install copies them.
+
 ## Compression not helping
 
 - Run `caveman_stats` MCP
