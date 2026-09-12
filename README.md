@@ -33,7 +33,11 @@ Não é um clone do Claude Code. Não inclui Obsidian, Graphify visual, agent-br
 ```bash
 ln -sfn ~/cursor-kit ~/.cursor/plugins/local/cursor-kit
 # ou: ln -sfn /ABS/PATH/TO/cursor-kit ~/.cursor/plugins/local/cursor-kit
+~/cursor-kit/sync-hooks.sh
+~/cursor-kit/sync-rules.sh   # opcional se o plugin já carrega rules/
 ```
+
+Branch de trabalho pessoal (Enzo). `enzo`. Default do repo continua `master` até merge.
 
 ## Testes do kit
 

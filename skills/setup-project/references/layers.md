@@ -6,9 +6,9 @@ Use this when deciding what to write. Prefer repair over duplicate.
 
 | Asset | Expected path | Role |
 |-------|---------------|------|
-| Rules | `~/.cursor/rules/*.mdc` | ponytail, caveman, token-engine, cbm-first, session-continuity, pstack-models, … |
+| Rules | plugin `rules/` and/or `~/.cursor/rules/*.mdc` | ponytail, caveman, token-engine, cbm-first, session-continuity, memory-security, pstack-models |
 | MCP | `~/.cursor/mcp.json` | token-engine, codebase-memory, context7, notion (and others) |
-| Hooks | `~/.cursor/hooks.json` + `~/.cursor/hooks/` | sessionStart, compress, failures, track-edits, checkpoint-stop |
+| Hooks | plugin `hooks/hooks.json` and/or `~/.cursor/hooks.json` + `~/.cursor/hooks/` | sessionStart, compress, failures, track-edits, checkpoint-stop |
 | User skills | `~/.cursor/skills/` | Matt Pocock + project-brain, context-engine, … |
 | Plugins | Cursor plugin UI | pstack, cursor-team-kit, continual-learning, this cursor-kit plugin |
 
