@@ -120,6 +120,7 @@ If interview depth is **2** and the repo looks JS/TS (`package.json` with js/ts 
 2. If yes, follow kit `docs/prompts/05-quality-gates-install.md` (copy templates, adapt paths, run measure, **do not autofix**).
 3. Always point to kit `docs/02-playbook-onboarding.md` and `docs/tools/05-quality-gates.md`.
 4. If not JS/TS, one line: quality-gates templates are N/A; document whatever gate the stack uses in `PROJECT.md`.
+5. If the target repo will be used from Cursor **Projects** (Cloud) and has no `.cursor/environment.json`, offer to copy kit `templates/cloud/environment.json` → `.cursor/environment.json` so Builds install kit skills on the VM (see `docs/tools/09-cloud-projects.md`).
 
 Do not reinvent matt-pocock or pstack here.
 

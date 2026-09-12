@@ -1,0 +1,3 @@
+{
+  "install": "curl -fsSL https://raw.githubusercontent.com/Bossmann007/cursor-kit/master/scripts/install-cloud-skills.sh | bash"
+}

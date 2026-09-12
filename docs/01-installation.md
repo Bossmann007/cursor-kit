@@ -77,6 +77,15 @@ Fallback:
 ~/cursor-kit/install.sh /ABS/PATH/TO/your-repo
 ```
 
+## 7. Aba Projects (Cloud)
+
+Skills do laptop **não** entram sozinhas. Opção C deste kit:
+
+- Repo `cursor-kit`: já tem `.cursor/environment.json` → Build instala `skills/` na VM.
+- Outro repo: copia `templates/cloud/environment.json` → `.cursor/environment.json`, commit, Build novo.
+
+Detalhes: [tools/09-cloud-projects.md](tools/09-cloud-projects.md).
+
 ## Verificação mínima
 
 1. MCP `token-engine` aparece enabled.
