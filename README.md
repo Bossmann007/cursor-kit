@@ -39,10 +39,17 @@ Não é um clone do Claude Code. Não inclui Obsidian, Graphify visual, agent-br
 
 ## Plugin local
 
+Cursor rejeita symlink cujo target fica fora de `~/.cursor/plugins/local/`. Sync ou clone in-place (detalhes em [docs/01-installation.md](docs/01-installation.md)):
+
 ```bash
-ln -sfn ~/cursor-kit ~/.cursor/plugins/local/cursor-kit
-# ou: ln -sfn /ABS/PATH/TO/cursor-kit ~/.cursor/plugins/local/cursor-kit
+rsync -a --delete --exclude '.git/' --exclude '__pycache__/' \
+  ~/cursor-kit/ ~/.cursor/plugins/local/cursor-kit/
+~/cursor-kit/sync-hooks.sh
+~/cursor-kit/sync-rules.sh   # opcional se o plugin já carrega rules/
+# depois: Developer → Reload Window
 ```
+
+Branch de trabalho pessoal (Enzo). `enzo`. Default do repo continua `master` até merge.
 
 ## Testes do kit
 

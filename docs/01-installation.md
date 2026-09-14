@@ -40,21 +40,47 @@ Em Cursor. Settings → MCP → enable `token-engine` (e `codebase-memory` / `co
 # Windows: ~\cursor-kit\sync-hooks.ps1
 ```
 
-Confirme `~/.cursor/hooks.json` com sessionStart / postToolUse / stop. Detalhes em [ARCHITECTURE](ARCHITECTURE.md).
+Isto copia `hooks/*.py` para `~/.cursor/hooks/` **e** gera `~/.cursor/hooks.json` a partir de `hooks.json.template` (paths resolvidos na máquina). Confirme sessionStart / postToolUse / stop. Detalhes em [ARCHITECTURE](ARCHITECTURE.md).
 
-## 4. Plugin cursor-kit + skills
+## 4. Plugin cursor-kit + rules + skills
+
+Cursor **rejeita** symlink em `~/.cursor/plugins/local/` cujo target fica **fora** dessa pasta (log: `loadUserLocalPlugin cursor-kit rejected: symlink target … is outside …/plugins/local`). Não use `ln -sfn ~/cursor-kit ~/.cursor/plugins/local/cursor-kit` se o clone vive em `~/.cursor/repos/` ou similar.
+
+Opção A — sync (clone fica onde está; re-rode após mudar skills/rules/hooks):
 
 ```bash
-ln -sfn ~/cursor-kit ~/.cursor/plugins/local/cursor-kit
+mkdir -p ~/.cursor/plugins/local
+rsync -a --delete \
+  --exclude '.git/' --exclude '__pycache__/' --exclude 'node_modules/' \
+  ~/cursor-kit/ ~/.cursor/plugins/local/cursor-kit/
 ```
+
+Opção B — desenvolver o plugin in-place (target dentro de `plugins/local`):
+
+```bash
+# clone (ou move) o repo para cá, depois atalho opcional:
+#   ~/.cursor/plugins/local/cursor-kit   ← git checkout real
+ln -sfn ~/.cursor/plugins/local/cursor-kit ~/cursor-kit
+```
+
+O plugin declara `skills/`, `rules/` e `hooks/hooks.json`. Rules do kit (ponytail, caveman, token-engine, cbm-first, session-continuity, memory-security) aplicam com o plugin ligado. Depois: **Developer: Reload Window**.
+
+Opcional (espelho global, se preferir rules fora do plugin):
+
+```bash
+~/cursor-kit/sync-rules.sh
+# Windows: ~\cursor-kit\sync-rules.ps1
+```
+
+`sync-rules` também semeia `pstack-models.mdc` com `inherit-parent` se ainda não existir. Depois rode `/setup-pstack` para pin de modelos reais.
 
 Plugins recomendados (UI do Cursor, não inventados pelo kit).
 
-- continual-learning
-- cursor-team-kit
-- pstack (depois `/setup-pstack` se `~/.cursor/rules/pstack-models.mdc` faltar)
+- continual-learning (contratos `AGENTS.md` Learned *)
+- cursor-team-kit (CI/PR/review)
+- pstack (playbooks `/poteto-mode`; depois `/setup-pstack` se a rule ainda for seed)
 
-Rules globais esperadas (ponytail, caveman, token-engine, cbm-first) costumam já viver em `~/.cursor/rules/`. O kit **não** as copia para cada repo.
+O kit **não** copia rules globais para dentro de cada app repo.
 
 ## 5. Skills Matt Pocock (opcional mas usado pelo `/setup-project`)
 
@@ -89,7 +115,9 @@ Detalhes: [tools/09-cloud-projects.md](tools/09-cloud-projects.md).
 ## Verificação mínima
 
 1. MCP `token-engine` aparece enabled.
-2. `sync-hooks` rodou sem erro.
+2. `sync-hooks` rodou sem erro e `~/.cursor/hooks.json` existe.
 3. Skill `/setup-project` aparece (plugin ou `~/.cursor/skills/setup-project`).
+4. Rules do kit visíveis (plugin local ou `~/.cursor/rules/*.mdc` após `sync-rules`).
+5. Plugins continual-learning / pstack / team-kit instalados na UI (ou ação explícita pendente).
 
 Problemas. [TROUBLESHOOTING](TROUBLESHOOTING.md).

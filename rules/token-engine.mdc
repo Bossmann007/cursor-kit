@@ -1,0 +1,64 @@
+---
+description: Token Engine MCP — when and how to compress context in Cursor agent sessions.
+globs:
+alwaysApply: true
+---
+
+# Token Engine — Cursor integration
+
+MCP server `token-engine` provides Caveman-compatible compression tools.
+
+## When to compress
+
+| Situation | Action |
+|-----------|--------|
+| Multi-item session / messages JSON | `token_engine_compress_session` or `caveman_compress` (auto-detect) |
+| Tool output >500 tokens | `caveman_compress` |
+| pytest/cargo/npm log dump | `caveman_compress` content_type=log |
+| Large JSON API response | `caveman_compress` content_type=json |
+| git status with many files | `caveman_compress` |
+| Re-reading same file content | Avoid — use cross-turn pointer or diff |
+| 50+ MCP tool definitions | `token_engine_compact_tools` (auto-lazy at 20+ tools) |
+| Bulk data / CSV / analytics | `token_engine_sandbox` (Python outside context) |
+| Code exploration | `codebase-memory` MCP — search_graph, not full Read |
+
+## MCP servers (default)
+
+- **token-engine** — compression + sandbox + schema compaction
+- **codebase-memory** — structural code graph (99% less exploration tokens)
+
+## Workflow
+
+1. Run tool (bash, read, grep)
+2. Multi-item context → `token_engine_compress_session(items_json=..., task_query=...)`
+3. Single large blob → `caveman_compress(input=..., task_query=<current task>)`
+4. Use `compressed` field in reasoning, not raw output
+5. Only `caveman_retrieve` if exact byte needed and not derivable from compressed view
+
+## Config defaults (Cursor)
+
+- `quality=balanced` — default agent work
+- `quality=maximum` — debugging, stack traces critical
+- `quality=economy` — huge log dumps only
+
+## Harness integration
+
+Start API:
+
+```bash
+token-engine serve   # http://127.0.0.1:8741
+```
+
+Before each LLM request:
+
+```python
+from token_engine.harness import HarnessClient
+
+client = HarnessClient()
+out = client.optimize_messages(messages, task_query="fix login bug")
+prompt = out["content"]
+```
+
+Or `POST http://127.0.0.1:8741/optimize-context` directly.
+
+Live-zone mode: compress all items; hybrid knapsack drops LOW tiers only when over budget.

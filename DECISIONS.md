@@ -40,3 +40,10 @@ User approved Phase 7 build. Reference for future sessions.
 1. Reload Cursor window
 2. Connect Notion MCP (OAuth prompt)
 3. `python -m unittest discover -s ~/cursor-kit/tests`
+
+## Built on branch `enzo` (2026-09-12)
+
+- Plugin ships `rules/` + `hooks/hooks.json` (usable without machine-only copies)
+- `hooks.json.template` + sync-hooks writes `~/.cursor/hooks.json`
+- `sync-rules.sh` / `.ps1` mirrors rules + seeds pstack `inherit-parent` example
+- Kit `PROJECT.md` documents Enzo working configuration

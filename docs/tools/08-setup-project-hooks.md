@@ -11,9 +11,15 @@ Depth 2 deve oferecer quality gates (JS/TS) e apontar o [playbook](../02-playboo
 
 ## Hooks
 
-Fonte. `cursor-kit/hooks/` → `sync-hooks.sh` / `sync-hooks.ps1` → `~/.cursor/hooks/`.
+Fonte. `cursor-kit/hooks/*.py` + `hooks.json.template` → `sync-hooks.sh` / `sync-hooks.ps1` → `~/.cursor/hooks/` e `~/.cursor/hooks.json`.
 
-Eventos típicos. sessionStart, postToolUse, postToolUseFailure, afterFileEdit, stop (checkpoint).
+Plugin path. `hooks/hooks.json` usa `${CURSOR_PLUGIN_ROOT}` quando o cursor-kit está ligado como plugin local.
+
+Eventos. sessionStart, postToolUse, postToolUseFailure, afterFileEdit, stop (checkpoint).
+
+## Rules
+
+Fonte. `cursor-kit/rules/*.mdc` (plugin) e opcionalmente `sync-rules.sh` → `~/.cursor/rules/`. Inclui ponytail, caveman, token-engine, cbm-first, session-continuity, memory-security. pstack: seed em `templates/pstack/` + `/setup-pstack`.
 
 ## Limite
 
