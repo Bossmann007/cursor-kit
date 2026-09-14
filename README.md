@@ -1,3 +1,12 @@
+<!-- ENZO-PORTFOLIO-BRAND -->
+<p align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:111111,100:7751FF&height=165&section=header&text=Cursor%20Kit&fontSize=42&fontColor=ffffff&animation=fadeIn&fontAlignY=35&desc=Cursor-native%20toolkit%20for%20disciplined%20agent%20development.&descAlignY=57&descSize=14" alt="Cursor Kit" />
+</p>
+
+<p align="center"><strong>Python · Cursor · Agents</strong></p>
+
+---
+
 # Cursor Kit
 
 **Repo:** [Bossmann007/cursor-kit](https://github.com/Bossmann007/cursor-kit) · pares com [token-engine](https://github.com/Bossmann007/token-engine)
@@ -44,3 +53,8 @@ python -m unittest discover -s ~/cursor-kit/tests
 ## Licença
 
 MIT. Ver [LICENSE](LICENSE).
+
+<!-- ENZO-PORTFOLIO-BRAND-FOOTER -->
+<p align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:111111,100:7751FF&height=85&section=footer" alt="Footer" />
+</p>
