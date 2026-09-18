@@ -31,7 +31,10 @@ python -m unittest discover -s tests
 
 ## Architecture
 
-Cursor-native kit. Plugin ships skills (`/setup-project`, `/setup-pucpr`), always-on rules (ponytail, caveman, token-engine, cbm-first, session-continuity, memory-security), and hooks for checkpoint + compress hints. Compression lives in [token-engine](https://github.com/Bossmann007/token-engine). Models for subagents come from pstack (`/setup-pstack` → `~/.cursor/rules/pstack-models.mdc`). Durable prefs/facts live in `AGENTS.md` via continual-learning.
+Cursor-native kit. Plugin ships skills (`/setup-project`, `/setup-pucpr`,
+`/setup-ai-memory`, `/verification-planning`, `/simplify`, `/blindspot-pass`), always-on rules (ponytail, caveman,
+token-engine, cbm-first, session-continuity, memory-security), and hooks for
+checkpoint + compress hints. Compression lives in [token-engine](https://github.com/Bossmann007/token-engine). Optional long-horizon wiki/handoff: [ai-memory](https://github.com/akitaonrails/ai-memory) companion. Models for subagents come from pstack (`/setup-pstack` → `~/.cursor/rules/pstack-models.mdc`). Durable prefs/facts live in `AGENTS.md` via continual-learning.
 
 ## Conventions
 
@@ -49,6 +52,9 @@ Cursor-native kit. Plugin ships skills (`/setup-project`, `/setup-pucpr`), alway
 | 2026-08-29 | Global MCP: token-engine, codebase-memory, context7, notion | Fail-closed compress + CBM |
 | 2026-08-29 | Checkpoints in `.cursor/state/checkpoint.json` | Episodic memory without Obsidian |
 | 2026-09-12 | Ship rules + hooks.json in plugin on `enzo` | Make kit usable as Enzo working config without machine-only copies |
+| 2026-09-17 | Add native `verification-planning` + `simplify`; wire into setup-* | Digest peer skill *form* (Akita/Osmani); not vendored third-party copies |
+| 2026-09-17 | Drop unused env skills; ship `blindspot-pass` in plugin only | User never used context-engine/dev-workflow/project-brain/update-checkpoint |
+| 2026-09-18 | ai-memory as opt-in companion; kit layers stay episodic SoT; merge-safe sync-hooks | Steal form (wiki/handoff/MCP); keep AGENTS/PROJECT/checkpoint + token-engine |
 
 ## Known issues
 

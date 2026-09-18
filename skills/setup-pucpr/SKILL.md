@@ -104,10 +104,11 @@ Check, summarize in one short block, then continue:
 | pstack explain trio | plugin skills `how`, `why`, `teach` | Optional code-explain path; distinct from Matt teach |
 | Other study skills | `grilling`/`grill-me`, `research`, `diagnosing-bugs`, `wait-what`, `domain-modeling`, `handoff`; plugin `create-learning-path`; optional `pucpr-canvas` | List present vs missing per `references/skills-wiring.md`; **do not invent** |
 | `/setup-project` already applied | `AGENTS.md` continual-learning sections + `.cursor/state/` present | If absent: **offer** run `/setup-project` first (full Cursor stack) **or** continue with **academic-only** scaffold |
+| ai-memory companion (when full stack) | MCP `ai-memory` + server `127.0.0.1:49374` healthy if user also wants kit agent stack | If broken/missing and user chose full stack / already ran `/setup-project`: **repair/arrumar** via `/setup-ai-memory`. Academic-only path: skip with one line |
 | Kit templates | `~/cursor-kit/templates/faculdade/` (or this skill’s bundled copies) | Prefer kit path; fall back to files beside this skill |
 | Parent courses dir | `~/PUCPR` exists | Use as default parent for new folders |
 
-Never invent a second hook/MCP system inside the course folder.
+Never invent a second hook/MCP system inside the course folder. Do not fork ai-memory into the folder.
 
 ### 2. Scaffold idempotente
 
@@ -175,13 +176,14 @@ Follow `references/skills-wiring.md`. Summary:
    - `grill-with-docs` + `domain-modeling` — cursos de modelagem (ex. BD)
    - `research` — fontes primárias (ainda assim professor PDFs first)
    - `diagnosing-bugs` — código do aluno não compila/roda
+   - `verification-planning` — opcional em `projeto` / labs (evidence path); nunca para auto-completar PBL
    - `wait-what` — reexplicar
    - `handoff` — fim de sessão
    - `create-learning-path` — oferecer em **prova-prep**
    - pstack `how` / `why` / `teach` — explicar código/exemplo
    - pstack `recall` — “onde parei nesta disciplina?”
-5. **Skip by default** (see skills-wiring): `implement`, `to-spec`, issue
-   tracker Matt, `poteto-mode`/`arena`/`swarm`/`interrogate`, full
+5. **Skip by default** (see skills-wiring): `implement`, `to-spec`, `simplify`,
+   issue tracker Matt, `poteto-mode`/`arena`/`swarm`/`interrogate`, full
    `principle-*` list — point heavy eng at `/setup-project` instead
 6. **Default: no GitHub issue tracker.** Only if user insists, delegate to
    `/setup-matt-pocock-skills` / `/setup-project` phase 4
@@ -227,7 +229,8 @@ Offer, do not force:
 1. Confirm slide/PDF paths exist (`test -f` / list dir)
 2. Toolchain sniff when relevant (`gcc --version`, `node -v`, etc.)
 3. If `/setup-project` was also applied: optional token-engine / codebase-memory
-   pings (delegate; do not duplicate those instructions here)
+   pings; if ai-memory is in play, confirm loopback `/mcp` → 405 or note repair via `/setup-ai-memory`
+   (delegate; do not duplicate those instructions here)
 
 ### 8. Done report
 
@@ -241,6 +244,7 @@ Always end with a compact checklist:
 - Disciplina: …
 - Work type: PBL | lista | prova-prep | projeto
 - setup-project: already present | offered | skipped (academic-only)
+- ai-memory: OK | repaired | skipped (academic-only) | N/A
 - Matt teach: present | missing | stubs offered/created/skipped
 - pstack how/why/teach: present | missing
 - Other wired skills: (list) | skipped-as-N/A: (short)
@@ -254,14 +258,14 @@ Always end with a compact checklist:
 
 ## Guardrails
 
-- Composition over duplication: delegate to `setup-project`, Matt `teach`,
+- Composition over duplication: delegate to `setup-project`, `/setup-ai-memory`, Matt `teach`,
   `grilling`, `create-learning-path`, pstack `how`/`why`/`teach`,
   `project-brain` patterns, `pucpr-*` when installed — see
   `references/skills-wiring.md`
-- No second memory system — prefer `AGENTS.md` + `COURSE.md` (+ `.cursor/state`
-  only when acting as full agent repo)
+- No competing **episodic** state — prefer `AGENTS.md` + `COURSE.md` (+ `.cursor/state`
+  only when acting as full agent repo); ai-memory wiki is optional companion when full stack is on
 - Never store secrets, passwords, LMS cookies, or sensitive personal data in
-  AGENTS/COURSE
+  AGENTS/COURSE (nor in ai-memory wiki)
 - Idempotent: never clobber student solutions, enunciados, or filled brains
 - If `move_agent_to_root` fails after creating a new folder, **stop** and ask
   the user to open that folder before writing further files

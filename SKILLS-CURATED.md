@@ -23,8 +23,15 @@
 
 `wayfinder`, `triage`, `improve-codebase-architecture`, `to-tickets`, `scaffold-exercises`, `setup-pre-commit`, `wizard`, `writing-for-agents`, `to-questionnaire`, `ask-matt`, `codebase-design`
 
+## Removidas (kit env — pouco usadas; lógica coberta por rules/hooks/setup)
+
+`context-engine`, `dev-workflow`, `project-brain`, `update-checkpoint`
+
 ## Sempre manter
 
-PUCPR: `pucpr-canvas`, `pucpr-tutor`  
-Env: `dev-workflow`, `context-engine`, `project-brain`, `update-checkpoint`, `find-skills`, `blindspot-pass`  
+Kit plugin (source of truth on desktop): `setup-project`, `setup-pucpr`, `setup-ai-memory`, `verification-planning`, `simplify`, `blindspot-pass`  
+Env (`~/.cursor/skills/`): `find-skills` (+ Matt allowlist below)  
+PUCPR: `pucpr-canvas`, `pucpr-tutor` (when installed)  
 Matt core: `grill-me`, `grill-with-docs`, `grilling`, `handoff`, `wait-what`, `tdd`, `diagnosing-bugs`, `code-review`, `implement`, `to-spec`, `research`, `prototype`, `domain-modeling`, `resolving-merge-conflicts`, `setup-matt-pocock-skills`, `teach`
+
+Do **not** copy plugin-shipped skills into `~/.cursor/skills/` **or** `~/.agents/skills/` when the cursor-kit plugin is installed. Cursor loads both user paths; leftover copies there look like “not deleted”.

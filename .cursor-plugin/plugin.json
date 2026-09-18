@@ -1,8 +1,8 @@
 {
   "name": "cursor-kit",
   "displayName": "Cursor Kit",
-  "version": "0.2.0",
-  "description": "Enzo Bossmann Cursor stack: templates, hooks, rules (ponytail/caveman/token-engine/cbm), /setup-project, pstack seed, continual-learning-ready AGENTS.md. Pairs with token-engine.",
+  "version": "0.2.3",
+  "description": "Enzo Bossmann Cursor stack: templates, hooks, rules (ponytail/caveman/token-engine/cbm), /setup-project, /setup-ai-memory, /verification-planning, /simplify, /blindspot-pass, pstack seed, continual-learning-ready AGENTS.md. Pairs with token-engine + optional ai-memory companion.",
   "author": {
     "name": "Bossmann007"
   },
@@ -17,7 +17,8 @@
     "poteto",
     "agents-md",
     "project-brain",
-    "continual-learning"
+    "continual-learning",
+    "ai-memory"
   ],
   "category": "developer-tools",
   "tags": [

@@ -19,12 +19,12 @@ MCP server `token-engine` provides Caveman-compatible compression tools.
 | git status with many files | `caveman_compress` |
 | Re-reading same file content | Avoid — use cross-turn pointer or diff |
 | 50+ MCP tool definitions | `token_engine_compact_tools` (auto-lazy at 20+ tools) |
-| Bulk data / CSV / analytics | `token_engine_sandbox` (Python outside context) |
+| Bulk data / CSV / analytics | Prefer local scripts; `token_engine_run_python` only if explicitly enabled (not a sandbox) |
 | Code exploration | `codebase-memory` MCP — search_graph, not full Read |
 
 ## MCP servers (default)
 
-- **token-engine** — compression + sandbox + schema compaction
+- **token-engine** — compression + schema compaction (+ gated Python runner, off by default)
 - **codebase-memory** — structural code graph (99% less exploration tokens)
 
 ## Workflow

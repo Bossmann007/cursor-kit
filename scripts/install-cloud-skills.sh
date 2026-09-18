@@ -1,14 +1,22 @@
 #!/usr/bin/env bash
-# Install cursor-kit skills into ~/.cursor/skills for Cursor Cloud / Projects VMs.
-# Idempotent. Safe to re-run on every Build.
+# Install cursor-kit skills into ~/.cursor/skills for Cursor Cloud / Projects VMs
+# when the cursor-kit **plugin is not** available on that machine.
+#
+# Desktop with plugin installed: do NOT copy — plugin skills/ is the source of
+# truth. Prefer: rsync kit → ~/.cursor/plugins/local/cursor-kit/
+#
+# Override: FORCE_USER_SKILLS=1 copies even when the plugin is present
+# (legacy / debugging only).
+#
+# Idempotent. Safe to re-run on every Cloud Build.
 set -euo pipefail
 
 KIT_REPO="${CURSOR_KIT_REPO:-https://github.com/Bossmann007/cursor-kit.git}"
 KIT_REF="${CURSOR_KIT_REF:-master}"
 KIT_DIR="${CURSOR_KIT_DIR:-${HOME}/.cursor-kit-src}"
 SKILLS_DST="${HOME}/.cursor/skills"
+PLUGIN_SKILLS="${HOME}/.cursor/plugins/local/cursor-kit/skills"
 
-# Prefer the checkout that invoked this script (Project = cursor-kit)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [[ -f "${SCRIPT_DIR}/../skills/setup-project/SKILL.md" ]]; then
   KIT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
@@ -26,6 +34,14 @@ else
     rm -rf "${KIT_DIR}"
     git clone --depth 1 --branch "${KIT_REF}" "${KIT_REPO}" "${KIT_DIR}"
   fi
+fi
+
+if [[ "${FORCE_USER_SKILLS:-}" != "1" && -f "${PLUGIN_SKILLS}/setup-project/SKILL.md" ]]; then
+  echo "install-cloud-skills: cursor-kit plugin found at ${PLUGIN_SKILLS}"
+  echo "install-cloud-skills: skipping copy to ${SKILLS_DST} (plugin is source of truth)"
+  echo "install-cloud-skills: tip — rsync kit → ~/.cursor/plugins/local/cursor-kit/ then Reload Window"
+  echo "install-cloud-skills: override with FORCE_USER_SKILLS=1 if you really need user-skills copies"
+  exit 0
 fi
 
 mkdir -p "${SKILLS_DST}"

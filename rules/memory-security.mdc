@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Memory security
 
-Never write secrets into `AGENTS.md`, `PROJECT.md`, `.cursor/state/*`, commits, or skill outputs.
+Never write secrets into `AGENTS.md`, `PROJECT.md`, `.cursor/state/*`, commits, skill outputs, or **ai-memory** wiki / observations.
 
 ## Secrets include
 
@@ -13,9 +13,10 @@ API keys, tokens, passwords, private keys, OAuth refresh material, connection st
 
 ## If a secret appears
 
-1. Do not copy it into memory files
+1. Do not copy it into memory files or the wiki
 2. Tell the user to rotate it
 3. Redact any accidental paste in the same turn
+4. If it may already be in ai-memory storage, tell the user to purge/redact via upstream lifecycle docs — do not re-store
 
 ## Safe to store
 

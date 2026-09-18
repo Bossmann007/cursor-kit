@@ -21,6 +21,8 @@ Eventos. sessionStart, postToolUse, postToolUseFailure, afterFileEdit, stop (che
 
 Fonte. `cursor-kit/rules/*.mdc` (plugin) e opcionalmente `sync-rules.sh` → `~/.cursor/rules/`. Inclui ponytail, caveman, token-engine, cbm-first, session-continuity, memory-security. pstack: seed em `templates/pstack/` + `/setup-pstack`.
 
+`sync-hooks.sh` / `.ps1` é **merge-safe**: atualiza só hooks do kit; preserva companions (ai-memory, rtk). Ver [10 ai-memory](10-ai-memory.md).
+
 ## Limite
 
 Hooks quebrados com path de máquina no repo são bug. Prefira sync global a hooks project-local com absolutos.
