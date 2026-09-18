@@ -3,11 +3,12 @@ name: setup-project
 description: >
   Bootstrap or repair a repo for the Bossmann Cursor stack (cursor-kit templates,
   token-engine, pstack models, Matt Pocock engineering skills, cursor-team-kit,
-  continual-learning). Use whenever the user asks to set up / setar / scaffold a
-  project or repo for agents, wire AGENTS.md + PROJECT.md + .cursor/state, run
-  first-time Cursor kit install, or says the repo is missing agent memory,
-  checkpoints, docs/agents, or stack integration — even if they do not say
-  "setup-project". Prefer this over ad-hoc copying of templates.
+  continual-learning, verification-planning, simplify, blindspot-pass). Use
+  whenever the user asks to set up / setar / scaffold a project or repo for
+  agents, wire AGENTS.md + PROJECT.md + .cursor/state, run first-time Cursor kit
+  install, or says the repo is missing agent memory, checkpoints, docs/agents, or
+  stack integration — even if they do not say "setup-project". Prefer this over
+  ad-hoc copying of templates.
 disable-model-invocation: false
 ---
 
@@ -41,7 +42,7 @@ Ask two questions up front (one answer each; lead with the recommended default):
 
 2. **Interview depth**
    - **1 — Minimal**: issue tracker (via Matt Pocock setup) + "fill PROJECT.md now?"
-   - **2 — Completo**: everything in 1, plus confirm stack summary, offer codebase-memory index, note poteto/pstack as default for non-trivial work, **offer quality gates** for JS/TS (measure-only; point at kit playbook + `docs/prompts/05-quality-gates-install.md`), and point at `docs/02-playbook-onboarding.md` for the stranger path
+   - **2 — Completo**: everything in 1, plus confirm stack summary, offer codebase-memory index, note poteto/pstack as default for non-trivial work, **offer quality gates** for JS/TS (measure-only; point at kit playbook + `docs/prompts/05-quality-gates-install.md`), **arrumar ai-memory** (install/repair companion via `/setup-ai-memory`; see §6c), remind kit skills `verification-planning` + `simplify` + `blindspot-pass`, and point at `docs/02-playbook-onboarding.md` for the stranger path
 
 If the user already stated mode/depth in the trigger message, skip the matching question.
 
@@ -53,7 +54,8 @@ Check, do not duplicate:
 |-------|----------------|--------|
 | pstack models | `~/.cursor/rules/pstack-models.mdc` exists | Follow `/setup-pstack` (detect models → confirm → write rule) |
 | token-engine MCP | `~/.cursor/mcp.json` has `token-engine` pointing at a real Python/venv | Point at `~/token-engine` / `~/.cursor/repos/token-engine`; remind user to enable MCP + reload if needed |
-| Hooks | `~/.cursor/hooks.json` has sessionStart / postToolUse / stop | Restore from kit docs / existing machine backup; do not invent a second hook system inside the repo |
+| Hooks | `~/.cursor/hooks.json` has sessionStart / postToolUse / stop | Restore via kit `./sync-hooks.sh` (**merge-safe** — preserves companions like ai-memory); do not invent a second hook system inside the repo; do not overwrite hooks.json from scratch when companions are present |
+| ai-memory companion | Binary on PATH or `~/Applications/ai-memory/ai-memory`; `curl` `http://127.0.0.1:49374/mcp` → 405; MCP `ai-memory` in `~/.cursor/mcp.json`; hooks.json has kit **and** ai-memory commands | **Repair if broken** via `/setup-ai-memory` (or `scripts/install-ai-memory.sh`). If never installed: depth 1 → one-line note + skip; depth 2 → install/repair in §6c (default recommend yes on this stack). Keep AGENTS/PROJECT/checkpoint authoritative |
 | Plugins | cursor-team-kit, continual-learning, pstack available | If missing, tell user to `/add-plugin` (or install this `cursor-kit` plugin); do not fake plugin install |
 
 Summarize what was OK vs repaired in one short block before continuing.
@@ -78,7 +80,7 @@ Do **not** copy global `~/.cursor/rules` into the project.
 
 If `PROJECT.md` is still template-empty, or the user said yes to filling it:
 
-- Follow the `project-brain` skill: derive stack/commands from manifests (`package.json`, `pyproject.toml`, README, CI)
+- Derive stack/commands from manifests (`package.json`, `pyproject.toml`, README, CI)
 - Keep the Decisions table for approved architecture only
 - Never store secrets
 
@@ -108,9 +110,30 @@ Do not invent learned bullets during setup.
 
 ### 6. Team-kit + pstack reminders
 
-- Confirm cursor-team-kit skills (CI/PR/review) are available; if not, instruct `/add-plugin cursor-team-kit`
+- Confirm cursor-team-kit skills (CI/PR/review, `deslop`) are available; if not, instruct `/add-plugin cursor-team-kit`
 - pstack: only invoke `/setup-pstack` when phase 1 found the rule missing; otherwise one line that models already apply to new sessions
 - Depth **2** only: note that non-trivial engineering should prefer `/poteto-mode` when that skill is installed
+
+### 6a. Kit verification / cleanup skills
+
+Prefer the **cursor-kit plugin** (`~/.cursor/plugins/local/cursor-kit/skills/`
+or marketplace/local plugin path). Do **not** also copy these into
+`~/.cursor/skills/` on desktop — duplicates confuse which copy is live.
+
+| Skill | When to point the user at it |
+|-------|------------------------------|
+| `verification-planning` | Before non-trivial implement — evidence path + budget |
+| `simplify` | After behavior is proven — readability without behavior change |
+| `blindspot-pass` | Second pass before ship (edges / silent failures) |
+
+If the plugin is missing and Cloud/VM needs the kit skills, run
+`scripts/install-cloud-skills.sh` (copies only when plugin absent, unless
+`FORCE_USER_SKILLS=1`). Desktop sync: rsync kit → local plugin, then Reload.
+
+Depth **2**: add a short **Agent skills** note in `AGENTS.md` or
+`docs/agents/` only if the Matt phase already maintains an Agent skills block —
+list the three triggers in one line each. Depth **1**: mention in the Done
+report only.
 
 ### 6b. Quality gates offer (depth 2 only)
 
@@ -122,7 +145,17 @@ If interview depth is **2** and the repo looks JS/TS (`package.json` with js/ts 
 4. If not JS/TS, one line: quality-gates templates are N/A; document whatever gate the stack uses in `PROJECT.md`.
 5. If the target repo will be used from Cursor **Projects** (Cloud) and has no `.cursor/environment.json`, offer to copy kit `templates/cloud/environment.json` → `.cursor/environment.json` so Builds install kit skills on the VM (see `docs/tools/09-cloud-projects.md`).
 
-Do not reinvent matt-pocock or pstack here.
+### 6c. ai-memory companion — arrumar (always check; install on depth 2)
+
+Part of stack setup. Delegate to `/setup-ai-memory` — do not reimplement upstream.
+
+1. **Always (depth 1 + 2):** if companion is installed but broken (no binary, server down, MCP missing, or hooks wiped), **repair** via `/setup-ai-memory` / `scripts/install-ai-memory.sh`. After repair, confirm kit hooks still present (`./sync-hooks.sh` is merge-safe).
+2. **Depth 2 only:** if companion was never installed, **install** it (recommended default on this stack; user may decline once). Point at `docs/prompts/07-ai-memory-wire.md` + `docs/tools/10-ai-memory.md`.
+3. **Depth 1:** if never installed, one line: long-horizon wiki skipped; use depth 2 or `/setup-ai-memory` later.
+4. Reminder: new Cursor repos auto-capture once companion is healthy — no per-repo reinstall. Optional `.ai-memory.toml` only if the user wants custom workspace/project naming.
+5. Keep AGENTS / PROJECT / checkpoint authoritative. Report: OK | repaired | installed | declined | N/A (non-macOS / blocked).
+
+Do not reinvent matt-pocock, pstack, or ai-memory core here.
 
 ### 7. Optional smoke (depth 2 or when user asks)
 
@@ -130,7 +163,8 @@ Offer, do not force:
 
 1. Ping token-engine (`caveman_stats` or a tiny compress) if MCP is up
 2. `codebase-memory` `index_repository` / `list_projects` for this root
-3. Point at kit smoke A/B/C in `docs/02-playbook-onboarding.md` (continue / PROJECT decision / failure retry)
+3. If ai-memory wired: `curl` loopback `/mcp` → 405, or MCP `memory_status`
+4. Point at kit smoke A/B/C in `docs/02-playbook-onboarding.md` (continue / PROJECT decision / failure retry)
 
 ### 8. Done report
 
@@ -145,22 +179,26 @@ Always end with a compact checklist:
 - Created/updated: (file list)
 - Matt Pocock: issue tracker = …
 - Quality gates: offered | installed (measure) | N/A | declined
+- ai-memory: OK | repaired | installed | declined | N/A
+- Kit skills: verification-planning / simplify / blindspot-pass / setup-ai-memory = plugin | missing
 - Plugins: team-kit / continual-learning / pstack = present | action needed
 - Playbook: docs/02-playbook-onboarding.md
+- External inventory: docs/EXTERNAL-COMPONENTS.md
 - Next: reload window if MCP/plugins changed; then normal work (or `/poteto-mode` for non-trivial)
 ```
 
 ## Guardrails
 
-- Composition over duplication: delegate to `setup-pstack`, `setup-matt-pocock-skills`, `project-brain`
-- No second memory system — AGENTS.md + PROJECT.md + `.cursor/state` only
+- Composition over duplication: delegate to `setup-pstack`, `setup-matt-pocock-skills`, `/setup-ai-memory`; fill `PROJECT.md` from manifests inline (no separate `project-brain` skill)
+- No competing **episodic** state — AGENTS.md + PROJECT.md + `.cursor/state` stay authoritative; ai-memory wiki is an optional long-horizon companion (not a second checkpoint)
 - No Hermes / Claude Code / OMH runtime assumptions
 - Windows users may still use `install.ps1`; on macOS/Linux prefer `install.sh`
+- Global hooks: merge, do not clobber companions (`./sync-hooks.sh` is merge-safe)
 - If `move_agent_to_root` fails after creating a new repo, stop and ask the user to open that folder before writing further project files
 
 ## Out of scope
 
 - Implementing app features inside the target repo
-- Packaging releases of token-engine
+- Packaging releases of token-engine or forking ai-memory
 - Rewriting global hooks from scratch when they already work
 - Full skill-creator eval loops (separate follow-up)

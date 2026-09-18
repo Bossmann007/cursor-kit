@@ -1,8 +1,6 @@
-# Context engine
+# Context pipeline
 
-See skill `context-engine`.
-
-## Pipeline
+Pipeline (rules + MCP — no separate `context-engine` skill):
 
 ```text
 USER TASK → PROJECT.md → AGENTS.md → checkpoint → failures

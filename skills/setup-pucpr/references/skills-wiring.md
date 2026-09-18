@@ -27,6 +27,7 @@ If both exist, document both with distinct triggers in `COURSE.md`:
 | **`domain-modeling`** | Ubiquitous language / `CONTEXT.md` for modeling courses | Offer only if disciplina is domain-heavy and user wants glossary |
 | **`research`** | Cite primary sources (docs/specs); still prefer professor PDFs first | Document; never invent enunciado |
 | **`diagnosing-bugs`** | Student code fails to compile/run | Document as “debug my program” path |
+| **`verification-planning`** | Non-trivial student *project* code — how to prove a claim before changing more | Document optional for `projeto` / web/C labs; **never** use to auto-finish PBL |
 | **`wait-what`** | Last explanation did not land — re-pitch | Document |
 | **`handoff`** | End of study session / pass context | Document optional |
 | **`create-learning-path`** (teaching plugin) | `prova-prep` roadmaps | Offer on prova-prep; do not auto-run |
@@ -49,6 +50,7 @@ If both exist, document both with distinct triggers in `COURSE.md`:
 Temptation to complete coursework or overkill for a course folder:
 
 - `implement`, `to-spec`, `prototype` — push toward finishing PBL
+- `simplify` — rewrites student code toward “cleaner”; only if student asks for a readability pass on *their* draft
 - `setup-matt-pocock-skills` issue tracker / GitHub labels — default remains local `.scratch`
 - `poteto-mode`, `arena`, `swarm`, `architect`, `interrogate` — heavy eng panels
 - `tdd` — only if student explicitly practices TDD on a project

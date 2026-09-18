@@ -1,0 +1,31 @@
+---
+description: Session continuity — resume from checkpoint, decisions, and failure memory
+alwaysApply: true
+---
+
+# Session continuity
+
+Before inventing task state, read layered memory in order:
+
+1. `AGENTS.md` (durable prefs / facts)
+2. `PROJECT.md` Decisions (approved architecture)
+3. `.cursor/state/checkpoint.json` (live task)
+4. `.cursor/state/failures.jsonl` (last ~5 rows)
+5. If **ai-memory** MCP is available: pending handoff / brief for this project — long-horizon only; never skip checkpoint for wiki
+
+## Continue / retomar
+
+When the user says `continue`, `retomar`, or resumes after a reload:
+
+- Treat `checkpoint.json` `task` + `next_action` as the plan
+- Prefer listed `files` over broad discovery
+- Do not restart from README unless checkpoint is empty
+- If ai-memory is wired and a handoff exists, use it as **context**, not as a replacement for checkpoint
+
+## Failure memory
+
+If the same tool/approach failed twice in `failures.jsonl`, change approach. Do not retry the identical command hoping for a different result.
+
+## Checkpoint hygiene
+
+Keep `task`, `status`, and `next_action` current. Hooks track `files`; the agent owns task semantics (write `.cursor/state/checkpoint.json` directly).

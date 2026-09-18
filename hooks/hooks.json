@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": "python3 ${CURSOR_PLUGIN_ROOT}/hooks/token-engine-session.py"
+      }
+    ],
+    "postToolUse": [
+      {
+        "command": "python3 ${CURSOR_PLUGIN_ROOT}/hooks/compress-tool-output.py",
+        "matcher": "Shell|Read"
+      }
+    ],
+    "postToolUseFailure": [
+      {
+        "command": "python3 ${CURSOR_PLUGIN_ROOT}/hooks/tool-failure.py"
+      }
+    ],
+    "afterFileEdit": [
+      {
+        "command": "python3 ${CURSOR_PLUGIN_ROOT}/hooks/track-edits.py"
+      }
+    ],
+    "stop": [
+      {
+        "command": "python3 ${CURSOR_PLUGIN_ROOT}/hooks/checkpoint-stop.py"
+      }
+    ]
+  }
+}

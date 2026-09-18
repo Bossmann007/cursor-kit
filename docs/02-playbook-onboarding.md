@@ -46,7 +46,7 @@ Se falhar. volte à [instalação §2](01-installation.md) e [TROUBLESHOOTING](T
 
 1. Escreva uma linha real em `PROJECT.md` → Decisions (data, decisão, porquê).
 2. Peça ao agente. “Cite a última Decision de PROJECT.md.”
-3. Rode o skill `update-checkpoint` (ou peça) com `task` + `next_action` preenchidos.
+3. Update `.cursor/state/checkpoint.json` with `task` + `next_action` preenchidos (agent escreve o arquivo; hooks mesclam `files`).
 
 ## Passo 5. Quality gates (só se o repo for JS/TS)
 

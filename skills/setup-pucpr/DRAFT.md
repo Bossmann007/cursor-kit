@@ -1,11 +1,21 @@
-# setup-pucpr — DRAFT
+# setup-pucpr — install notes
 
-Draft only. **Do not treat as installed** until SKILL.md is approved.
+Canonical path: `cursor-kit/skills/setup-pucpr/` (plugin `skills: ./skills/`).
 
-Proposed install targets (pick one later):
+User-skills install (same pattern as `setup-project`):
 
-1. Plugin path (current): `cursor-kit/skills/setup-pucpr/` (picked up via `plugin.json` `skills: ./skills/`)
-2. User skills: `~/.cursor/skills/setup-pucpr/` (symlink or copy)
-3. Alias folder name `setup-faculdade` — not used; canonical name is `setup-pucpr`
+```bash
+ln -sfn ~/cursor-kit/skills/setup-pucpr ~/.cursor/skills/setup-pucpr
+# or: ln -sfn ~/.cursor/repos/cursor-kit/skills/setup-pucpr ~/.cursor/skills/setup-pucpr
+```
 
-Do **not** run this skill against real `~/PUCPR/*` folders until the draft is approved.
+Also ensure the plugin is installed under `~/.cursor/plugins/local/` as a **real directory** (Cursor rejects symlinks whose target is outside that folder):
+
+```bash
+rsync -a --delete --exclude '.git/' --exclude '__pycache__/' \
+  ~/cursor-kit/ ~/.cursor/plugins/local/cursor-kit/
+```
+
+Then **reload Cursor** (or new agent chat) so `/setup-pucpr` appears.
+
+If slash-command still missing: attach the skill manually or say “run setup-pucpr”.

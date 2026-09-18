@@ -10,6 +10,7 @@ Referência curta por peça. Narrativa completa. [overview](../00-overview.md) e
 | [04 ponytail-caveman](04-ponytail-caveman.md) | Personas |
 | [05 quality-gates](05-quality-gates.md) | ESLint medir ≠ consertar |
 | [06 codebase-memory](06-codebase-memory.md) | Grafo CBM |
-| [07 memory-layers](07-memory-layers.md) | AGENTS / PROJECT / state |
+| [07 memory-layers](07-memory-layers.md) | AGENTS / PROJECT / state / ai-memory |
 | [08 setup-project-hooks](08-setup-project-hooks.md) | Orquestrador + hooks |
 | [09 cloud-projects](09-cloud-projects.md) | Aba Projects / Cloud. opção C |
+| [10 ai-memory](10-ai-memory.md) | Companion wiki / handoff |

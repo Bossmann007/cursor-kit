@@ -22,9 +22,17 @@ $bookAllow = @(
 )
 
 $cursorKitSkills = @(
-    'blindspot-pass','context-engine','dev-workflow','find-skills',
-    'project-brain','pucpr-canvas','pucpr-tutor','update-checkpoint'
+    'find-skills','pucpr-canvas','pucpr-tutor'
 )
+
+# Skills that ship in the cursor-kit plugin — do NOT copy into ~/.cursor/skills
+# when the local plugin is present (plugin is source of truth on desktop).
+$pluginShippedSkills = @(
+    'setup-project','setup-pucpr','setup-ai-memory','verification-planning','simplify','blindspot-pass'
+)
+$pluginSkillsDir = Join-Path $env:USERPROFILE ".cursor\plugins\local\cursor-kit\skills"
+$pluginPresent = Test-Path (Join-Path $pluginSkillsDir "setup-project\SKILL.md")
+
 
 New-Item -ItemType Directory -Force $TempDir, $rulesDst | Out-Null
 
@@ -57,10 +65,35 @@ Get-ChildItem $src -Directory | Where-Object { $skip -notcontains $_.Name } | Fo
     }
 }
 
-# remove matt skills not in allowlist
+# cursor-kit plugin skills: only copy to ~/.cursor/skills when plugin is absent
+# (Cloud / machines without local plugin). Desktop prefers the plugin.
+$kitSkillsSrc = Join-Path $PSScriptRoot "skills"
+$forceUser = $env:FORCE_USER_SKILLS -eq "1"
+if ((-not $pluginPresent -or $forceUser) -and (Test-Path $kitSkillsSrc)) {
+    Get-ChildItem $kitSkillsSrc -Directory | ForEach-Object {
+        if (-not (Test-Path (Join-Path $_.FullName 'SKILL.md'))) { return }
+        $dest = Join-Path $skillsDst $_.Name
+        if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
+        Copy-Item $_.FullName $dest -Recurse -Force
+        Write-Host "kit skill (user-skills fallback): $($_.Name)"
+    }
+} elseif ($pluginPresent) {
+    Write-Host "cursor-kit plugin present — not copying plugin skills into $skillsDst"
+    # Drop stale user-skills copies of plugin-shipped names
+    foreach ($n in $pluginShippedSkills) {
+        $stale = Join-Path $skillsDst $n
+        if (Test-Path $stale) {
+            Remove-Item $stale -Recurse -Force
+            Write-Host "removed stale user-skills duplicate: $n"
+        }
+    }
+}
+
+# remove matt skills not in allowlist (keep env + plugin-shipped if still present as fallback)
 Get-ChildItem $skillsDst -Directory | ForEach-Object {
     $n = $_.Name
     if ($cursorKitSkills -contains $n) { return }
+    if ($pluginShippedSkills -contains $n) { return }
     if ($mattAllow -contains $n) { return }
     Remove-Item $_.FullName -Recurse -Force
     Write-Host "pruned skill: $n"

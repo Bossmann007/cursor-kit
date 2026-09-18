@@ -1,0 +1,41 @@
+---
+description: Codebase exploration via codebase-memory — avoid full-file Read for discovery
+alwaysApply: true
+---
+
+# CBM-first code exploration
+
+Use **codebase-memory** MCP for structure. Do not Read entire source files to explore.
+
+## Workflow
+
+1. `list_projects` — confirm project id (once per session)
+2. `search_graph` — symbols, files, patterns
+3. `get_code_snippet` — exact lines when editing or verifying
+4. `trace_path` — callers/callees before refactors
+
+## When Read is OK
+
+- Task-focus file (named in user request)
+- Editing that file in the current turn
+- Snippet insufficient and file is small (< ~100 lines)
+- Non-code assets (short configs, markdown)
+
+## When Read is wrong
+
+- "How does X work?" → `search_graph` + `trace_path`
+- Re-read same path → snippet or prior turn pointer
+- Large exploratory read → token-engine may emit `[CBM: path — use search_graph]`
+
+## Tool priority
+
+| Need | Tool |
+|------|------|
+| Find symbol | `search_graph` |
+| Multi-hop | `query_graph` |
+| Call chain | `trace_path` |
+| Exact source | `get_code_snippet` |
+| Literal grep | `search_code` (if graph miss) |
+| Full file | `Read` (last resort) |
+
+Both MCPs normally live in `~/.cursor/mcp.json` (see kit `mcp.json.template`): **codebase-memory** + **token-engine**.

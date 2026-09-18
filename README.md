@@ -9,9 +9,9 @@
 
 # Cursor Kit
 
-**Repo:** [Bossmann007/cursor-kit](https://github.com/Bossmann007/cursor-kit) · pares com [token-engine](https://github.com/Bossmann007/token-engine)
+**Repo:** [Bossmann007/cursor-kit](https://github.com/Bossmann007/cursor-kit) · pares com [token-engine](https://github.com/Bossmann007/token-engine) · companion opcional [ai-memory](https://github.com/akitaonrails/ai-memory)
 
-Stack **Cursor-native** para desenvolvimento com agentes. Templates, hooks, memória e o orquestrador `/setup-project`. A compressão fail-closed vive no token-engine (MCP), não neste repo.
+Stack **Cursor-native** para desenvolvimento com agentes. Templates, hooks, memória e o orquestrador `/setup-project`. A compressão fail-closed vive no token-engine (MCP), não neste repo. Memória de longo prazo (wiki/handoff) é companion via `/setup-ai-memory`.
 
 ## Comece aqui
 
@@ -32,6 +32,10 @@ Não é um clone do Claude Code. Não inclui Obsidian, Graphify visual, agent-br
 | Precisa | Vá em |
 |---------|--------|
 | Orquestrar um repo | `/setup-project` (skill neste plugin) |
+| Companion ai-memory | `/setup-ai-memory` + [docs/tools/10-ai-memory.md](docs/tools/10-ai-memory.md) |
+| Evidence path (pré-implement) | `/verification-planning` |
+| Simplificar sem mudar comportamento | `/simplify` |
+| Inventário de plugins/companions | [docs/EXTERNAL-COMPONENTS.md](docs/EXTERNAL-COMPONENTS.md) |
 | Prompt colável | [docs/prompts/](docs/prompts/) |
 | Quality gates (JS/TS) | [templates/quality-gates/](templates/quality-gates/) + [prompt medir](docs/prompts/05-quality-gates-install.md) |
 | Card de ferramenta | [docs/tools/](docs/tools/) |
@@ -39,10 +43,17 @@ Não é um clone do Claude Code. Não inclui Obsidian, Graphify visual, agent-br
 
 ## Plugin local
 
+Cursor rejeita symlink cujo target fica fora de `~/.cursor/plugins/local/`. Sync ou clone in-place (detalhes em [docs/01-installation.md](docs/01-installation.md)):
+
 ```bash
-ln -sfn ~/cursor-kit ~/.cursor/plugins/local/cursor-kit
-# ou: ln -sfn /ABS/PATH/TO/cursor-kit ~/.cursor/plugins/local/cursor-kit
+rsync -a --delete --exclude '.git/' --exclude '__pycache__/' \
+  ~/cursor-kit/ ~/.cursor/plugins/local/cursor-kit/
+~/cursor-kit/sync-hooks.sh
+~/cursor-kit/sync-rules.sh   # opcional se o plugin já carrega rules/
+# depois: Developer → Reload Window
 ```
+
+Branch de trabalho pessoal (Enzo). `enzo`. Default do repo continua `master` até merge.
 
 ## Testes do kit
 

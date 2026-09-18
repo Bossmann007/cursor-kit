@@ -2,11 +2,14 @@
 
 ## Default dev (non-trivial)
 
-Skill: `dev-workflow`
+Prefer `/poteto-mode`. Fallback loop when staying light:
 
 ```text
 PLAN → IMPLEMENT → TEST → REVIEW → MEMORIZE
 ```
+
+Use `/verification-planning` before IMPLEMENT on non-trivial work; `/simplify`
+and `/blindspot-pass` after behavior is proven.
 
 ## Continue interrupted work
 
