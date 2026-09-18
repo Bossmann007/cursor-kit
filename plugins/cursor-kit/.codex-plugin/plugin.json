@@ -1,0 +1,27 @@
+{
+  "name": "cursor-kit",
+  "version": "0.1.0",
+  "description": "Enzo Bossmann's agent workflow for token-efficient, evidence-based project work in Codex.",
+  "author": {
+    "name": "Enzo Bossmann",
+    "url": "https://github.com/Bossmann007"
+  },
+  "homepage": "https://github.com/Bossmann007/cursor-kit",
+  "repository": "https://github.com/Bossmann007/cursor-kit",
+  "license": "MIT",
+  "keywords": ["agents", "workflow", "token-engine", "ai-memory", "verification"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Cursor Kit",
+    "shortDescription": "Seu fluxo de agentes do Cursor, adaptado ao Codex.",
+    "longDescription": "Aplica o fluxo Cursor Kit no Codex: mudanças mínimas, exploração eficiente, memória organizada, validação e revisão antes de entregar.",
+    "developerName": "Enzo Bossmann",
+    "category": "Productivity",
+    "capabilities": ["Interactive"],
+    "defaultPrompt": [
+      "Use Cursor Kit para preparar este projeto.",
+      "Planeje a verificação antes de alterar este código.",
+      "Faça uma revisão final usando Cursor Kit."
+    ]
+  }
+}
