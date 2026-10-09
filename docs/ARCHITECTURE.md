@@ -23,7 +23,7 @@
 |-------|----------|----------------|
 | Global config | `~/.cursor/` | rules, hooks, MCP, skills |
 | Per-project | repo root | AGENTS.md, PROJECT.md |
-| Ephemeral | `.cursor/state/` | checkpoint, session, failures, obs |
+| Ephemeral | `.claude/state/` | checkpoint, session, failures, obs |
 | Compression | token-engine | external infra, not duplicated |
 
 ## Hooks (global)

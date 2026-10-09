@@ -3,7 +3,7 @@ name: setup-ai-memory
 description: >
   Install or repair the ai-memory companion for Cursor (native macOS binary,
   LaunchAgent, MCP + lifecycle hooks) while keeping kit layers AGENTS.md,
-  PROJECT.md, and .cursor/state authoritative. Also invoked from /setup-project
+  PROJECT.md, and .claude/state authoritative. Also invoked from /setup-project
   (pré-check repair + depth-2 install) and /setup-pucpr when the full Cursor
   stack is in play. Use when the user asks to wire ai-memory, long-horizon wiki
   memory, cross-agent handoffs, or says setup / arrumar ai-memory. Prefer this
@@ -26,8 +26,8 @@ Canonical kit root: `~/cursor-kit` (or this plugin repo). Human doc (PT):
 |-------|-----------|
 | Prefs / facts | `AGENTS.md` (continual-learning) |
 | Architecture | `PROJECT.md` Decisions |
-| Live task / continue | `.cursor/state/checkpoint.json` |
-| Tool failures | `.cursor/state/failures.jsonl` |
+| Live task / continue | `.claude/state/checkpoint.json` |
+| Tool failures | `.claude/state/failures.jsonl` |
 | Long-horizon wiki / handoff / FTS | ai-memory (when enabled) |
 
 Retrieval still starts with kit layers; only then ask ai-memory MCP for handoff/brief.

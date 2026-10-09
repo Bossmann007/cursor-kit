@@ -1,0 +1,11 @@
+{
+  "name": "cursor-kit",
+  "version": "0.3.0",
+  "description": "Enzo Bossmann's agent kit for Claude Code: setup skills, verification, checkpoint hooks, token-engine + ai-memory companions.",
+  "author": { "name": "Enzo Bossmann", "url": "https://github.com/Bossmann007" },
+  "homepage": "https://github.com/Bossmann007/cursor-kit",
+  "repository": "https://github.com/Bossmann007/cursor-kit",
+  "license": "MIT",
+  "keywords": ["token-engine", "ai-memory", "checkpoint", "verification"],
+  "skills": "./skills/"
+}

@@ -11,6 +11,7 @@ sys.path.insert(0, str(HOOKS))
 
 from cursor_state import (  # noqa: E402
     checkpoint_summary,
+    emit_context,
     ensure_checkpoint_exists,
     load_checkpoint,
     workspace_root,
@@ -35,7 +36,7 @@ def main() -> None:
         "Explore code via codebase-memory before full-file Read. "
         "Non-trivial work: /poteto-mode."
     )
-    print(json.dumps({"additional_context": extra}))
+    emit_context("SessionStart", extra)
 
 
 if __name__ == "__main__":

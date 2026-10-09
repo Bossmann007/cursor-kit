@@ -1,0 +1,7 @@
+{
+  "name": "bossmann",
+  "owner": { "name": "Enzo Bossmann" },
+  "plugins": [
+    { "name": "cursor-kit", "source": "./", "description": "Enzo's Claude Code kit: skills + checkpoint hooks" }
+  ]
+}

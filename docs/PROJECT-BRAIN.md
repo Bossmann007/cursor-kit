@@ -16,7 +16,7 @@ Avoid rediscovering stack, commands, and decisions every session.
 |--------|-----|
 | Track edited files | `track-edits.py` hook |
 | Update stack/commands | Agent after real changes |
-| Task progress | Agent writes `.cursor/state/checkpoint.json` |
+| Task progress | Agent writes `.claude/state/checkpoint.json` |
 | Architecture diagram | Agent when user approves design |
 
 ## Bootstrap

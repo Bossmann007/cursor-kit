@@ -52,8 +52,8 @@ Ver [codebase-memory](tools/06-codebase-memory.md).
 |--------|------|--------|
 | Semântica | `AGENTS.md` | Preferências e fatos estáveis (continual-learning) |
 | Decisão / stack | `PROJECT.md` | Semi-estático; tabela Decisions |
-| Episódica | `.cursor/state/checkpoint.json` | Tarefa atual |
-| Falha | `.cursor/state/failures.jsonl` | Evitar repetir a mesma abordagem |
+| Episódica | `.claude/state/checkpoint.json` | Tarefa atual |
+| Falha | `.claude/state/failures.jsonl` | Evitar repetir a mesma abordagem |
 
 Sem Obsidian obrigatório. Notion MCP é opcional se já estiver no global.
 

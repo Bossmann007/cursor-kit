@@ -28,7 +28,7 @@ O que deve existir depois (idempotente se já existir conteúdo).
 
 - `AGENTS.md` (seções Learned *)
 - `PROJECT.md`
-- `.cursor/state/checkpoint.json`
+- `.claude/state/checkpoint.json`
 - ignore de state no `.gitignore`
 - `docs/agents/*` se a fase Matt rodou
 
@@ -46,7 +46,7 @@ Se falhar. volte à [instalação §2](01-installation.md) e [TROUBLESHOOTING](T
 
 1. Escreva uma linha real em `PROJECT.md` → Decisions (data, decisão, porquê).
 2. Peça ao agente. “Cite a última Decision de PROJECT.md.”
-3. Update `.cursor/state/checkpoint.json` with `task` + `next_action` preenchidos (agent escreve o arquivo; hooks mesclam `files`).
+3. Update `.claude/state/checkpoint.json` with `task` + `next_action` preenchidos (agent escreve o arquivo; hooks mesclam `files`).
 
 ## Passo 5. Quality gates (só se o repo for JS/TS)
 
@@ -64,7 +64,7 @@ Outras linguagens. documente o gate no `PROJECT.md`; templates v1 não cobrem.
 
 **B. Decision.** A Decision do passo 4 deve ser citada sem alucinar outra.
 
-**C. Failure.** Force uma falha de tool duas vezes (comando inválido). Confira `.cursor/state/failures.jsonl`. Na próxima tentativa o agente deve mudar de abordagem.
+**C. Failure.** Force uma falha de tool duas vezes (comando inválido). Confira `.claude/state/failures.jsonl`. Na próxima tentativa o agente deve mudar de abordagem.
 
 ## Passo 7. Primeiro trabalho disciplinado
 

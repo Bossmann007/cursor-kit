@@ -28,7 +28,7 @@ or teach skills.
 | Deliverables | `PBLs/`, `Listas/`, `Projeto/`, `TDE*` | Work-type dirs; never clobber contents |
 | Scratch | `.scratch/` | Local notes; gitignored |
 | Official sources | `Modulos/`, `Slides/`, `Plano-de-Ensino*` | Professor materials — map, do not invent |
-| Optional agent state | `.cursor/state/` | Only if also `/setup-project` / full agent repo |
+| Optional agent state | `.claude/state/` | Only if also `/setup-project` / full agent repo |
 
 ## External sources (do not fork into the skill body)
 

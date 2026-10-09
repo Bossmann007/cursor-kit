@@ -15,7 +15,7 @@
     },
     {
       "id": 3,
-      "prompt": "Setup faculdade na pasta atual de Arquitetura de Banco de Dados: já tenho Slides/ e LEARNING-PATH-PROVA-RA1.md. Depth 2. Tipo prova-prep. Lembra: não substituir /setup-project; se AGENTS/.cursor/state faltarem, oferece setup-project OU academic-only.",
+      "prompt": "Setup faculdade na pasta atual de Arquitetura de Banco de Dados: já tenho Slides/ e LEARNING-PATH-PROVA-RA1.md. Depth 2. Tipo prova-prep. Lembra: não substituir /setup-project; se AGENTS/.claude/state faltarem, oferece setup-project OU academic-only.",
       "expected_output": "Composes with setup-project offer; maps Slides/ + existing learning path; seeds pedagogical + BD scope only from user/files; no SQL/minimundo invention; Done checklist.",
       "files": []
     }

@@ -22,7 +22,7 @@ Stack defaults (Bossmann Cursor):
 
 - Explore via **codebase-memory** (`search_graph` / `trace_path` / `get_code_snippet`)
 - Compress large logs via **token-engine**
-- Record the plan in `.cursor/state/checkpoint.json` (`tests`, `next_action`)
+- Record the plan in `.claude/state/checkpoint.json` (`tests`, `next_action`)
 - Prefer **measure-only** quality gates; do not autofix unless the user asks
 - After the path runs, optional `/blindspot-pass` for missed edges
 
@@ -105,4 +105,4 @@ Status: established | limited | refuted | not-run-yet
 | `blindspot-pass` | Second pass after the path runs |
 | `simplify` | Only after behavior is proven |
 | quality-gates templates | Measure-only static gates — not a substitute for the claim |
-| checkpoint | Persist `tests` + `next_action` in `.cursor/state/checkpoint.json` (agent owns semantics; hooks merge files) |
+| checkpoint | Persist `tests` + `next_action` in `.claude/state/checkpoint.json` (agent owns semantics; hooks merge files) |

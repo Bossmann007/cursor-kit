@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install / repair ai-memory companion for Cursor (macOS native default).
+# Install / upgrade / repair ai-memory companion (macOS native default). Wires Claude Code (+ Cursor if present).
 # Does not vendor upstream sources into cursor-kit. Idempotent where possible.
 #
 # Env overrides:
@@ -7,11 +7,21 @@
 #   AI_MEMORY_BIND     default 127.0.0.1:49374
 #   AI_MEMORY_SKIP_LAUNCHD=1   skip LaunchAgent
 #   AI_MEMORY_SKIP_WIRE=1      skip install-mcp / install-hooks
+#   AI_MEMORY_AGENTS           space-separated agents to wire (default: "claude-code"; add "cursor")
+#   AI_MEMORY_VERSION          pin a tag (default: latest GitHub release)
 set -euo pipefail
 
 AI_MEMORY_HOME="${AI_MEMORY_HOME:-${HOME}/Applications/ai-memory}"
 AI_MEMORY_BIND="${AI_MEMORY_BIND:-127.0.0.1:49374}"
-REPO_RELEASES="https://github.com/akitaonrails/ai-memory/releases/latest/download"
+REPO="https://github.com/akitaonrails/ai-memory"
+if [[ -n "${AI_MEMORY_VERSION:-}" ]]; then
+  TAG="${AI_MEMORY_VERSION}"
+else
+  TAG="$(basename "$(curl -fsSL -o /dev/null -w '%{url_effective}' "${REPO}/releases/latest")")"
+fi
+[[ "${TAG}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]] || { echo "install-ai-memory: cannot resolve release tag (got '${TAG}')" >&2; exit 1; }
+REPO_RELEASES="${REPO}/releases/download/${TAG}"
+AGENTS="${AI_MEMORY_AGENTS:-claude-code}"
 
 arch="$(uname -m)"
 case "${arch}" in
@@ -34,13 +44,28 @@ cd "${AI_MEMORY_HOME}"
 need_download=0
 if [[ ! -x "${AI_MEMORY_HOME}/ai-memory" ]]; then
   need_download=1
+else
+  have="$("${AI_MEMORY_HOME}/ai-memory" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)"
+  if [[ "${have}" != "${TAG#v}" ]]; then
+    echo "install-ai-memory: installed ${have:-unknown} -> ${TAG#v}"
+    need_download=1
+  else
+    echo "install-ai-memory: already at ${have}"
+  fi
 fi
 
 if [[ "${need_download}" -eq 1 || "${AI_MEMORY_FORCE_DOWNLOAD:-}" == "1" ]]; then
-  echo "install-ai-memory: downloading ${asset}"
+  echo "install-ai-memory: downloading ${asset} (${TAG})"
   tmp="$(mktemp -d)"
   trap 'rm -rf "${tmp}"' EXIT
   curl -fsSL -o "${tmp}/${asset}" "${REPO_RELEASES}/${asset}"
+  curl -fsSL -o "${tmp}/${asset}.sha256" "${REPO_RELEASES}/${asset}.sha256"
+  want="$(awk '{print $1}' "${tmp}/${asset}.sha256")"
+  got="$(shasum -a 256 "${tmp}/${asset}" | awk '{print $1}')"
+  [[ "${want}" == "${got}" ]] || { echo "install-ai-memory: checksum mismatch, aborting" >&2; exit 1; }
+  # stop service before replacing the binary; back up the old one
+  launchctl bootout "gui/$(id -u)/com.github.akitaonrails.ai-memory" 2>/dev/null || true
+  [[ -x "${AI_MEMORY_HOME}/ai-memory" ]] && cp "${AI_MEMORY_HOME}/ai-memory" "${AI_MEMORY_HOME}/ai-memory.prev"
   tar -xzf "${tmp}/${asset}" -C "${AI_MEMORY_HOME}"
   chmod +x "${AI_MEMORY_HOME}/ai-memory"
   rm -rf "${tmp}"
@@ -127,14 +152,17 @@ done
 
 if [[ "${AI_MEMORY_SKIP_WIRE:-}" != "1" ]]; then
   # Run installers via real binary path (not symlink) — older releases had #546
-  echo "install-ai-memory: wiring Cursor MCP + hooks"
-  "${BIN}" install-mcp --client cursor --apply
-  "${BIN}" install-hooks --agent cursor --apply
+  for agent in ${AGENTS}; do
+    client="${agent}"
+    echo "install-ai-memory: wiring ${agent} MCP + hooks"
+    "${BIN}" install-mcp --client "${client}" --apply
+    "${BIN}" install-hooks --agent "${agent}" --apply
+  done
 fi
 
 echo
 echo "install-ai-memory: done"
 echo "  binary:  ${BIN}"
 echo "  bind:    http://${AI_MEMORY_BIND}"
-echo "  next:    Reload Cursor MCP; verify docs/tools/10-ai-memory.md"
+echo "  next:    restart Claude Code (/mcp, /hooks); verify docs/tools/10-ai-memory.md"
 echo "  ensure:  ~/.local/bin is on PATH"

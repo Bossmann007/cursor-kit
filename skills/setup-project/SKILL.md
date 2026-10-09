@@ -5,7 +5,7 @@ description: >
   token-engine, pstack models, Matt Pocock engineering skills, cursor-team-kit,
   continual-learning, verification-planning, simplify, blindspot-pass). Use
   whenever the user asks to set up / setar / scaffold a project or repo for
-  agents, wire AGENTS.md + PROJECT.md + .cursor/state, run first-time Cursor kit
+  agents, wire AGENTS.md + PROJECT.md + .claude/state, run first-time Cursor kit
   install, or says the repo is missing agent memory, checkpoints, docs/agents, or
   stack integration — even if they do not say "setup-project". Prefer this over
   ad-hoc copying of templates.
@@ -64,12 +64,12 @@ Summarize what was OK vs repaired in one short block before continuing.
 
 From kit templates (`AGENTS.md.template`, `PROJECT.md.template`, `state/checkpoint.json.example`, `gitignore.snippet`):
 
-1. Ensure `.cursor/state/` exists
+1. Ensure `.claude/state/` exists
 2. Create `AGENTS.md` only if absent — continual-learning sections only:
    - `## Learned User Preferences`
    - `## Learned Workspace Facts`
 3. Create `PROJECT.md` only if absent
-4. Create `.cursor/state/checkpoint.json` only if absent
+4. Create `.claude/state/checkpoint.json` only if absent
 5. Append kit gitignore snippet if `checkpoint.json` ignore is missing
 
 Prefer the kit's `install.sh` when the machine has `~/cursor-kit` linked; otherwise copy the same files from this plugin repo root.
@@ -190,7 +190,7 @@ Always end with a compact checklist:
 ## Guardrails
 
 - Composition over duplication: delegate to `setup-pstack`, `setup-matt-pocock-skills`, `/setup-ai-memory`; fill `PROJECT.md` from manifests inline (no separate `project-brain` skill)
-- No competing **episodic** state — AGENTS.md + PROJECT.md + `.cursor/state` stay authoritative; ai-memory wiki is an optional long-horizon companion (not a second checkpoint)
+- No competing **episodic** state — AGENTS.md + PROJECT.md + `.claude/state` stay authoritative; ai-memory wiki is an optional long-horizon companion (not a second checkpoint)
 - No Hermes / Claude Code / OMH runtime assumptions
 - Windows users may still use `install.ps1`; on macOS/Linux prefer `install.sh`
 - Global hooks: merge, do not clobber companions (`./sync-hooks.sh` is merge-safe)
