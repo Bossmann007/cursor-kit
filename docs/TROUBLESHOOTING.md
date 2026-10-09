@@ -20,7 +20,7 @@
 
 - Agent must set `task` and `next_action` in checkpoint.json
 - Hooks only auto-track `files`
-- Run once: write `.cursor/state/checkpoint.json` with a concrete `task` + `next_action`
+- Run once: write `.claude/state/checkpoint.json` with a concrete `task` + `next_action`
 
 ## Notion MCP OAuth
 

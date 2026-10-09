@@ -1,4 +1,4 @@
-"""Copy of ~/.cursor/hooks/cursor_state.py — source of truth in cursor-kit."""
+"""Shared hook state helpers (Claude Code + Cursor). Source of truth in cursor-kit."""
 
 from __future__ import annotations
 
@@ -41,10 +41,28 @@ def workspace_root(payload: dict[str, Any] | None = None) -> Path:
 
 
 def state_dir(root: Path | None = None) -> Path:
+    """Claude-first state dir `.claude/state`; one-time copy from legacy `.cursor/state`."""
     base = root or Path.cwd()
-    directory = base / ".cursor" / "state"
+    directory = base / ".claude" / "state"
+    legacy = base / ".cursor" / "state"
+    if not directory.exists() and legacy.is_dir():
+        import shutil
+
+        shutil.copytree(legacy, directory)
     directory.mkdir(parents=True, exist_ok=True)
     return directory
+
+
+def emit_context(event: str, text: str) -> None:
+    """Print hook output understood by Claude Code (hookSpecificOutput) and Cursor (additional_context)."""
+    print(
+        json.dumps(
+            {
+                "additional_context": text,
+                "hookSpecificOutput": {"hookEventName": event, "additionalContext": text},
+            }
+        )
+    )
 
 
 def _read_json(path: Path, default: dict[str, Any]) -> dict[str, Any]:
@@ -155,7 +173,7 @@ def checkpoint_summary(checkpoint: dict[str, Any]) -> str:
 def ensure_checkpoint_exists(root: Path | None = None) -> None:
     path = checkpoint_path(root)
     if not path.is_file():
-        example = root / ".cursor" / "state" / "checkpoint.json.example" if root else None
+        example = root / ".claude" / "state" / "checkpoint.json.example" if root else None
         if example and example.is_file():
             path.write_text(example.read_text(encoding="utf-8"), encoding="utf-8")
         else:

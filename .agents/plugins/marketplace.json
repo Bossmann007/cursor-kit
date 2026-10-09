@@ -1,0 +1,20 @@
+{
+  "name": "bossmann",
+  "interface": {
+    "displayName": "Bossmann"
+  },
+  "plugins": [
+    {
+      "name": "cursor-kit",
+      "source": {
+        "source": "local",
+        "path": "./plugins/cursor-kit"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

@@ -21,12 +21,12 @@ Global repair (phase 0) only when something above is missing or broken. Do not c
 |-------|------|------|
 | Durable memory | `AGENTS.md` | Continual Learning contract (`## Learned User Preferences`, `## Learned Workspace Facts`) |
 | Project brain | `PROJECT.md` | Stack, commands, architecture, decisions table |
-| Ephemeral state | `.cursor/state/` | checkpoint.json, session.json, failures.jsonl |
+| Ephemeral state | `.claude/state/` | checkpoint.json, session.json, failures.jsonl |
 | Ignore noise | `.gitignore` | Ignore state files (kit snippet) |
 | Eng. skills config | `docs/agents/*` | issue-tracker, domain, optional triage-labels |
 | Domain docs | `CONTEXT.md` + `docs/adr/` | Created lazily by domain-modeling unless interview depth 2 asks to scaffold empty dirs |
 
-Long-horizon wiki (opt-in) lives in the **ai-memory** data dir / server — not under the repo `.cursor/state/`. See `/setup-ai-memory`.
+Long-horizon wiki (opt-in) lives in the **ai-memory** data dir / server — not under the repo `.claude/state/`. See `/setup-ai-memory`.
 
 ## External sources (do not fork into the skill body)
 

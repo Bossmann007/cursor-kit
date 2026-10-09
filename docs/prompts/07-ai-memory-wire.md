@@ -14,8 +14,8 @@ Wire the ai-memory companion for this Cursor machine. Do not replace kit memory 
 Keep authoritative:
 1. AGENTS.md — durable prefs/facts (continual-learning)
 2. PROJECT.md Decisions — approved architecture
-3. .cursor/state/checkpoint.json — live task for continue/retomar
-4. .cursor/state/failures.jsonl — tool failure memory
+3. .claude/state/checkpoint.json — live task for continue/retomar
+4. .claude/state/failures.jsonl — tool failure memory
 
 Add companion (opt-in long-horizon wiki):
 - Prefer kit scripts/install-ai-memory.sh (macOS native binary + LaunchAgent) or /setup-ai-memory

@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "SessionStart": [
+      { "hooks": [ { "type": "command", "command": "python3 __CLAUDE_HOOKS_DIR__/token-engine-session.py" } ] }
+    ],
+    "PostToolUse": [
+      { "matcher": "Bash|Read", "hooks": [ { "type": "command", "command": "python3 __CLAUDE_HOOKS_DIR__/compress-tool-output.py" } ] },
+      { "matcher": "Edit|Write|MultiEdit|NotebookEdit", "hooks": [ { "type": "command", "command": "python3 __CLAUDE_HOOKS_DIR__/track-edits.py" } ] }
+    ],
+    "PostToolUseFailure": [
+      { "hooks": [ { "type": "command", "command": "python3 __CLAUDE_HOOKS_DIR__/tool-failure.py" } ] }
+    ],
+    "Stop": [
+      { "hooks": [ { "type": "command", "command": "python3 __CLAUDE_HOOKS_DIR__/checkpoint-stop.py" } ] }
+    ]
+  }
+}

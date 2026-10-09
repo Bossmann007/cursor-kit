@@ -103,7 +103,7 @@ Check, summarize in one short block, then continue:
 | Matt `/teach` | `~/.cursor/skills/teach` (MISSION / lessons workspace skill) | Primary study skill — required for full teach wiring; if missing, say so |
 | pstack explain trio | plugin skills `how`, `why`, `teach` | Optional code-explain path; distinct from Matt teach |
 | Other study skills | `grilling`/`grill-me`, `research`, `diagnosing-bugs`, `wait-what`, `domain-modeling`, `handoff`; plugin `create-learning-path`; optional `pucpr-canvas` | List present vs missing per `references/skills-wiring.md`; **do not invent** |
-| `/setup-project` already applied | `AGENTS.md` continual-learning sections + `.cursor/state/` present | If absent: **offer** run `/setup-project` first (full Cursor stack) **or** continue with **academic-only** scaffold |
+| `/setup-project` already applied | `AGENTS.md` continual-learning sections + `.claude/state/` present | If absent: **offer** run `/setup-project` first (full Cursor stack) **or** continue with **academic-only** scaffold |
 | ai-memory companion (when full stack) | MCP `ai-memory` + server `127.0.0.1:49374` healthy if user also wants kit agent stack | If broken/missing and user chose full stack / already ran `/setup-project`: **repair/arrumar** via `/setup-ai-memory`. Academic-only path: skip with one line |
 | Kit templates | `~/cursor-kit/templates/faculdade/` (or this skill’s bundled copies) | Prefer kit path; fall back to files beside this skill |
 | Parent courses dir | `~/PUCPR` exists | Use as default parent for new folders |
@@ -124,7 +124,7 @@ From kit templates (`templates/faculdade/` or skill-local copies):
    pointer to official sources + Matt `/teach` as primary study entry)
 5. Append faculdade `.gitignore` snippet if missing (ignore `.scratch/` noise,
    OS junk; do **not** ignore deliverable source the student must hand in)
-6. Optionally create `.cursor/state/` **only** if the user also wants full
+6. Optionally create `.claude/state/` **only** if the user also wants full
    agent-repo behavior or already ran `/setup-project` — otherwise skip
 
 Prefer filling gaps over replacing existing `MISSION.md`, `NOTES.md`,
@@ -262,7 +262,7 @@ Always end with a compact checklist:
   `grilling`, `create-learning-path`, pstack `how`/`why`/`teach`,
   `project-brain` patterns, `pucpr-*` when installed — see
   `references/skills-wiring.md`
-- No competing **episodic** state — prefer `AGENTS.md` + `COURSE.md` (+ `.cursor/state`
+- No competing **episodic** state — prefer `AGENTS.md` + `COURSE.md` (+ `.claude/state`
   only when acting as full agent repo); ai-memory wiki is optional companion when full stack is on
 - Never store secrets, passwords, LMS cookies, or sensitive personal data in
   AGENTS/COURSE (nor in ai-memory wiki)

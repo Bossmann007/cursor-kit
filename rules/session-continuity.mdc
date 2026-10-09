@@ -9,8 +9,8 @@ Before inventing task state, read layered memory in order:
 
 1. `AGENTS.md` (durable prefs / facts)
 2. `PROJECT.md` Decisions (approved architecture)
-3. `.cursor/state/checkpoint.json` (live task)
-4. `.cursor/state/failures.jsonl` (last ~5 rows)
+3. `.claude/state/checkpoint.json` (live task)
+4. `.claude/state/failures.jsonl` (last ~5 rows)
 5. If **ai-memory** MCP is available: pending handoff / brief for this project — long-horizon only; never skip checkpoint for wiki
 
 ## Continue / retomar
@@ -28,4 +28,4 @@ If the same tool/approach failed twice in `failures.jsonl`, change approach. Do 
 
 ## Checkpoint hygiene
 
-Keep `task`, `status`, and `next_action` current. Hooks track `files`; the agent owns task semantics (write `.cursor/state/checkpoint.json` directly).
+Keep `task`, `status`, and `next_action` current. Hooks track `files`; the agent owns task semantics (write `.claude/state/checkpoint.json` directly).

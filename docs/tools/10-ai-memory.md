@@ -12,7 +12,7 @@ Camadas. [07 memory-layers](07-memory-layers.md) · [MEMORY](../MEMORY.md)
 |----------------------------|--------------------|
 | `AGENTS.md` prefs/fatos | Wiki de sessão consolidada |
 | `PROJECT.md` Decisions | Search FTS / entities |
-| `.cursor/state/checkpoint.json` | Handoff cross-agent / cross-machine |
+| `.claude/state/checkpoint.json` | Handoff cross-agent / cross-machine |
 | `failures.jsonl` | Capture via hooks → consolidate |
 | token-engine + CBM | MCP `ai-memory` (recall / status) |
 

@@ -6,9 +6,9 @@
 |----------------|-------|------------|
 | `AGENTS.md` | Global/project prefs | Continual Learning plugin + agent |
 | `PROJECT.md` | Project brain | Agent on arch changes |
-| `.cursor/state/checkpoint.json` | Task state | Agent + stop hook |
-| `.cursor/state/failures.jsonl` | Failure lessons | tool-failure hook + agent |
-| `.cursor/state/observability.jsonl` | Minimal metrics | stop hook only |
+| `.claude/state/checkpoint.json` | Task state | Agent + stop hook |
+| `.claude/state/failures.jsonl` | Failure lessons | tool-failure hook + agent |
+| `.claude/state/observability.jsonl` | Minimal metrics | stop hook only |
 | ai-memory wiki + index (opt-in) | Long-horizon project knowledge | [ai-memory](https://github.com/akitaonrails/ai-memory) companion |
 
 ## Intelligence rules

@@ -24,10 +24,11 @@ def main() -> None:
         return
 
     root = workspace_root(payload)
+    tool_input = payload.get("tool_input") if isinstance(payload.get("tool_input"), dict) else {}
     entry = {
         "tool": payload.get("tool_name") or payload.get("toolName"),
         "error": payload.get("error") or payload.get("message") or payload.get("stderr"),
-        "command": payload.get("command"),
+        "command": tool_input.get("command") or payload.get("command"),
     }
     append_failure(entry, root)
     session = load_session(root)

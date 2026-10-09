@@ -4,8 +4,8 @@
 |--------|-------------------|-------------|
 | Preferências / fatos | `AGENTS.md` | continual-learning + edições manuais |
 | Stack / decisions | `PROJECT.md` | humanos + `/setup-project` / agent refresh |
-| Tarefa | `.cursor/state/checkpoint.json` | hooks + agent (`task` / `next_action`) |
-| Falhas de tool | `.cursor/state/failures.jsonl` | hook postToolUseFailure |
+| Tarefa | `.claude/state/checkpoint.json` | hooks + agent (`task` / `next_action`) |
+| Falhas de tool | `.claude/state/failures.jsonl` | hook postToolUseFailure |
 | Long-horizon (opt-in) | ai-memory wiki + índice | companion [ai-memory](https://github.com/akitaonrails/ai-memory) |
 
 ## Ordem de leitura

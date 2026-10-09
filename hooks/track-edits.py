@@ -24,8 +24,13 @@ def main() -> None:
         return
 
     root = workspace_root(payload)
+    tool_input = payload.get("tool_input")
+    if not isinstance(tool_input, dict):
+        tool_input = {}
     path = (
-        payload.get("file_path")
+        tool_input.get("file_path")
+        or tool_input.get("notebook_path")
+        or payload.get("file_path")
         or payload.get("path")
         or payload.get("file")
         or ""
