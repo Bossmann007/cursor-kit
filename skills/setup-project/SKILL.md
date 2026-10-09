@@ -153,7 +153,8 @@ Part of stack setup. Delegate to `/setup-ai-memory` — do not reimplement upstr
 2. **Depth 2 only:** if companion was never installed, **install** it (recommended default on this stack; user may decline once). Point at `docs/prompts/07-ai-memory-wire.md` + `docs/tools/10-ai-memory.md`.
 3. **Depth 1:** if never installed, one line: long-horizon wiki skipped; use depth 2 or `/setup-ai-memory` later.
 4. Reminder: new Cursor repos auto-capture once companion is healthy — no per-repo reinstall. Optional `.ai-memory.toml` only if the user wants custom workspace/project naming.
-5. Keep AGENTS / PROJECT / checkpoint authoritative. Report: OK | repaired | installed | declined | N/A (non-macOS / blocked).
+5. **Seed the new project (all depths, when ai-memory is healthy):** run `~/cursor-kit/scripts/seed-project.sh <repo>`. It installs the ai-memory routing snippet + managed skills into the repo (`install-instructions --compact`), applies the cross-project **profile** as a managed block via `ai-memory profile apply` (no-op until >=2 projects share a habit), and, only with `AI_MEMORY_BOOTSTRAP=1` on an existing git repo and user consent (sends repo text to the configured LLM), runs `ai-memory bootstrap`. Handoff/brief delivery at SessionStart needs no repo step.
+6. Keep AGENTS / PROJECT / checkpoint authoritative. Report: OK | repaired | installed | declined | N/A (non-macOS / blocked).
 
 Do not reinvent matt-pocock, pstack, or ai-memory core here.
 
