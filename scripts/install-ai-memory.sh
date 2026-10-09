@@ -135,7 +135,17 @@ EOF
 
   uid="$(id -u)"
   launchctl bootout "gui/${uid}/com.github.akitaonrails.ai-memory" 2>/dev/null || true
-  launchctl bootstrap "gui/${uid}" "${PLIST_DST}"
+  # bootout is async: wait for the service to unload, then retry bootstrap (EIO 5 if still loading)
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    launchctl print "gui/${uid}/com.github.akitaonrails.ai-memory" >/dev/null 2>&1 || break
+    sleep 0.5
+  done
+  boot_ok=0
+  for _ in 1 2 3 4 5; do
+    if launchctl bootstrap "gui/${uid}" "${PLIST_DST}" 2>/dev/null; then boot_ok=1; break; fi
+    sleep 1
+  done
+  [[ "${boot_ok}" == 1 ]] || { echo "install-ai-memory: launchctl bootstrap failed" >&2; exit 1; }
   launchctl kickstart -k "gui/${uid}/com.github.akitaonrails.ai-memory" 2>/dev/null || true
   echo "install-ai-memory: LaunchAgent loaded"
 fi
