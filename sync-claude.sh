@@ -45,7 +45,6 @@ if [[ "${SKIP_MCP:-}" != "1" ]] && command -v claude >/dev/null; then
   ADD_TAIL=(-- "${HOME}/.local/bin/codebase-memory-mcp")
   add codebase-memory
   ADD_TAIL=(https://mcp.context7.com/mcp);  add context7 --transport http
-  ADD_TAIL=(https://mcp.notion.com/mcp);    add notion --transport http
   ADD_TAIL=(http://127.0.0.1:49374/mcp)
   [[ "${SKIP_AI_MEMORY:-}" == "1" ]] || add ai-memory --transport http
 else
