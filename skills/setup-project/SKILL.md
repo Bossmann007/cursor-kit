@@ -1,7 +1,7 @@
 ---
 name: setup-project
 description: >
-  Bootstrap or repair a repo for the Bossmann Cursor stack (cursor-kit templates,
+  Bootstrap or repair a repo for the Bossmann agent stack (Claude Code primary; Cursor/Codex/Gemini via sync-all.sh) (cursor-kit templates,
   token-engine, pstack models, Matt Pocock engineering skills, cursor-team-kit,
   continual-learning, verification-planning, simplify, blindspot-pass). Use
   whenever the user asks to set up / setar / scaffold a project or repo for
@@ -47,6 +47,8 @@ Ask two questions up front (one answer each; lead with the recommended default):
 If the user already stated mode/depth in the trigger message, skip the matching question.
 
 ### 1. Global pré-check (repair only if broken)
+
+On Claude Code the table below maps to: MCP → `claude mcp list` (token-engine, codebase-memory, context7, ai-memory); hooks → `~/.claude/settings.json`; pstack/superpowers → `claude plugin list`. Repair any tool in one go with `~/cursor-kit/sync-all.sh` (merge-safe). Cursor-only paths (`~/.cursor/...`) apply when Cursor is the active tool.
 
 Check, do not duplicate:
 
