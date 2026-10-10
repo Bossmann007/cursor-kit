@@ -31,6 +31,7 @@ echo "installed ${CL}/CLAUDE.md"
 mkdir -p "${CL}/skills"
 for d in "$ROOT"/skills/*/; do
   n="$(basename "$d")"
+  case " code-review simplify tdd diagnosing-bugs grilling " in *" $n "*) continue ;; esac  # shadowed by built-ins / superpowers
   [[ -e "${CL}/skills/${n}" ]] || ln -s "${d%/}" "${CL}/skills/${n}"
 done
 echo "linked skills into ${CL}/skills"

@@ -1,8 +1,8 @@
 ---
 name: setup-ai-memory
 description: >
-  Install or repair the ai-memory companion for Cursor (native macOS binary,
-  LaunchAgent, MCP + lifecycle hooks) while keeping kit layers AGENTS.md,
+  Install or repair the ai-memory companion for Claude Code, Cursor, Codex and Gemini
+  (native macOS binary, LaunchAgent, MCP + lifecycle hooks) while keeping kit layers AGENTS.md,
   PROJECT.md, and .claude/state authoritative. Also invoked from /setup-project
   (pré-check repair + depth-2 install) and /setup-pucpr when the full Cursor
   stack is in play. Use when the user asks to wire ai-memory, long-horizon wiki
@@ -12,6 +12,8 @@ disable-model-invocation: false
 ---
 
 # Setup ai-memory
+
+**Multi-tool (primary path):** run `~/cursor-kit/sync-all.sh` (subset via `TOOLS="claude cursor codex gemini"`). It installs/repairs the binary + LaunchAgent and wires every tool. Verify with `claude mcp list`, `codex mcp list`, `ai-memory doctor`. Cursor-specific steps below apply only to Cursor.
 
 Opt-in **companion** for long-horizon project memory. Compose upstream
 [ai-memory](https://github.com/akitaonrails/ai-memory) with cursor-kit — do not
