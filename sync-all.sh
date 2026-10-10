@@ -47,4 +47,7 @@ for f in ~/.cursor/mcp.json ~/.cursor/hooks.json ~/.claude.json ~/.claude/settin
   [[ -f "$f" ]] && chmod 600 "$f"
 done
 chmod 600 ~/.cursor/mcp.json.bak.* ~/.claude/settings.json.bak.* ~/.claude.json.backup* 2>/dev/null || true
+# 5. backup retention: keep newest 3 per config family, all 600
+prune() { local f n=0; for f in $(ls -t "$1"* 2>/dev/null); do [[ "$f" == "$1" ]] && continue; n=$((n+1)); [[ $n -gt 3 ]] && rm -f "$f" || chmod 600 "$f"; done; }
+for b in ~/.claude/settings.json.bak ~/.claude/CLAUDE.md.bak ~/.cursor/mcp.json.bak ~/.cursor/hooks.json.bak ~/.codex/config.toml.bak ~/.codex/hooks.json.bak ~/.gemini/settings.json.bak; do prune "$b"; done
 say "done. Restart each tool. TiDB MCP: register with env vars only; rotate the old password."

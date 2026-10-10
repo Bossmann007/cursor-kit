@@ -2,3 +2,4 @@ __pycache__/
 *.pyc
 .cursor/state/
 .cursor/hooks/state/
+.claude/

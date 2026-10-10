@@ -29,3 +29,17 @@
 - Course folders default under `~/PUCPR`; academic setup is composed via `setup-pucpr` (does not replace `/setup-project`)
 - Matt `/teach` (mission/lessons workspace) and pstack `/teach` (code explain via how/why) are different skills — do not conflate in wiring
 - Removed unused kit env skills (`context-engine`, `dev-workflow`, `project-brain`, `update-checkpoint`); their intent lives in rules/hooks/`/setup-project` instead
+
+<!-- ai-memory:profile:start -->
+## Usual choices (ai-memory profile)
+
+Written by `ai-memory profile apply` from the user's cross-project profile. Change the profile (`ai-memory profile show` / `forget`) and re-run the command instead of editing this block. Everything else in this file takes precedence.
+
+- [javascript] JavaScript is one of the stacks this user usually works in. (`profile/stack/javascript.md`)
+- `## Agent skills` block in existing `AGENTS.md` or `CLAUDE.md` (never create the other when one exists; (`profile/habits/agent-skills-block-in-existing-agents-md-or-claude-md-never.md`)
+- Não use casos, vault_personal_notes, hardvault_*, mcp_runs nem as 26 capas. (`profile/habits/n-o-use-casos-vault-personal-notes-hardvault-mcp-runs-nem-as.md`)
+- Não use o termo BYOAI. (`profile/habits/n-o-use-o-termo-byoai.md`)
+- Never store secrets (`profile/habits/never-store-secrets.md`)
+- on macOS/Linux prefer `install.sh` (`profile/habits/on-macos-linux-prefer-install-sh.md`)
+- Prefer the kit's `install.sh` when the machine has `~/cursor-kit` linked; (`profile/habits/prefer-the-kit-s-install-sh-when-the-machine-has-cursor-kit.md`)
+<!-- ai-memory:profile:end -->
