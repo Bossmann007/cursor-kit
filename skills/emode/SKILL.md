@@ -24,9 +24,10 @@ Style: terse, direct, Portuguese in chat, English in code. Smallest change that 
 | Task | Do |
 |---|---|
 | Bug / failing test / odd behavior | `systematic-debugging` first (root cause), fix, then prove |
-| New tool, MCP, skill, integration | `/prior-art-check` before designing |
+| New tool, MCP, skill, integration | `find-skills` for skills, `/prior-art-check` for the rest, before designing |
 | Feature, medium | `brainstorming` -> `writing-plans` -> implement with `test-driven-development` |
 | Feature, large or multi-file | same, but run the implementation through `/poteto-mode` (see 2) |
+| Task with no clear skill, or "existe uma skill pra isso?" | `find-skills` (search installed + public skills) before improvising; install only after reading it |
 | Plan too big for one session | `wayfinder` |
 | Unclear spec or risky design | `brainstorming` (or `/prior-art-check`), record decisions with `domain-modeling` |
 | Docs, PR text | `pr` for PR bodies; unslop prose |
