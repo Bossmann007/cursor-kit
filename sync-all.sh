@@ -30,6 +30,7 @@ fi
 has claude && SKIP_AI_MEMORY=1 "$ROOT/sync-claude.sh"
 has claude && "$ROOT/scripts/install-claude-plugins.sh"
 has claude && python3 "$ROOT/scripts/apply-skill-curation.py"
+has claude && python3 "$ROOT/scripts/build-skill-index.py"
 if has cursor; then "$ROOT/sync-hooks.sh"; python3 "$ROOT/scripts/merge-mcp.py" --client cursor --file ~/.cursor/mcp.json; fi
 if has codex; then
   mkdir -p ~/.codex
