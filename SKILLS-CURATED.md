@@ -37,3 +37,5 @@ Matt core: `grill-me`, `grill-with-docs`, `grilling`, `handoff`, `wait-what`, `t
 Do **not** copy plugin-shipped skills into `~/.cursor/skills/` **or** `~/.agents/skills/` when the cursor-kit plugin is installed. Cursor loads both user paths; leftover copies there look like “not deleted”.
 
 Source: mattpocock/skills @49dd158 (MIT). Vendored copies: pr, wayfinder, retro.
+
+Source: danyuchn/asd-ste100-skill @32511c6 (MIT, Dustin Yuchen Teng): vendored as skills/asd-ste100 (stdlib-only linter, reviewed).
