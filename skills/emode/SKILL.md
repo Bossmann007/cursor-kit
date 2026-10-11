@@ -1,16 +1,16 @@
 ---
-name: enzo-mode
+name: emode
 description: >
   Enzo's working mode: the default workflow for any non-trivial engineering task
   (feature, bug, refactor, plan, review, PR, new tool/MCP/skill). Routes to the
   right skills, decides when to escalate to poteto-mode, and keeps tokens low.
-  Use at the start of real engineering work, on "enzo-mode", "fluxo", "qual o
+  Use at the start of real engineering work, on "emode", "fluxo", "qual o
   workflow", or when a task spans several files or steps. Do NOT use for
   casual chat or one-line edits.
 disable-model-invocation: false
 ---
 
-# Enzo mode
+# emode
 
 Style: terse, direct, Portuguese in chat, English in code. Smallest change that works. Never claim done without evidence. Do not commit or push unless asked; ship via PR.
 
