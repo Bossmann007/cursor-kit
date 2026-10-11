@@ -1,0 +1,25 @@
+{
+  "off": [
+    "superpowers:using-superpowers",
+    "superpowers:writing-skills",
+    "superpowers:dispatching-parallel-agents",
+    "superpowers:executing-plans",
+    "pstack:arena",
+    "pstack:swarm",
+    "pstack:benchmark-checklist",
+    "pstack:make-bot-ui",
+    "pstack:figure-it-out",
+    "pstack:create-verification-skill",
+    "pstack:maintain-verification-skill",
+    "pstack:automate-me",
+    "pstack:recall",
+    "pstack:reflect",
+    "pstack:poteto-help",
+    "pstack:tdd",
+    "senior-engineering-partner:senior-engineering-partner",
+    "code-review:code-review",
+    "anthropic-skills:morning",
+    "anthropic-skills:setup-claude",
+    "anthropic-skills:import-memory"
+  ]
+}
