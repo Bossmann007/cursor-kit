@@ -14,6 +14,8 @@ mkdir -p "$M/.claude-plugin" "$M/plugins"
 rsync -a --delete --exclude .git --exclude .cache-complete "$(latest pstack)" "$M/plugins/pstack/"
 rsync -a --delete --exclude .git --exclude .cache-complete "$(latest superpowers)" "$M/plugins/superpowers/"
 
+# drop superpowers SessionStart hook (injects ~3KB every session; conflicts with terse style)
+rm -rf "$M/plugins/superpowers/hooks"
 python3 - "$M" <<'PY'
 import json,re,sys,os
 M=sys.argv[1]
@@ -39,7 +41,6 @@ claude plugin marketplace update bossmann-local >/dev/null
 for p in pstack@bossmann-local superpowers@bossmann-local frontend-design@anthropic-plugin-directory commit-commands@anthropic-plugin-directory claude-md-management@anthropic-plugin-directory; do
   claude plugin list 2>/dev/null | grep -q "❯ $p" && echo "plugin $p: installed" || claude plugin install "$p" 2>&1 | tail -1
 done
-# pick up a changed local version
-claude plugin update pstack@bossmann-local >/dev/null 2>&1 || true
-claude plugin update superpowers@bossmann-local >/dev/null 2>&1 || true
+# refresh cached copies (same-version edits are not picked up by `plugin update`)
+for p in pstack superpowers; do claude plugin uninstall "$p@bossmann-local" >/dev/null 2>&1 || true; rm -rf "$HOME/.claude/plugins/cache/bossmann-local/$p"; claude plugin install "$p@bossmann-local" 2>&1 | tail -1; done
 echo "install-claude-plugins: done (restart Claude Code)"
