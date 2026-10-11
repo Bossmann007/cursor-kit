@@ -5,8 +5,8 @@ description: >
   (feature, bug, refactor, plan, review, PR, new tool/MCP/skill). Routes to the
   right skills, decides when to escalate to poteto-mode, and keeps tokens low.
   Use at the start of real engineering work, on "enzo-mode", "fluxo", "qual o
-  workflow", or when a task spans several files or steps. Do NOT use for PUCPR
-  coursework (teach step by step instead), casual chat, or one-line edits.
+  workflow", or when a task spans several files or steps. Do NOT use for
+  casual chat or one-line edits.
 disable-model-invocation: false
 ---
 
@@ -16,7 +16,6 @@ Style: terse, direct, Portuguese in chat, English in code. Smallest change that 
 
 ## 0. Gate (10 seconds)
 
-- Coursework (PUCPR, PBL, entrega, prova, slides): STOP this skill. Teach step by step, never write the student's deliverable. Use `digest-files` for PDFs.
 - One-line / mechanical edit: just do it.
 - Otherwise continue. Name the task size: small, medium, large.
 
