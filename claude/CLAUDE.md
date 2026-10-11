@@ -21,6 +21,10 @@ On `continue` / `retomar`: follow checkpoint `task` + `next_action`, prefer list
 - Portuguese OK in chat; code/identifiers in English unless the project is PT-first.
 - Non-trivial engineering: prefer `/poteto-mode`.
 
+## Planning
+
+- Before designing or building anything non-trivial (feature, tool, MCP, skill, integration), run `/prior-art-check`: reuse an installed or open-source solution when one fits. It also runs as step 0 of `/verification-planning`, and fits before `superpowers:brainstorming` / `writing-plans`.
+
 ## Tokens and exploration
 
 - token-engine MCP: tool output >~500 tokens → `caveman_compress` (content_type=log|json); multi-item context → `token_engine_compress_session`; `caveman_retrieve` only as last resort.

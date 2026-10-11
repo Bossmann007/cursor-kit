@@ -33,6 +33,12 @@ types green). Follow ordinary project commands directly.
 
 ## Process
 
+### 0. Prior-art check (reuse before build)
+
+If the plan introduces a new component, tool, integration or workflow, run `/prior-art-check` first: look for an existing open-source or already-installed solution and record `adopt | adapt | build` with the reason. Skip for edits inside code that already exists.
+
+**Done when:** the plan says what is reused and what is genuinely new.
+
 ### 1. Frame the claim
 
 State the behavior that must become true and what could make a confident
