@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # One-shot install of cursor-kit + token-engine + ai-memory across Claude Code, Cursor, Codex, Gemini CLI.
 # Idempotent, add-only merges, backups chmod 600, no secrets read/printed/written.
-# Env: TOOLS="claude cursor codex gemini" (subset), SKIP_AI_MEMORY=1.
+# Env: TOOLS="claude cursor codex gemini" (default: claude cursor codex; gemini opt-in), SKIP_AI_MEMORY=1.
 set -euo pipefail
 umask 077
 ROOT="$(cd "$(dirname "$0")" && pwd)"
-TOOLS="${TOOLS:-claude cursor codex gemini}"
+TOOLS="${TOOLS:-claude cursor codex}"
 TE="${HOME}/.cursor/repos/token-engine"
 has() { [[ " $TOOLS " == *" $1 "* ]]; }
 say() { echo "sync-all: $*"; }

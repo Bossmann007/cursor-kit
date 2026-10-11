@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -37,7 +38,7 @@ def main() -> None:
         output = json.dumps(output, ensure_ascii=False) if output else ""
 
     tokens = _approx_tokens(output)
-    if tokens < 500:
+    if tokens < int(os.environ.get("TE_HINT_TOKENS", "4000")):
         print("{}")
         return
 
