@@ -69,3 +69,7 @@ MIT. Ver [LICENSE](LICENSE).
 <p align="center">
   <img src="https://capsule-render.vercel.app/api?type=waving&color=0:111111,100:7751FF&height=85&section=footer" alt="Footer" />
 </p>
+
+## Claude Code plugins
+
+`scripts/install-claude-plugins.sh` (run by `sync-all.sh`) installs pstack and superpowers from the Cursor plugin cache into a local marketplace (`~/.claude/local-marketplace`), plus frontend-design, commit-commands and claude-md-management. pstack subagents (`poteto-agent`, `Comment Sicko`) are pinned to Sonnet to cut usage; use `/model opus` for hard tasks. Re-run after updating pstack in Cursor.

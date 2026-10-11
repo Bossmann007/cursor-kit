@@ -28,6 +28,7 @@ fi
 
 # 3. per-tool kit wiring
 has claude && SKIP_AI_MEMORY=1 "$ROOT/sync-claude.sh"
+has claude && "$ROOT/scripts/install-claude-plugins.sh"
 if has cursor; then "$ROOT/sync-hooks.sh"; python3 "$ROOT/scripts/merge-mcp.py" --client cursor --file ~/.cursor/mcp.json; fi
 if has codex; then
   mkdir -p ~/.codex
