@@ -5,7 +5,7 @@ Project brain — cursor-kit (Enzo Bossmann working configuration).
 ## Stack
 
 - Language: Markdown + Python (hooks) + shell/PowerShell installers
-- Runtime: Cursor IDE (plugins, hooks, MCP, skills)
+- Runtime: Claude Code (primary), Cursor, Codex; install via `./sync-all.sh`
 - Package manager: n/a (pair with token-engine Python venv)
 - Branch: `enzo` is the working base for Enzo's personal/kit setup
 

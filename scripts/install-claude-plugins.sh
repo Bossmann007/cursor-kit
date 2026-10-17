@@ -1,46 +1,47 @@
 #!/usr/bin/env bash
-# Install pstack + superpowers (pinned copies from the Cursor plugin cache) and the official helper plugins into Claude Code.
-# Local marketplace: ~/.claude/local-marketplace (name: bossmann-local). Idempotent. No network except the official directory.
-# pstack tweaks (cost): poteto-agent and Comment Sicko run on Sonnet (see "model:" frontmatter). Re-run after updating pstack in Cursor.
+# Install Claude Code plugins:
+#  - pstack: OFFICIAL Claude Code build from marketplace cursor/plugins (generated tree with Cursor->Claude name adapter).
+#  - superpowers: pinned copy from the Cursor plugin cache via a local marketplace (hooks stripped).
+#  - official helpers: frontend-design, commit-commands, claude-md-management.
+# Idempotent. Network only for GitHub (cursor/plugins) and the Anthropic plugin directory.
 set -euo pipefail
 umask 022
-CACHE="${HOME}/.cursor/plugins/cache/cursor-public"
-M="${HOME}/.claude/local-marketplace"
 command -v claude >/dev/null || { echo "claude CLI missing"; exit 0; }
-[[ -d "$CACHE/pstack" && -d "$CACHE/superpowers" ]] || { echo "install-claude-plugins: Cursor cache for pstack/superpowers missing; skipping"; exit 0; }
-latest() { ls -dt "$CACHE/$1"/*/ | head -1; }
+M="${HOME}/.claude/local-marketplace"
+CACHE="${HOME}/.cursor/plugins/cache/cursor-public"
+has_plugin() { claude plugin list 2>/dev/null | grep -q "❯ $1"; }
 
-mkdir -p "$M/.claude-plugin" "$M/plugins"
-rsync -a --delete --exclude .git --exclude .cache-complete "$(latest pstack)" "$M/plugins/pstack/"
-rsync -a --delete --exclude .git --exclude .cache-complete "$(latest superpowers)" "$M/plugins/superpowers/"
+# pstack (official)
+claude plugin marketplace list 2>/dev/null | grep -q cursor-plugins || claude plugin marketplace add cursor/plugins 2>&1 | tail -1
+has_plugin pstack@cursor-plugins && claude plugin update pstack@cursor-plugins 2>&1 | tail -1 || claude plugin install pstack@cursor-plugins 2>&1 | tail -1
+# retire the old local pstack copy if present
+has_plugin pstack@bossmann-local && claude plugin uninstall pstack@bossmann-local >/dev/null 2>&1 || true
+rm -rf "$M/plugins/pstack" "$HOME/.claude/plugins/cache/bossmann-local/pstack"
 
-# drop superpowers SessionStart hook (injects ~3KB every session; conflicts with terse style)
-rm -rf "$M/plugins/superpowers/hooks"
-python3 - "$M" <<'PY'
-import json,re,sys,os
+# superpowers (local copy, no SessionStart hook)
+if [[ -d "$CACHE/superpowers" ]]; then
+  mkdir -p "$M/.claude-plugin" "$M/plugins"
+  latest="$(ls -dt "$CACHE"/superpowers/*/ | head -1)"
+  rsync -a --delete --exclude .git --exclude .cache-complete "$latest" "$M/plugins/superpowers/"
+  rm -rf "$M/plugins/superpowers/hooks"
+  python3 - "$M" <<'PY'
+import json,sys
 M=sys.argv[1]
-src=json.load(open(f'{M}/plugins/pstack/.cursor-plugin/plugin.json'))
-ver=src['version']+'-local1'
-man={k:src[k] for k in ('name','description','author','homepage','repository','license','keywords') if k in src}
-man['version']=ver
-os.makedirs(f'{M}/plugins/pstack/.claude-plugin',exist_ok=True)
-json.dump(man,open(f'{M}/plugins/pstack/.claude-plugin/plugin.json','w'),indent=2)
-for f in ('poteto-agent.md','comment-sicko.md'):
-    p=f'{M}/plugins/pstack/agents/{f}';s=open(p).read()
-    s=re.sub(r'^model:.*\n','',s,flags=re.M).replace('\n---\n','\nmodel: sonnet\n---\n',1)
-    open(p,'w').write(s)
 sp=json.load(open(f'{M}/plugins/superpowers/.claude-plugin/plugin.json'))
 json.dump({"name":"bossmann-local","owner":{"name":"Enzo Bossmann"},"plugins":[
- {"name":"pstack","source":"./plugins/pstack","description":"pstack (poteto-mode, principles) with Sonnet subagents","version":ver},
- {"name":"superpowers","source":"./plugins/superpowers","description":"superpowers","version":sp['version']}]},
+ {"name":"superpowers","source":"./plugins/superpowers","description":"superpowers (no hooks)","version":sp['version']}]},
  open(f'{M}/.claude-plugin/marketplace.json','w'),indent=2)
 PY
+  claude plugin marketplace list 2>/dev/null | grep -q bossmann-local || claude plugin marketplace add "$M"
+  claude plugin marketplace update bossmann-local >/dev/null
+  claude plugin uninstall superpowers@bossmann-local >/dev/null 2>&1 || true
+  rm -rf "$HOME/.claude/plugins/cache/bossmann-local/superpowers"
+  claude plugin install superpowers@bossmann-local 2>&1 | tail -1
+else
+  echo "install-claude-plugins: Cursor cache for superpowers missing; skipping superpowers"
+fi
 
-claude plugin marketplace list 2>/dev/null | grep -q bossmann-local || claude plugin marketplace add "$M"
-claude plugin marketplace update bossmann-local >/dev/null
-for p in pstack@bossmann-local superpowers@bossmann-local frontend-design@anthropic-plugin-directory commit-commands@anthropic-plugin-directory claude-md-management@anthropic-plugin-directory; do
-  claude plugin list 2>/dev/null | grep -q "❯ $p" && echo "plugin $p: installed" || claude plugin install "$p" 2>&1 | tail -1
+for p in frontend-design commit-commands claude-md-management; do
+  has_plugin "$p@anthropic-plugin-directory" && echo "plugin $p: installed" || claude plugin install "$p@anthropic-plugin-directory" 2>&1 | tail -1
 done
-# refresh cached copies (same-version edits are not picked up by `plugin update`)
-for p in pstack superpowers; do claude plugin uninstall "$p@bossmann-local" >/dev/null 2>&1 || true; rm -rf "$HOME/.claude/plugins/cache/bossmann-local/$p"; claude plugin install "$p@bossmann-local" 2>&1 | tail -1; done
-echo "install-claude-plugins: done (restart Claude Code)"
+echo "install-claude-plugins: done (restart Claude Code; pstack commands are /pstack:<name>)"

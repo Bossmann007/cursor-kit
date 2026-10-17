@@ -15,10 +15,20 @@ chmod +x "$DST"/*.py
 SETTINGS="${CL}/settings.json"
 [[ -f "$SETTINGS" ]] && cp "$SETTINGS" "${SETTINGS}.bak.$(date +%Y%m%d%H%M%S)"
 KIT_RESOLVED="$(mktemp)"; MERGED="$(mktemp)"
-sed "s|__CLAUDE_HOOKS_DIR__|${DST}|g" "$ROOT/claude-hooks.json.template" > "$KIT_RESOLVED"
+TE_PY="${HOME}/.cursor/repos/token-engine/.venv/bin/python"; [[ -x "$TE_PY" ]] || TE_PY=python3
+sed -e "s|__CLAUDE_HOOKS_DIR__|${DST}|g" -e "s|__TE_PY__|${TE_PY}|g" "$ROOT/claude-hooks.json.template" > "$KIT_RESOLVED"
 python3 "$ROOT/scripts/merge-claude-settings.py" --kit "$KIT_RESOLVED" --existing "$SETTINGS" --out "$MERGED"
 mv "$MERGED" "$SETTINGS"; rm -f "$KIT_RESOLVED"
 echo "merged kit hooks into $SETTINGS"
+
+# 2b. output style (terse replies) + select it if the user has not picked one
+mkdir -p "${CL}/output-styles" && cp "$ROOT"/claude/output-styles/*.md "${CL}/output-styles/"
+python3 - "$SETTINGS" <<'PY'
+import json, os, sys
+p = sys.argv[1]; d = json.load(open(p))
+if not d.get("outputStyle"):
+    d["outputStyle"] = "Caveman"; json.dump(d, open(p, "w"), indent=2); os.chmod(p, 0o600); print("outputStyle set to Caveman")
+PY
 
 # 3. global CLAUDE.md (backup if different)
 if [[ -f "${CL}/CLAUDE.md" ]] && ! cmp -s "${CL}/CLAUDE.md" "$ROOT/claude/CLAUDE.md"; then

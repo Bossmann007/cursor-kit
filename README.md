@@ -11,7 +11,7 @@
 
 **Repo:** [Bossmann007/cursor-kit](https://github.com/Bossmann007/cursor-kit) · pares com [token-engine](https://github.com/Bossmann007/token-engine) · companion opcional [ai-memory](https://github.com/akitaonrails/ai-memory)
 
-Stack **Cursor-native** para desenvolvimento com agentes. Templates, hooks, memória e o orquestrador `/setup-project`. A compressão fail-closed vive no token-engine (MCP), não neste repo. Memória de longo prazo (wiki/handoff) é companion via `/setup-ai-memory`.
+Stack para desenvolvimento com agentes. **Claude Code é o agente principal**; Cursor, Codex e Gemini são suportados via `./sync-all.sh`. Templates, hooks, memória e o orquestrador `/setup-project`. A compressão fail-closed vive no token-engine (MCP), não neste repo. Memória de longo prazo (wiki/handoff) é companion via `/setup-ai-memory`.
 
 ## Comece aqui
 
@@ -23,9 +23,15 @@ Critério de sucesso. Um estranho clona os dois repos e, em cerca de 1–2h, tem
 
 ## O que este kit é (e não é)
 
-É runtime e embalagem para **Cursor**. Hooks globais, `.cursor/state`, `AGENTS.md` / `PROJECT.md`, skill `/setup-project`.
+É runtime e embalagem para agentes (Claude Code primário). Hooks globais, `.claude/state`, `AGENTS.md` / `PROJECT.md`, skills `/emode` e `/setup-project`.
 
-Não é um clone do Claude Code. Não inclui Obsidian, Graphify visual, agent-browser nem proxy CLI tipo RTK. Para tokens use [token-engine](https://github.com/Bossmann007/token-engine). Limitações honestas estão no [overview](docs/00-overview.md#limites).
+Não inclui Obsidian, Graphify visual, agent-browser nem proxy CLI tipo RTK. Para tokens use [token-engine](https://github.com/Bossmann007/token-engine). Limitações honestas estão no [overview](docs/00-overview.md#limites).
+
+## Instalação rápida (Claude Code, Cursor, Codex)
+
+```bash
+cd ~/cursor-kit && ./sync-all.sh   # TOOLS="claude cursor codex gemini" para escolher
+```
 
 ## Atalhos depois do onboarding
 
@@ -34,7 +40,9 @@ Não é um clone do Claude Code. Não inclui Obsidian, Graphify visual, agent-br
 | Orquestrar um repo | `/setup-project` (skill neste plugin) |
 | Companion ai-memory | `/setup-ai-memory` + [docs/tools/10-ai-memory.md](docs/tools/10-ai-memory.md) |
 | Evidence path (pré-implement) | `/verification-planning` |
-| Simplificar sem mudar comportamento | `/simplify` |
+| Fluxo de trabalho padrão | `/emode` |
+| O que está provado e o que não | [docs/EVIDENCE.md](docs/EVIDENCE.md) |
+| Reutilizar antes de construir | `/prior-art-check` |
 | Inventário de plugins/companions | [docs/EXTERNAL-COMPONENTS.md](docs/EXTERNAL-COMPONENTS.md) |
 | Prompt colável | [docs/prompts/](docs/prompts/) |
 | Quality gates (JS/TS) | [templates/quality-gates/](templates/quality-gates/) + [prompt medir](docs/prompts/05-quality-gates-install.md) |
@@ -65,11 +73,11 @@ python -m unittest discover -s ~/cursor-kit/tests
 
 MIT. Ver [LICENSE](LICENSE).
 
+## Claude Code plugins
+
+`scripts/install-claude-plugins.sh` (run by `sync-all.sh`) installs pstack and superpowers from the Cursor plugin cache into a local marketplace (`~/.claude/local-marketplace`), plus frontend-design, commit-commands and claude-md-management. pstack subagents (`poteto-agent`, `Comment Sicko`) are pinned to Sonnet to cut usage; use `/model opus` for hard tasks. Re-run after updating pstack in Cursor.
+
 <!-- ENZO-PORTFOLIO-BRAND-FOOTER -->
 <p align="center">
   <img src="https://capsule-render.vercel.app/api?type=waving&color=0:111111,100:7751FF&height=85&section=footer" alt="Footer" />
 </p>
-
-## Claude Code plugins
-
-`scripts/install-claude-plugins.sh` (run by `sync-all.sh`) installs pstack and superpowers from the Cursor plugin cache into a local marketplace (`~/.claude/local-marketplace`), plus frontend-design, commit-commands and claude-md-management. pstack subagents (`poteto-agent`, `Comment Sicko`) are pinned to Sonnet to cut usage; use `/model opus` for hard tasks. Re-run after updating pstack in Cursor.
