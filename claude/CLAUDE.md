@@ -1,35 +1,28 @@
 # Global Claude instructions (Enzo Bossmann)
 
-Source of truth: `~/cursor-kit/claude/CLAUDE.md`. Installed to `~/.claude/CLAUDE.md` by `sync-claude.sh`.
+Source: `~/cursor-kit/claude/CLAUDE.md`, installed by `sync-claude.sh`.
 
 @~/AGENTS.md
 
-## Memory layers (read in order, never invent task state)
+## Replies (IMPORTANT)
 
-1. `AGENTS.md` — durable prefs/facts
-2. `PROJECT.md` Decisions — approved architecture
-3. `.claude/state/checkpoint.json` — live task (`task`, `status`, `next_action`, `files`); you own the semantics, hooks track `files`
-4. `.claude/state/failures.jsonl` — last ~5 rows; same approach failed twice → change approach
-5. ai-memory MCP (if wired) — long-horizon handoff/brief only; never replaces the checkpoint
+Short and direct: no preamble, no recap, no option menus, about 6 lines unless asked for more. Portuguese in chat, English in code and identifiers. State only what you verified; say "não verifiquei" for the rest. Never invent commands, flags, files or features: check first.
 
-On `continue` / `retomar`: follow checkpoint `task` + `next_action`, prefer listed `files`, do not restart from README.
+## Work
 
-## Style
+- Done means evidence: run the project's check (tests, build, lint) and show the output.
+- Non-trivial task: `/emode`. Heavy or multi-file: `/pstack:poteto-mode`. Plan only if the change spans more than one file.
+- Before building a new tool, skill or integration: `/prior-art-check`.
+- No commit or push unless asked; ship by PR. Never merge unless asked.
+- Smallest change that works; fix the root cause.
+- On `continue` / `retomar`: follow `.claude/state/checkpoint.json` (`task`, `next_action`).
 
-- **Caveman** (default full): terse, fragments OK, no filler/pleasantries/tool narration. Keep code, errors, paths, numbers exact; never drop not/never/no. Drop it for security warnings, irreversible confirmations, ambiguous multi-step sequences. Code, comments, commits, docs, PRs: normal prose. Off: "stop caveman".
-- **Ponytail** (default full): simplest thing that works. Ladder: need exists? → already in codebase? → stdlib? → native feature? → installed dep? → one line? → minimum code. Bug fix = root cause. No unrequested abstractions. Max 3 lines after code: what skipped, when to add. Not lazy about understanding, validation at trust boundaries, security, accessibility, anything requested.
-- Portuguese OK in chat; code/identifiers in English unless the project is PT-first.
-- Non-trivial engineering: prefer `/pstack:poteto-mode`.
+## Context
 
-## Planning
+- Big Bash output is filtered by hooks (RTK, `te-filter-output`); do not compress by hand. Full text stays in `~/.claude/te-cache`.
+- Code structure: codebase-memory first (`search_graph`, `get_code_snippet`); do not re-read files.
+- History and decisions: ai-memory MCP.
 
-- Before designing or building anything non-trivial (feature, tool, MCP, skill, integration), run `/prior-art-check`: reuse an installed or open-source solution when one fits. It also runs as step 0 of `/verification-planning`, and fits before `superpowers:brainstorming` / `writing-plans`.
+## Security
 
-## Tokens and exploration
-
-- token-engine MCP: tool output >~4000 tokens → `caveman_compress` (content_type=log|json); multi-item context → `token_engine_compress_session`; `caveman_retrieve` only as last resort.
-- codebase-memory MCP first for code structure: `list_projects` → `search_graph` → `get_code_snippet` → `trace_path`. Read whole files only when named by the user, being edited this turn, or small (<~100 lines). Never re-read the same path.
-
-## Memory security
-
-Never write secrets (keys, tokens, passwords, private keys, connection strings with credentials, `.env` values, cookies) into AGENTS.md, PROJECT.md, `.claude/state/*`, commits, skill output, or ai-memory. If one appears: don't copy it, tell the user to rotate it, redact it in the same turn.
+Never write secrets (keys, tokens, passwords, connection strings, `.env` values, cookies) into any file, commit, memory or ai-memory. If one appears: do not copy it, tell the user to rotate it.
