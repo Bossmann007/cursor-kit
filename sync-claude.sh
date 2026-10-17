@@ -15,7 +15,8 @@ chmod +x "$DST"/*.py
 SETTINGS="${CL}/settings.json"
 [[ -f "$SETTINGS" ]] && cp "$SETTINGS" "${SETTINGS}.bak.$(date +%Y%m%d%H%M%S)"
 KIT_RESOLVED="$(mktemp)"; MERGED="$(mktemp)"
-sed "s|__CLAUDE_HOOKS_DIR__|${DST}|g" "$ROOT/claude-hooks.json.template" > "$KIT_RESOLVED"
+TE_PY="${HOME}/.cursor/repos/token-engine/.venv/bin/python"; [[ -x "$TE_PY" ]] || TE_PY=python3
+sed -e "s|__CLAUDE_HOOKS_DIR__|${DST}|g" -e "s|__TE_PY__|${TE_PY}|g" "$ROOT/claude-hooks.json.template" > "$KIT_RESOLVED"
 python3 "$ROOT/scripts/merge-claude-settings.py" --kit "$KIT_RESOLVED" --existing "$SETTINGS" --out "$MERGED"
 mv "$MERGED" "$SETTINGS"; rm -f "$KIT_RESOLVED"
 echo "merged kit hooks into $SETTINGS"

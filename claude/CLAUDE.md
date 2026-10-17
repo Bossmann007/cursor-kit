@@ -27,7 +27,7 @@ On `continue` / `retomar`: follow checkpoint `task` + `next_action`, prefer list
 
 ## Tokens and exploration
 
-- token-engine MCP: tool output >~500 tokens → `caveman_compress` (content_type=log|json); multi-item context → `token_engine_compress_session`; `caveman_retrieve` only as last resort.
+- Large Bash output is filtered automatically (RTK rewrites commands; `te-filter-output` hook compresses big logs, keeps the full text in `~/.claude/te-cache`). Do not call compress tools by hand; re-read the cache path only if detail is missing.
 - codebase-memory MCP first for code structure: `list_projects` → `search_graph` → `get_code_snippet` → `trace_path`. Read whole files only when named by the user, being edited this turn, or small (<~100 lines). Never re-read the same path.
 
 ## Memory security
