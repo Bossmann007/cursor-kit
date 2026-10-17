@@ -26,7 +26,7 @@ Style: terse, direct, Portuguese in chat, English in code. Smallest change that 
 | Bug / failing test / odd behavior | `systematic-debugging` first (root cause), fix, then prove |
 | New tool, MCP, skill, integration | `find-skills` for skills, `/prior-art-check` for the rest, before designing |
 | Feature, medium | `brainstorming` -> `writing-plans` -> implement with `test-driven-development` |
-| Feature, large or multi-file | same, but run the implementation through `/poteto-mode` (see 2) |
+| Feature, large or multi-file | same, but run the implementation through `/pstack:poteto-mode` (see 2) |
 | Task with no clear skill, or "existe uma skill pra isso?" | `find-skills` (search installed + public skills) before improvising; install only after reading it |
 | Plan too big for one session | `wayfinder` |
 | Unclear spec or risky design | `brainstorming` (or `/prior-art-check`), record decisions with `domain-modeling` |
@@ -35,7 +35,7 @@ Style: terse, direct, Portuguese in chat, English in code. Smallest change that 
 
 ## 2. When to escalate to poteto-mode
 
-Use `/poteto-mode` (subagent runs on Sonnet) only if at least one holds: changes span >3 files, architecture or data-model decision, auth/security/trust boundary, or a bug that survived one honest debugging pass. Otherwise stay inline: poteto-agent is expensive. For the hardest tasks, tell the user to run `/model opus` first.
+Use `/pstack:poteto-mode` (subagent runs on Sonnet) only if at least one holds: changes span >3 files, architecture or data-model decision, auth/security/trust boundary, or a bug that survived one honest debugging pass. Otherwise stay inline: poteto-agent is expensive. For the hardest tasks, tell the user to run `/model opus` first.
 
 ## 3. Prove it
 

@@ -19,7 +19,7 @@ On `continue` / `retomar`: follow checkpoint `task` + `next_action`, prefer list
 - **Caveman** (default full): terse, fragments OK, no filler/pleasantries/tool narration. Keep code, errors, paths, numbers exact; never drop not/never/no. Drop it for security warnings, irreversible confirmations, ambiguous multi-step sequences. Code, comments, commits, docs, PRs: normal prose. Off: "stop caveman".
 - **Ponytail** (default full): simplest thing that works. Ladder: need exists? → already in codebase? → stdlib? → native feature? → installed dep? → one line? → minimum code. Bug fix = root cause. No unrequested abstractions. Max 3 lines after code: what skipped, when to add. Not lazy about understanding, validation at trust boundaries, security, accessibility, anything requested.
 - Portuguese OK in chat; code/identifiers in English unless the project is PT-first.
-- Non-trivial engineering: prefer `/poteto-mode`.
+- Non-trivial engineering: prefer `/pstack:poteto-mode`.
 
 ## Planning
 
