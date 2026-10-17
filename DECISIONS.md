@@ -47,3 +47,10 @@ User approved Phase 7 build. Reference for future sessions.
 - `hooks.json.template` + sync-hooks writes `~/.cursor/hooks.json`
 - `sync-rules.sh` / `.ps1` mirrors rules + seeds pstack `inherit-parent` example
 - Kit `PROJECT.md` documents Enzo working configuration
+
+## Update 2026-10 (Claude Code primary)
+
+- Agent state dir is `.claude/state` (hooks migrate legacy `.cursor/state` once).
+- Install everything with `./sync-all.sh`; skills shadowed by built-ins/superpowers are not linked (see `sync-claude.sh`).
+- Notion dropped; TiDB is per project (never global); ai-memory is the long-term memory layer.
+- Notion/superpowers/OMH rows above are historical (Phase 7, 2026-08).

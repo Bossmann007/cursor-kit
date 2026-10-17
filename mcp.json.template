@@ -12,7 +12,7 @@
     },
     "codebase-memory": {
       "command": "npx",
-      "args": ["-y", "codebase-memory-mcp@latest"]
+      "args": ["-y", "codebase-memory-mcp@0.10.8"]
     },
     "notion": {
       "url": "https://mcp.notion.com/mcp"
