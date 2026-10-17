@@ -9,3 +9,4 @@ jobs:
         with: {python-version: '3.12'}
       - run: python -m unittest discover -s tests
       - run: ./scripts/secret-scan.sh --all
+      - run: python scripts/validate-docs.py

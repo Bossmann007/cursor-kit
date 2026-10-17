@@ -21,6 +21,15 @@ python3 "$ROOT/scripts/merge-claude-settings.py" --kit "$KIT_RESOLVED" --existin
 mv "$MERGED" "$SETTINGS"; rm -f "$KIT_RESOLVED"
 echo "merged kit hooks into $SETTINGS"
 
+# 2b. output style (terse replies) + select it if the user has not picked one
+mkdir -p "${CL}/output-styles" && cp "$ROOT"/claude/output-styles/*.md "${CL}/output-styles/"
+python3 - "$SETTINGS" <<'PY'
+import json, os, sys
+p = sys.argv[1]; d = json.load(open(p))
+if not d.get("outputStyle"):
+    d["outputStyle"] = "Caveman"; json.dump(d, open(p, "w"), indent=2); os.chmod(p, 0o600); print("outputStyle set to Caveman")
+PY
+
 # 3. global CLAUDE.md (backup if different)
 if [[ -f "${CL}/CLAUDE.md" ]] && ! cmp -s "${CL}/CLAUDE.md" "$ROOT/claude/CLAUDE.md"; then
   cp "${CL}/CLAUDE.md" "${CL}/CLAUDE.md.bak.$(date +%Y%m%d%H%M%S)"
