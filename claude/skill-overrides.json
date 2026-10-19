@@ -20,6 +20,13 @@
     "code-review:code-review",
     "anthropic-skills:morning",
     "anthropic-skills:setup-claude",
-    "anthropic-skills:import-memory"
+    "anthropic-skills:import-memory",
+    "handoff",
+    "retro",
+    "wayfinder",
+    "prototype",
+    "domain-modeling",
+    "asd-ste100",
+    "resolving-merge-conflicts"
   ]
 }

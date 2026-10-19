@@ -4,7 +4,6 @@
       { "hooks": [ { "type": "command", "command": "python3 __CLAUDE_HOOKS_DIR__/token-engine-session.py" } ] }
     ],
     "PostToolUse": [
-      { "matcher": "Bash", "hooks": [ { "type": "command", "command": "__TE_PY__ __CLAUDE_HOOKS_DIR__/te-filter-output.py" } ] },
       { "matcher": "Edit|Write|MultiEdit|NotebookEdit", "hooks": [ { "type": "command", "command": "python3 __CLAUDE_HOOKS_DIR__/track-edits.py" } ] }
     ],
     "PostToolUseFailure": [
