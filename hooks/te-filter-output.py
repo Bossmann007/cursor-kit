@@ -6,7 +6,7 @@ Fail-open and fidelity-guarded:
 - every error-looking line of the original must survive, else the output is left untouched
 - the full original is kept in ~/.claude/te-cache and referenced in a footer
 - every decision is logged to ~/.claude/te-ledger.jsonl (see scripts/token-report.py)
-Needs Claude Code to honor hookSpecificOutput.updatedToolOutput; if it does not, output is simply unchanged.
+hookSpecificOutput.updatedToolOutput must be the Bash result object ({stdout, stderr, interrupted, isImage, ...}); a plain string is silently ignored (that was the 2026-10-19 bug).
 """
 from __future__ import annotations
 
@@ -24,6 +24,21 @@ LEDGER = HOME / ".claude" / "te-ledger.jsonl"
 MIN_TOKENS = int(os.environ.get("TE_MIN_TOKENS", "1500"))
 MIN_RATIO = float(os.environ.get("TE_MIN_RATIO", "0.25"))
 ERR = re.compile(r"error|fail|traceback|exception|assert|fatal|panic|denied", re.I)
+
+
+# Allowlist: only collapse output that is mostly progress/pass noise. Lines that differ in numbers (latency,
+# counts, ids) carry data and must reach the model untouched, so generic logs, diffs, JSON and tables are skipped.
+NOISE = re.compile(
+    r"PASSED|\bok$|\.\.\. ok|^\.+$|Downloading|Collecting|Using cached|Requirement already|Installing|Compiling|"
+    r"Fetching|Resolving|Unpacking|Building wheel|npm warn|added \d+ packages|^\s*\[\d+/\d+\]|^\s*\d+%|Progress",
+    re.I,
+)
+MIN_NOISE_RATIO = float(os.environ.get("TE_MIN_NOISE_RATIO", "0.6"))
+
+
+def is_noisy_log(text: str) -> bool:
+    lines = [l for l in text.splitlines() if l.strip()]
+    return bool(lines) and sum(bool(NOISE.search(l)) for l in lines) / len(lines) >= MIN_NOISE_RATIO
 
 
 def _log(rec: dict) -> None:
@@ -49,6 +64,8 @@ def _prune() -> None:
 
 
 def filter_text(text: str, engine) -> tuple[str, int, int] | None:
+    if not is_noisy_log(text):
+        return None
     before = engine.count_tokens(text)
     if before < MIN_TOKENS:
         return None
@@ -63,14 +80,19 @@ def filter_text(text: str, engine) -> tuple[str, int, int] | None:
     return out, before, after
 
 
+def updated_output(resp: dict, text: str) -> dict:
+    """Claude Code ignores updatedToolOutput for built-in tools unless it has the tool's own shape: keep every field, swap stdout."""
+    return {**resp, "stdout": text}
+
+
 def main() -> None:
     try:
         payload = json.load(sys.stdin)
         resp = payload.get("tool_response")
-        if isinstance(resp, dict):
-            stdout, stderr = str(resp.get("stdout", "")), str(resp.get("stderr", ""))
-        else:
-            stdout, stderr = str(resp or ""), ""
+        if not isinstance(resp, dict) or resp.get("persistedOutputPath") or resp.get("backgroundTaskId"):
+            print("{}")  # not a plain Bash result: leave untouched
+            return
+        stdout, stderr = str(resp.get("stdout", "")), str(resp.get("stderr", ""))
         if not stdout or len(stdout) < MIN_TOKENS * 3:
             print("{}")
             return
@@ -93,9 +115,9 @@ def main() -> None:
         os.chmod(path, 0o600)
         _prune()
         footer = f"\n[token-engine: {before}->{after} tok; full output: {path}]"
-        text = out + (f"\n{stderr}" if stderr else "") + footer
+        text = out + footer
         _log({"tool": payload.get("tool_name"), "applied": True, "before": before, "after": after})
-        print(json.dumps({"hookSpecificOutput": {"hookEventName": "PostToolUse", "updatedToolOutput": text}}))
+        print(json.dumps({"hookSpecificOutput": {"hookEventName": "PostToolUse", "updatedToolOutput": updated_output(resp, text)}}))
     except Exception as exc:  # fail open
         _log({"applied": False, "reason": f"error:{type(exc).__name__}"})
         print("{}")

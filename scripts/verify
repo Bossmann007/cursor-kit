@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# One command, exit 0 = this repo is healthy. Used by /goal.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+python3 -m unittest discover -s tests
+scripts/secret-scan.sh --all

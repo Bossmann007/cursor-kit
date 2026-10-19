@@ -39,6 +39,20 @@ class T(unittest.TestCase):
         code = "\n".join(f"def f{i}(x):\n    return x * {i} + {i * 7}\n" for i in range(300))
         self.assertIsNone(m.filter_text(code, self.engine()))
 
+    def test_data_lines_that_differ_in_numbers_are_untouched(self):
+        m = load()
+        log = "\n".join(f"2026-10-19 INFO worker-{i % 4} processed batch {i} size={i * 13} latency={i % 97}ms" for i in range(600))
+        self.assertIsNone(m.filter_text(log, self.engine()))
+        js = "[" + ",".join(f'{{"id": {i}, "v": {i * 3}}}' for i in range(800)) + "]"
+        self.assertIsNone(m.filter_text(js, self.engine()))
+
+    def test_updated_output_keeps_bash_result_shape(self):
+        m = load()
+        resp = {"stdout": "x", "stderr": "e", "interrupted": False, "isImage": False, "noOutputExpected": False}
+        out = m.updated_output(resp, "short")
+        self.assertEqual(out["stdout"], "short")
+        self.assertEqual({k: v for k, v in out.items() if k != "stdout"}, {k: v for k, v in resp.items() if k != "stdout"})
+
 
 if __name__ == "__main__":
     unittest.main()
