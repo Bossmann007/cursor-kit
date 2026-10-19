@@ -1,13 +1,32 @@
 #!/usr/bin/env python3
-"""Where do tokens go? RTK savings + te-filter ledger + tool-result sizes from Claude Code transcripts."""
+"""Where do tokens go? RTK savings + te-filter ledger + tool-result sizes + harness usage from Claude Code transcripts.
+
+usage: token-report.py [DAYS=7] [--save]
+--save keeps the output in ~/.claude/state/harness-report-last.txt (mode 600) and prints the previous harness section first.
+"""
 import collections as C
 import glob
 import json
 import os
 import subprocess
+import sys
+import time
 from pathlib import Path
 
 H = Path.home()
+if "--save" in sys.argv:
+    out = subprocess.run([sys.executable, __file__, *[a for a in sys.argv[1:] if a != "--save"]], capture_output=True, text=True).stdout
+    last = H / ".claude/state/harness-report-last.txt"
+    if last.exists():
+        prev = last.read_text()
+        print("== previous harness section (" + time.strftime("%Y-%m-%d", time.localtime(last.stat().st_mtime)) + ")")
+        print(prev[prev.find("== harness usage"):].rstrip() if "== harness usage" in prev else "(none)")
+        print()
+    print(out, end="")
+    last.parent.mkdir(parents=True, exist_ok=True)
+    last.write_text(out)
+    os.chmod(last, 0o600)
+    sys.exit(0)
 print("== RTK (command rewriting)")
 try:
     out = subprocess.run(["rtk", "gain"], capture_output=True, text=True, timeout=20).stdout.splitlines()
@@ -15,7 +34,7 @@ try:
 except Exception:
     print("rtk not available")
 
-print("\n== te-filter hook (ledger)")
+print("\n== te-filter hook (ledger; entries before 2026-10-19 never reached the model)")
 led = H / ".claude/te-ledger.jsonl"
 if led.exists():
     rows = [json.loads(l) for l in led.read_text().splitlines() if l.strip()]
@@ -55,7 +74,8 @@ import statistics
 import sys
 import time
 
-days = int(sys.argv[1]) if len(sys.argv) > 1 else 7
+args = [a for a in sys.argv[1:] if not a.startswith("--")]
+days = int(args[0]) if args else 7
 skills, slash, words = C.Counter(), C.Counter(), []
 for f in glob.glob(str(H / ".claude/projects/*/*.jsonl")):
     if time.time() - os.path.getmtime(f) > days * 86400:
