@@ -26,6 +26,21 @@ MIN_RATIO = float(os.environ.get("TE_MIN_RATIO", "0.25"))
 ERR = re.compile(r"error|fail|traceback|exception|assert|fatal|panic|denied", re.I)
 
 
+# Allowlist: only collapse output that is mostly progress/pass noise. Lines that differ in numbers (latency,
+# counts, ids) carry data and must reach the model untouched, so generic logs, diffs, JSON and tables are skipped.
+NOISE = re.compile(
+    r"PASSED|\bok$|\.\.\. ok|^\.+$|Downloading|Collecting|Using cached|Requirement already|Installing|Compiling|"
+    r"Fetching|Resolving|Unpacking|Building wheel|npm warn|added \d+ packages|^\s*\[\d+/\d+\]|^\s*\d+%|Progress",
+    re.I,
+)
+MIN_NOISE_RATIO = float(os.environ.get("TE_MIN_NOISE_RATIO", "0.6"))
+
+
+def is_noisy_log(text: str) -> bool:
+    lines = [l for l in text.splitlines() if l.strip()]
+    return bool(lines) and sum(bool(NOISE.search(l)) for l in lines) / len(lines) >= MIN_NOISE_RATIO
+
+
 def _log(rec: dict) -> None:
     try:
         LEDGER.parent.mkdir(parents=True, exist_ok=True)
@@ -49,6 +64,8 @@ def _prune() -> None:
 
 
 def filter_text(text: str, engine) -> tuple[str, int, int] | None:
+    if not is_noisy_log(text):
+        return None
     before = engine.count_tokens(text)
     if before < MIN_TOKENS:
         return None
