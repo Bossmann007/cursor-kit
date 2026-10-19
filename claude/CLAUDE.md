@@ -20,7 +20,7 @@ Short and direct: no preamble, no recap, no option menus, about 6 lines unless a
 
 ## Context
 
-- RTK rewrites Bash commands to cut output; do not compress by hand. For a huge output, redirect to a file and read only the part you need.
+- Big Bash output is filtered by hooks (RTK, `te-filter-output`); do not compress by hand. Full text stays in `~/.claude/te-cache`; read it there when the filtered text hides detail.
 - Code structure: codebase-memory first (`search_graph`, `get_code_snippet`); do not re-read files.
 - History and decisions: ai-memory MCP.
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Where do tokens go? RTK savings + tool-result sizes from Claude Code transcripts."""
+"""Where do tokens go? RTK savings + te-filter ledger + tool-result sizes from Claude Code transcripts."""
 import collections as C
 import glob
 import json
@@ -14,6 +14,15 @@ try:
     print("\n".join(l for l in out if l.startswith(("Total commands", "Input tokens", "Tokens saved"))))
 except Exception:
     print("rtk not available")
+
+print("\n== te-filter hook (ledger)")
+led = H / ".claude/te-ledger.jsonl"
+if led.exists():
+    rows = [json.loads(l) for l in led.read_text().splitlines() if l.strip()]
+    ap = [r for r in rows if r.get("applied")]
+    print(f"decisions: {len(rows)}  applied: {len(ap)}  tokens saved: {sum(r['before'] - r['after'] for r in ap)}")
+else:
+    print("no ledger yet (hook not fired)")
 
 print("\n== tool-result text tokens in transcripts (top)")
 names, size, cnt = {}, C.Counter(), C.Counter()
