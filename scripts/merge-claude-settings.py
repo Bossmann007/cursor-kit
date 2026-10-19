@@ -7,8 +7,7 @@ usage: merge-claude-settings.py --kit KIT.json --existing SETTINGS.json --out OU
 import argparse, json, pathlib
 
 KIT = ("token-engine-session.py", "compress-tool-output.py", "track-edits.py",
-       "tool-failure.py", "checkpoint-stop.py",
-       "te-filter-output.py")  # retired: kept so re-merge strips the stale entry
+       "tool-failure.py", "checkpoint-stop.py", "te-filter-output.py")
 
 def is_kit(group):
     return any(h.get("command", "").strip().endswith(KIT) or any(k in h.get("command", "") for k in KIT)
