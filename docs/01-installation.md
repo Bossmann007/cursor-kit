@@ -63,7 +63,7 @@ Opção B — desenvolver o plugin in-place (target dentro de `plugins/local`):
 ln -sfn ~/.cursor/plugins/local/cursor-kit ~/cursor-kit
 ```
 
-O plugin declara `skills/`, `rules/` e `hooks/hooks.json`. Rules do kit (ponytail, caveman, token-engine, cbm-first, session-continuity, memory-security) aplicam com o plugin ligado. Depois: **Developer: Reload Window**.
+O plugin declara `skills/`, `rules/` e `hooks/cursor-hooks.json`. Rules do kit (ponytail, caveman, token-engine, cbm-first, session-continuity, memory-security) aplicam com o plugin ligado. Depois: **Developer: Reload Window**.
 
 Opcional (espelho global, se preferir rules fora do plugin):
 
