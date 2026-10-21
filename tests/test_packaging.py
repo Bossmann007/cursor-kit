@@ -21,7 +21,7 @@ class PackagingTests(unittest.TestCase):
         self.assertTrue(hooks.is_file(), hooks)
 
     def test_plugin_hooks_json_shape(self) -> None:
-        data = json.loads((ROOT / "hooks" / "hooks.json").read_text(encoding="utf-8"))
+        data = json.loads((ROOT / "hooks" / "cursor-hooks.json").read_text(encoding="utf-8"))
         self.assertEqual(data["version"], 1)
         for event in (
             "sessionStart",
@@ -33,6 +33,10 @@ class PackagingTests(unittest.TestCase):
             self.assertIn(event, data["hooks"])
             cmd = data["hooks"][event][0]["command"]
             self.assertIn("CURSOR_PLUGIN_ROOT", cmd)
+
+    def test_no_claude_autoloaded_hooks_file(self) -> None:
+        # Claude Code auto-loads hooks/hooks.json from a plugin root; the Cursor-format file must not live there.
+        self.assertFalse((ROOT / "hooks" / "hooks.json").exists())
 
     def test_hooks_template_placeholder(self) -> None:
         text = (ROOT / "hooks.json.template").read_text(encoding="utf-8")

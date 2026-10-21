@@ -43,7 +43,7 @@ User approved Phase 7 build. Reference for future sessions.
 
 ## Built on branch `enzo` (2026-09-12)
 
-- Plugin ships `rules/` + `hooks/hooks.json` (usable without machine-only copies)
+- Plugin ships `rules/` + `hooks/cursor-hooks.json` (usable without machine-only copies; not `hooks/hooks.json`, which Claude Code auto-loads in Claude format)
 - `hooks.json.template` + sync-hooks writes `~/.cursor/hooks.json`
 - `sync-rules.sh` / `.ps1` mirrors rules + seeds pstack `inherit-parent` example
 - Kit `PROJECT.md` documents Enzo working configuration

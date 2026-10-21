@@ -30,5 +30,5 @@
   ],
   "skills": "./skills/",
   "rules": "./rules/",
-  "hooks": "./hooks/hooks.json"
+  "hooks": "./hooks/cursor-hooks.json"
 }
