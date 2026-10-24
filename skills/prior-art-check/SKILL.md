@@ -4,7 +4,7 @@ description: >
   Reuse-before-build check at planning time. Before designing or building a
   non-trivial component, tool, integration, skill or workflow, search installed
   skills, the Claude plugin catalog, claude.ai connectors / MCP registry, public
-  skills, and GitHub open source; score the candidates and decide adopt / adapt /
+  skills, curated awesome lists, and GitHub open source; score the candidates and decide adopt / adapt /
   build. Use when the user plans a feature, tool, skill, MCP, script or
   infrastructure, says "isso já existe?", "tem plugin / connector / algo pronto?",
   "reinventar a roda", or when /verification-planning step 0 calls it. Skip for
@@ -24,15 +24,18 @@ Goal: do not build what already exists, better and maintained. Search cheap laye
 
 ## Layers (cheap first, stop when something fits)
 
-1. **Already installed:** read `~/.claude/skill-index.md` (all enabled skills, ~1k tokens). Also `ai-memory` (`memory_query`), `codebase-memory` (`search_graph`), the kit, the repo itself.
+1. **Already installed:** read `~/.claude/skill-index.md` (all enabled skills, ~1k tokens). Also `ai-memory` (`memory_query`, including `decisions/` pages about the need), `codebase-memory` (`search_graph`), the kit, the repo itself. Reuse past audits so nothing already owned or rejected is re-recommended: `~/orquestrador/notes/skills-*.md`, `~/bots/README.md` (third-party skills and pinned commits), and `ls ~/bots/*/.claude/skills`.
 2. **Claude plugin catalog (offline, 300+ plugins):** `python3 ~/cursor-kit/scripts/find-plugins.py <keywords> -n 8`. Shows installs, **always-on token cost per turn**, components, install command. Prefer high installs and low always-on cost.
 3. **Connectors / MCP registry (claude.ai):** load the tools with ToolSearch (`select:mcp__mcp-registry__search_mcp_registry,mcp__mcp-registry__suggest_connectors,mcp__mcp-registry__list_connectors`), then search by the need ("calendar", "database", "figma"). `list_connectors` shows what is already connected. The `SearchPlugins` tool also searches the user's claude.ai plugin catalog.
-4. **Public skills:** `find-skills` (`npx skills find <query>`; check skills.sh leaderboard first).
-5. **GitHub open source:**
+4. **Public skills:** Anthropic's official sources first (`anthropics/skills`, `anthropics/knowledge-work-plugins`, the app's Customize skills/plugins via `SearchSkills` / `SearchPlugins`, partner-tier plugins), before any third-party list. Then `find-skills` (`npx skills find <query>`; check skills.sh leaderboard first).
+5. **Curated awesome lists:** [hesreallyhim/awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code) and [BehiSecc/awesome-claude-skills](https://github.com/BehiSecc/awesome-claude-skills). Grep the README instead of reading it:
+   `gh api repos/<owner>/<repo>/readme --jq .content | base64 -d | grep -i -E "<keywords>"`
+   Entries are leads only: every candidate still gets the full score below (license, last push, stars, scripts/postinstall review, pinned commit).
+6. **GitHub open source:**
    - `gh search repos "<keywords>" --sort stars --limit 10 --json fullName,description,stargazersCount,pushedAt,license`
    - plugins/MCP: `gh search repos "topic:claude-code-plugin <kw>"`, `"topic:mcp-server <kw>"`
    - code patterns: `gh search code "filename:SKILL.md <kw>"`
-6. **Libraries / docs:** context7 for current library docs; web search only to fill gaps.
+7. **Libraries / docs:** context7 for current library docs; web search only to fill gaps.
 
 ## Score at most 5 candidates
 
@@ -49,13 +52,13 @@ Goal: do not build what already exists, better and maintained. Search cheap laye
 
 ## Decide and record
 
-`adopt` (use as is), `adapt` (fork or wrap a small part), or `build` (nothing fits). Name the exact plugin/connector/repo and version or commit. One line in the plan; for lasting choices a `decisions/` page (`domain-modeling` ADR, or `memory_write_page` after asking).
+`adopt` (use as is), `adapt` (fork or wrap a small part), or `build` (nothing fits). Name the exact plugin/connector/repo and version or commit. One line in the plan. Then always write a one-line decision with `memory_write_page` to `decisions/prior-art-<topic>.md` (`adopt X@commit for Y` / `rejected Z because …`), never secrets; for lasting architecture choices also a `domain-modeling` ADR.
 
 ## Output template
 
 ```
 Need: <one sentence>
-Checked: installed, plugin catalog (<queries>), connectors (<queries>), GitHub (<queries>)
+Checked: installed, plugin catalog (<queries>), connectors (<queries>), awesome lists (<queries>), GitHub (<queries>)
 Candidates: <name> (kind, installs/stars, last push, license, always-on tok) — fit/risk in 1 line each
 Decision: adopt | adapt | build — <name@version> — <why>
 Risks: <supply chain / data / permissions / lock-in>
