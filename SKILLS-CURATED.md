@@ -29,7 +29,7 @@
 
 ## Sempre manter
 
-Kit plugin (source of truth on desktop): `setup-project`, `setup-pucpr`, `setup-ai-memory`, `verification-planning`, `simplify`, `blindspot-pass`  
+Kit plugin (source of truth on desktop): `setup-project`, `setup-pucpr`, `new-bot`, `setup-ai-memory`, `verification-planning`, `simplify`, `blindspot-pass`  
 Env (`~/.cursor/skills/`): `find-skills` (+ Matt allowlist below)  
 PUCPR: `pucpr-canvas`, `pucpr-tutor` (when installed)  
 Matt core: `grill-me`, `grill-with-docs`, `grilling`, `handoff`, `wait-what`, `tdd`, `diagnosing-bugs`, `code-review`, `implement`, `to-spec`, `research`, `prototype`, `domain-modeling`, `resolving-merge-conflicts`, `setup-matt-pocock-skills`, `teach`

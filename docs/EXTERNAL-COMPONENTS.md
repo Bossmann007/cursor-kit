@@ -25,7 +25,7 @@ continual-learning, pstack/team-kit).
 
 | Skill | Role | Desktop location |
 |-------|------|------------------|
-| `setup-project` / `setup-pucpr` / `setup-ai-memory` / `setup-matt-pocock-skills` | Orchestrators (repo / PUCPR / ai-memory / Matt wiring) | **Plugin** `skills/` |
+| `setup-project` / `setup-pucpr` / `new-bot` / `setup-ai-memory` / `setup-matt-pocock-skills` | Orchestrators (repo / PUCPR / Claude app bot / ai-memory / Matt wiring) | **Plugin** `skills/` |
 | `verification-planning` / `simplify` / `blindspot-pass` | Quality / evidence / second-pass | **Plugin** `skills/` |
 | Engineering (promoted) | `code-review`, `diagnosing-bugs`, `tdd`, `research`, `prototype`, `domain-modeling`, `resolving-merge-conflicts`, `grilling`, `find-skills`, `handoff`, `digest-files` | **Plugin** `skills/` |
 

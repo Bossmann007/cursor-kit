@@ -38,6 +38,7 @@ cd ~/cursor-kit && ./sync-all.sh   # TOOLS="claude cursor codex gemini" para esc
 | Precisa | Vá em |
 |---------|--------|
 | Orquestrar um repo | `/setup-project` (skill neste plugin) |
+| Criar um bot do time (`~/bots/<bot>`) | `/new-bot` |
 | Companion ai-memory | `/setup-ai-memory` + [docs/tools/10-ai-memory.md](docs/tools/10-ai-memory.md) |
 | Evidence path (pré-implement) | `/verification-planning` |
 | Fluxo de trabalho padrão | `/emode` |
