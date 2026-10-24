@@ -24,7 +24,7 @@ Goal: do not build what already exists, better and maintained. Search cheap laye
 
 ## Layers (cheap first, stop when something fits)
 
-1. **Already installed:** read `~/.claude/skill-index.md` (all enabled skills, ~1k tokens). Also `ai-memory` (`memory_query`), `codebase-memory` (`search_graph`), the kit, the repo itself.
+1. **Already installed:** read `~/.claude/skill-index.md` (all enabled skills, ~1k tokens). Also `ai-memory` (`memory_query`, including `decisions/` pages about the need), `codebase-memory` (`search_graph`), the kit, the repo itself. Reuse past audits so nothing already owned or rejected is re-recommended: `~/orquestrador/notes/skills-*.md`, `~/bots/README.md` (third-party skills and pinned commits), and `ls ~/bots/*/.claude/skills`.
 2. **Claude plugin catalog (offline, 300+ plugins):** `python3 ~/cursor-kit/scripts/find-plugins.py <keywords> -n 8`. Shows installs, **always-on token cost per turn**, components, install command. Prefer high installs and low always-on cost.
 3. **Connectors / MCP registry (claude.ai):** load the tools with ToolSearch (`select:mcp__mcp-registry__search_mcp_registry,mcp__mcp-registry__suggest_connectors,mcp__mcp-registry__list_connectors`), then search by the need ("calendar", "database", "figma"). `list_connectors` shows what is already connected. The `SearchPlugins` tool also searches the user's claude.ai plugin catalog.
 4. **Public skills:** Anthropic's official sources first (`anthropics/skills`, `anthropics/knowledge-work-plugins`, the app's Customize skills/plugins via `SearchSkills` / `SearchPlugins`, partner-tier plugins), before any third-party list. Then `find-skills` (`npx skills find <query>`; check skills.sh leaderboard first).
@@ -52,7 +52,7 @@ Goal: do not build what already exists, better and maintained. Search cheap laye
 
 ## Decide and record
 
-`adopt` (use as is), `adapt` (fork or wrap a small part), or `build` (nothing fits). Name the exact plugin/connector/repo and version or commit. One line in the plan; for lasting choices a `decisions/` page (`domain-modeling` ADR, or `memory_write_page` after asking).
+`adopt` (use as is), `adapt` (fork or wrap a small part), or `build` (nothing fits). Name the exact plugin/connector/repo and version or commit. One line in the plan. Then always write a one-line decision with `memory_write_page` to `decisions/prior-art-<topic>.md` (`adopt X@commit for Y` / `rejected Z because …`), never secrets; for lasting architecture choices also a `domain-modeling` ADR.
 
 ## Output template
 
