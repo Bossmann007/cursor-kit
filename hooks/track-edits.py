@@ -9,7 +9,7 @@ from pathlib import Path
 HOOKS = Path(__file__).resolve().parent
 sys.path.insert(0, str(HOOKS))
 
-from cursor_state import track_file, workspace_root  # noqa: E402
+from cursor_state import should_run, track_file, workspace_root  # noqa: E402
 
 
 def main() -> None:
@@ -24,6 +24,9 @@ def main() -> None:
         return
 
     root = workspace_root(payload)
+    if not should_run("track-edits", root):
+        print("{}")
+        return
     tool_input = payload.get("tool_input")
     if not isinstance(tool_input, dict):
         tool_input = {}

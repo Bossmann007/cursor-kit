@@ -27,6 +27,14 @@
     "prototype",
     "domain-modeling",
     "asd-ste100",
-    "resolving-merge-conflicts"
+    "resolving-merge-conflicts",
+    "orca-cli",
+    "orchestration",
+    "varlock",
+    "find-skills",
+    "vibesec"
+  ],
+  "name-only": [
+    "setup-ai-memory"
   ]
 }

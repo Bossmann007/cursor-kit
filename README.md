@@ -75,7 +75,7 @@ MIT. Ver [LICENSE](LICENSE).
 
 ## Claude Code plugins
 
-`scripts/install-claude-plugins.sh` (run by `sync-all.sh`) installs pstack and superpowers from the Cursor plugin cache into a local marketplace (`~/.claude/local-marketplace`), plus frontend-design, commit-commands and claude-md-management. pstack subagents (`poteto-agent`, `Comment Sicko`) are pinned to Sonnet to cut usage; use `/model opus` for hard tasks. Re-run after updating pstack in Cursor.
+`scripts/install-claude-plugins.sh` (run by `sync-all.sh`) installs pstack, plus superpowers from the Cursor plugin cache into a local marketplace (`~/.claude/local-marketplace`) only with `WITH_SUPERPOWERS=1`, plus frontend-design. pstack subagents (`poteto-agent`, `Comment Sicko`) are pinned to Sonnet to cut usage; use `/model opus` for hard tasks. Re-run after updating pstack in Cursor.
 
 <!-- ENZO-PORTFOLIO-BRAND-FOOTER -->
 <p align="center">
