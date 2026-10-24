@@ -53,7 +53,7 @@ Per the docs ([skills-routines](https://docs.x.ai/grok-bot/skills-routines-and-a
 |---|---|---|---|
 | **L0 on-demand** | Nothing until Enzo or Maria messages it | Session only (live) or a `time.md` role (on-demand) | `default` or `acceptEdits` |
 | **L1 scheduled read-only report** | Runs on a schedule, reads its sources, replies with a report; edits no file | Scheduled task, prompt says "read only, edit nothing" (like `pucpr-briefing-diario`) | task default |
-| **L2 scheduled work in its folder + push** | Runs on a schedule, updates its own data files or drafts inside `~/bots/<slug>`, then pushes a one-line summary to Enzo's phone | Scheduled task, prompt limits writes to the bot folder and ends with a push | `auto` |
+| **L2 scheduled work in its folder + push** | Runs on a schedule, updates its own data files or drafts inside `~/bots/<slug>`, then pushes a one-line summary to Enzo's phone | Scheduled task, prompt limits writes to the bot folder and ends with a push | mode of the creating session (never bypass) |
 | **L3 self-paced loop** | In its open session, re-checks one narrow source and follows up on its own pace | `/loop` with a self-contained prompt in the bot's session (dynamic pacing via `ScheduleWakeup`, fallback 20 to 30 min); a stop condition in the prompt | `auto` |
 
 The hard limits do not change at any level: anything outward (send, post, comment, pay, trade, buy, delete outside

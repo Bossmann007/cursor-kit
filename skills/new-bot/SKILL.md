@@ -28,7 +28,8 @@ Grok Bot concepts map to what here and which have no equivalent.
   (precedence: Enzo > `~/orquestrador/CLAUDE.md` > `time.md` > the bot's `CLAUDE.md`).
 - **One job per bot.** A new bot only when the work has its own goal, tools, approval boundary or schedule.
 - **Roster is Enzo's.** `time.md` and `~/bots/README.md` changes are shown as a diff and written only after his yes.
-- **Idempotent.** Never overwrite an existing bot folder or file; fill gaps only.
+- **Idempotent.** Never overwrite an existing bot folder or file. The scaffold refuses an existing folder; to finish
+  a half-done bot, skip step 2 and continue from the first step whose output is missing.
 - Chat in Portuguese; persona files, identifiers and paths in English (outward text in the bot's language).
 
 ## Process
@@ -73,9 +74,9 @@ Fill every `{{...}}` in the copied template from the interview, then delete unus
 Match the style of the live bots (`~/bots/social/CLAUDE.md`, `~/bots/money-maker/CLAUDE.md`,
 `~/bots/pucpr/CLAUDE.md`): short, imperative, hard rules first, a fixed reply format.
 
-- Compare the template's **Maria's hard limits** block with `~/orquestrador/CLAUDE.md` → Hard limits.
-  If Maria's list changed, copy the current items that apply to a bot (not the Maria-only ones such as
-  ai-memory authorization or account switching).
+- The template's **Maria's hard limits** block is a bot-facing summary of `~/orquestrador/CLAUDE.md` → Hard limits,
+  sometimes stricter. Check Maria's list for an item the block does not cover yet and add it; never drop or weaken
+  an item. Skip Maria-only items (ai-memory authorization, account switching).
 - Keep the **draft-only** rule even when the bot has no outward channel today.
 - Bot data files (tables, pipelines, logs) live in the folder; name them in `CLAUDE.md` and say they never
   leave it (no memory, ai-memory or other bots).
@@ -109,7 +110,9 @@ one-time task → reliable → skill → routine).
 | **L3 self-paced loop** | In the bot's own session, start `/loop` with a self-contained prompt: one narrow source to re-check, what counts as new, a stop condition, and a fallback wakeup of 20 to 30 min. Only while that session stays open. |
 
 **The hard limits do not change at any level.** Anything outward (send, post, comment, pay, trade, buy, submit,
-delete outside its folder) stays a draft for Enzo. Never `bypassPermissions`; L2 and L3 use `auto`.
+delete outside its folder) stays a draft for Enzo. Never `bypassPermissions`. An L3 loop runs in a session in `auto`;
+a scheduled task takes the mode of the session that creates it, so create L1/L2 tasks from a session in `default`,
+`acceptEdits` or `auto`, never from one in bypass.
 If Enzo asks for something only Grok Bot does (runs with the Mac closed, event triggers, auto-send after an
 "Always allow"), say it has no equivalent here and why the gate stays (see the reference).
 
@@ -117,8 +120,8 @@ If Enzo asks for something only Grok Bot does (runs with the Mac closed, event t
 boundary and missing-source behavior. Fill `templates/scheduled-task.md` into a self-contained prompt that names
 the bot folder by absolute path and starts by reading its `CLAUDE.md`; keep the L1 or L2 line, delete the other.
 Create it with `create_scheduled_task`, task id `<slug>-<what>`. Tell Enzo it runs only while the Claude app is
-open (a missed run fires on next launch). Record the level in the bot's `CLAUDE.md` (`## Autonomy`) and in its
-`time.md` row.
+open (a missed run fires on next launch). Record the level in the bot's `CLAUDE.md` (`## Autonomy`) and at the end
+of the "What it does" cell of its `time.md` row (e.g. `L1: task <id> 07:00`); do not add a column.
 
 ### 6. Roster entries (diff, then Enzo's yes)
 
@@ -144,7 +147,8 @@ open (a missed run fires on next launch). Record the level in the bot's `CLAUDE.
 
 1. `agnix ~/bots/<slug>` → 0 errors (list warnings in the report).
 2. `find ~/bots/<slug> | sort` (show the tree).
-3. `grep -rniE '(api[_-]?key|token|secret|password)[[:space:]]*[:=][[:space:]]*[^<[:space:]]' ~/bots/<slug>` → no hits.
+3. `grep -rliE --exclude=.env '(api[_-]?key|token|secret|password)[[:space:]]*[:=][[:space:]]*[^<[:space:]]' ~/bots/<slug>`
+   → no files listed (`-l` prints file names only, so a real value never reaches the transcript; `.env` is Enzo's).
 4. The first task's reply contains the evidence promised in `time.md`.
 
 Dry run (`--bots-dir` outside `~/bots`): run 1–3, print the step 5 setup without creating it, skip 6–7, print the roster diff instead of writing it,

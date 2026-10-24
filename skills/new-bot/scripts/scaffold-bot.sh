@@ -3,7 +3,7 @@
 # Refuses an existing folder. Writes nothing outside the new folder. No secrets.
 # Usage: scaffold-bot.sh <slug> [--bots-dir DIR]   (default DIR: ~/bots)
 set -euo pipefail
-SKILL="$(cd "$(dirname "$0")/.." && pwd)"
+SKILL="$(cd "$(dirname "$0")/.." && pwd -P)"  # -P: resolve the ~/.claude/skills symlink to the kit
 KIT="$(cd "$SKILL/../.." && pwd)"
 slug="${1:-}"; shift || true
 dir="${HOME}/bots"
