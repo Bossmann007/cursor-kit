@@ -20,7 +20,7 @@ Ver [plan-ship](tools/01-plan-ship.md) e [WORKFLOWS](WORKFLOWS.md).
 
 ## 3. Economia de tokens (token-engine)
 
-Saídas grandes de ferramentas enchem o contexto. O **token-engine** comprime de forma fail-closed (só substitui se menor e com checks). Hooks avisam; o agente chama `caveman_compress` quando o output é grande.
+Saídas grandes de ferramentas enchem o contexto. O **token-engine** comprime de forma fail-closed (só substitui se menor e com checks). No Claude Code, hooks (RTK e `te-filter-output`) filtram a saída grande antes de chegar ao modelo; o agente não comprime à mão.
 
 Isto é a vantagem deste stack frente a “fale menos” ou proxies CLI não publicados.
 

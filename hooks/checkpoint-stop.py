@@ -9,7 +9,7 @@ from pathlib import Path
 HOOKS = Path(__file__).resolve().parent
 sys.path.insert(0, str(HOOKS))
 
-from cursor_state import append_obs, merge_session_into_checkpoint, workspace_root  # noqa: E402
+from cursor_state import should_run, append_obs, merge_session_into_checkpoint, workspace_root  # noqa: E402
 
 
 def main() -> None:
@@ -19,6 +19,9 @@ def main() -> None:
         payload = {}
 
     root = workspace_root(payload if isinstance(payload, dict) else None)
+    if not should_run("checkpoint-stop", root):
+        print("{}")
+        return
     status = "idle"
     if isinstance(payload, dict):
         status = str(payload.get("status") or payload.get("reason") or "idle")

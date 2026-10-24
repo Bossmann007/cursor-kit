@@ -39,9 +39,14 @@ echo "installed ${CL}/CLAUDE.md"
 
 # 4. skills: link kit skills into ~/.claude/skills (plugin install is the alternative)
 mkdir -p "${CL}/skills"
+OFF=" $(python3 -c 'import json,sys; print(" ".join(json.load(open(sys.argv[1]))["off"]))' "$ROOT/claude/skill-overrides.json") "
 for d in "$ROOT"/skills/*/; do
   n="$(basename "$d")"
   case " code-review simplify tdd diagnosing-bugs grilling setup-matt-pocock-skills setup-pucpr " in *" $n "*) continue ;; esac  # shadowed by built-ins / superpowers
+  if [[ "$OFF" == *" $n "* ]]; then  # curated off: do not link; drop a link the kit made earlier
+    [[ -L "${CL}/skills/${n}" && "$(readlink "${CL}/skills/${n}")" == "${d%/}" ]] && rm "${CL}/skills/${n}"
+    continue
+  fi
   [[ -e "${CL}/skills/${n}" ]] || ln -s "${d%/}" "${CL}/skills/${n}"
 done
 echo "linked skills into ${CL}/skills"

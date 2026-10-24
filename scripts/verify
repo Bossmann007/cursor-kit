@@ -4,3 +4,5 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 python3 -m unittest discover -s tests
 scripts/secret-scan.sh --all
+# Config lint (errors fail, warnings print). Skipped when agnix is not installed.
+if command -v agnix >/dev/null; then agnix . | tail -3; else echo "agnix not installed; skipped config lint"; fi

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -38,6 +39,19 @@ def workspace_root(payload: dict[str, Any] | None = None) -> Path:
             if isinstance(val, str) and val.strip():
                 return Path(val).resolve()
     return Path.cwd().resolve()
+
+
+def should_run(hook: str, root: Path) -> bool:
+    """False when hooks are switched off or root is not a project.
+
+    CLAUDE_HOOKS_PROFILE=minimal skips every state hook; CLAUDE_DISABLED_HOOKS=a,b skips by name.
+    A project is a git root or a folder that already has .claude/state; elsewhere no stub state is written.
+    """
+    if os.environ.get("CLAUDE_HOOKS_PROFILE") == "minimal":
+        return False
+    if hook in os.environ.get("CLAUDE_DISABLED_HOOKS", "").split(","):
+        return False
+    return (root / ".git").exists() or (root / ".claude" / "state").is_dir()
 
 
 def state_dir(root: Path | None = None) -> Path:
