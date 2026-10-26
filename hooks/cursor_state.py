@@ -13,6 +13,11 @@ SESSION_NAME = "session.json"
 FAILURES_NAME = "failures.jsonl"
 OBS_NAME = "observability.jsonl"
 
+# failures.jsonl bounds: the hook gets a failed command's whole output, which can hold private data.
+FAILURE_ERROR_CHARS = 300
+FAILURE_COMMAND_CHARS = 200
+FAILURE_MAX_LINES = 200
+
 DEFAULT_CHECKPOINT: dict[str, Any] = {
     "task": "",
     "status": "idle",
@@ -155,12 +160,27 @@ def merge_session_into_checkpoint(
     return checkpoint
 
 
+def bound_failure(entry: dict[str, Any]) -> dict[str, Any]:
+    """Keep the tail of `error` (where the message is) and the head of `command`."""
+    line = dict(entry)
+    error = line.get("error")
+    if isinstance(error, str) and len(error) > FAILURE_ERROR_CHARS:
+        line["error"] = "…" + error[-FAILURE_ERROR_CHARS:]
+    command = line.get("command")
+    if isinstance(command, str) and len(command) > FAILURE_COMMAND_CHARS:
+        line["command"] = command[:FAILURE_COMMAND_CHARS] + "…"
+    return line
+
+
 def append_failure(entry: dict[str, Any], root: Path | None = None) -> None:
     path = state_dir(root) / FAILURES_NAME
-    line = dict(entry)
+    line = bound_failure(entry)
     line.setdefault("at", _now_iso())
     with path.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(line, ensure_ascii=False) + "\n")
+    lines = path.read_text(encoding="utf-8").splitlines(keepends=True)
+    if len(lines) > FAILURE_MAX_LINES:
+        path.write_text("".join(lines[-FAILURE_MAX_LINES:]), encoding="utf-8")
 
 
 def append_obs(entry: dict[str, Any], root: Path | None = None) -> None:
