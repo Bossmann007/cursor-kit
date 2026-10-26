@@ -71,6 +71,7 @@ existing folder or a bad slug. Nothing else is touched.
 ### 3. Write the persona `CLAUDE.md`
 
 Fill every `{{...}}` in the copied template from the interview, then delete unused optional sections.
+Keep the `Checkpoint (continue / retomar)` section as is: it makes `retomar` resume the bot's last task.
 Match the style of the live bots (`~/bots/social/CLAUDE.md`, `~/bots/money-maker/CLAUDE.md`,
 `~/bots/pucpr/CLAUDE.md`): short, imperative, hard rules first, a fixed reply format.
 

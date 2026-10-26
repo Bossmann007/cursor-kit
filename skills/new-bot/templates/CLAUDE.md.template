@@ -51,3 +51,12 @@ At every level, anything outward stays a draft for Enzo.
 
 {{Global skills to use (by name), project skills in `.claude/skills/`, subagents in `.claude/agents/` (draft only),
 scripts in this folder and how to run them. Delete this section if none.}}
+
+## Checkpoint (continue / retomar)
+
+Keep `.claude/state/checkpoint.json` live (cursor-kit schema). Hooks fill `files` and `updated_at`; you own the rest.
+
+- When a multi-step task ends, or you stop mid-task, write `task`, `status` (`in_progress`, `blocked` or `done`),
+  `pending`, `blockers` and `next_action`. Keep the other keys.
+- On `continue` or `retomar`, read it first and resume from `next_action`. If `task` is empty, ask what to resume.
+- Short labels and file paths only: no secrets, no personal or patient data, no message, draft or report text.
