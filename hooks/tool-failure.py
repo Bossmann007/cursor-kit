@@ -33,6 +33,10 @@ def main() -> None:
         "error": payload.get("error") or payload.get("message") or payload.get("stderr"),
         "command": tool_input.get("command") or payload.get("command"),
     }
+    # A bare "Exit code 1" (grep or test with no match, no output) is not a failure worth a lesson.
+    if str(entry["error"] or "").strip() == "Exit code 1":
+        print("{}")
+        return
     append_failure(entry, root)
     session = load_session(root)
     session["tool_failures"] = int(session.get("tool_failures") or 0) + 1
