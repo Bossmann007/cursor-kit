@@ -4,9 +4,16 @@ from __future__ import annotations
 
 import json
 import os
+import re
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+try:
+    import fcntl
+except ImportError:  # Windows: no flock; appends stay unlocked there.
+    fcntl = None  # type: ignore[assignment]
 
 CHECKPOINT_NAME = "checkpoint.json"
 SESSION_NAME = "session.json"
@@ -160,27 +167,60 @@ def merge_session_into_checkpoint(
     return checkpoint
 
 
+_REDACTIONS = [
+    (re.compile(r"(?i)\b(authorization\s*[:=]\s*)(?:(?:bearer|basic|token)\s+)?[^\s\"',;]+"), r"\1[REDACTED]"),
+    (re.compile(r"(?i)\b(bearer|basic)\s+[A-Za-z0-9._~+/=-]{8,}"), r"\1 [REDACTED]"),
+    (
+        re.compile(r"(?i)\b([\w-]*(?:key|token|password|passwd|pwd|secret)[\w-]*)(\"?\s*[=:]\s*\"?)[^\s\"'&,;}]+"),
+        r"\1\2[REDACTED]",
+    ),
+    (re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+"), "[EMAIL]"),
+    (re.compile(r"\b\d{3}\.\d{3}\.\d{3}-\d{2}\b"), "[CPF]"),
+    (re.compile(r"(?:\+?55\s?)?\(?\b\d{2}\)?\s?9?\d{4}-\d{4}\b"), "[PHONE]"),
+    (re.compile(r"\b\d{8,}\b"), "[NUMBER]"),
+]
+
+
+def redact(text: str) -> str:
+    """Mask credentials, emails, CPFs, phones and long digit runs before they reach disk."""
+    for pattern, repl in _REDACTIONS:
+        text = pattern.sub(repl, text)
+    return text
+
+
 def bound_failure(entry: dict[str, Any]) -> dict[str, Any]:
-    """Keep the tail of `error` (where the message is) and the head of `command`."""
+    """Redact, then keep the tail of `error` (where the message is) and the head of `command`."""
     line = dict(entry)
     error = line.get("error")
-    if isinstance(error, str) and len(error) > FAILURE_ERROR_CHARS:
-        line["error"] = "…" + error[-FAILURE_ERROR_CHARS:]
+    if isinstance(error, str):
+        error = redact(error)
+        line["error"] = "…" + error[-FAILURE_ERROR_CHARS:] if len(error) > FAILURE_ERROR_CHARS else error
     command = line.get("command")
-    if isinstance(command, str) and len(command) > FAILURE_COMMAND_CHARS:
-        line["command"] = command[:FAILURE_COMMAND_CHARS] + "…"
+    if isinstance(command, str):
+        command = redact(command)
+        line["command"] = command[:FAILURE_COMMAND_CHARS] + "…" if len(command) > FAILURE_COMMAND_CHARS else command
     return line
 
 
 def append_failure(entry: dict[str, Any], root: Path | None = None) -> None:
+    """Append one record and keep the last FAILURE_MAX_LINES, under a lock, rotating atomically.
+
+    ensure_ascii keeps U+2028/U+2029/\\x85 escaped, so records split only on "\\n".
+    """
     path = state_dir(root) / FAILURES_NAME
     line = bound_failure(entry)
     line.setdefault("at", _now_iso())
-    with path.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(line, ensure_ascii=False) + "\n")
-    lines = path.read_text(encoding="utf-8").splitlines(keepends=True)
-    if len(lines) > FAILURE_MAX_LINES:
-        path.write_text("".join(lines[-FAILURE_MAX_LINES:]), encoding="utf-8")
+    with (path.parent / (FAILURES_NAME + ".lock")).open("a") as lock:
+        if fcntl:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+        with path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(line, ensure_ascii=True) + "\n")
+        lines = [row for row in path.read_text(encoding="utf-8").split("\n") if row]
+        if len(lines) > FAILURE_MAX_LINES:
+            fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=FAILURES_NAME + ".")
+            with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                handle.write("\n".join(lines[-FAILURE_MAX_LINES:]) + "\n")
+            os.replace(tmp, path)
 
 
 def append_obs(entry: dict[str, Any], root: Path | None = None) -> None:
