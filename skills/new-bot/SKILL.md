@@ -2,7 +2,7 @@
 name: new-bot
 description: >
   Create a new bot for Enzo's agent team in the Claude app: a folder
-  ~/bots/BOT-SLUG/ with a persona CLAUDE.md (draft-only rule + Maria's hard
+  ~/bots/BOT-SLUG/ with a persona AGENTS.md (CLAUDE.md imports it) (draft-only rule + Maria's hard
   limits), project skills and agents, .claude/state, optional scheduled tasks,
   a row in ~/orquestrador/time.md, an entry in ~/bots/README.md and a session in
   the sidebar group "Time". Grok Bot concepts adapted to Claude Code. Use when
@@ -25,7 +25,7 @@ Grok Bot concepts map to what here and which have no equivalent.
 
 - **Draft only.** Every bot drafts; Enzo sends, posts, pays or submits himself. No bot logs in to his accounts.
 - **Maria's hard limits** are copied into every persona. A bot's rules only add limits, never relax them
-  (precedence: Enzo > `~/orquestrador/CLAUDE.md` > `time.md` > the bot's `CLAUDE.md`).
+  (precedence: Enzo > `~/orquestrador/CLAUDE.md` > `time.md` > the bot's `AGENTS.md`).
 - **One job per bot.** A new bot only when the work has its own goal, tools, approval boundary or schedule.
 - **Roster is Enzo's.** `time.md` and `~/bots/README.md` changes are shown as a diff and written only after his yes.
 - **Idempotent.** Never overwrite an existing bot folder or file. The scaffold refuses an existing folder; to finish
@@ -65,28 +65,28 @@ Ask only what the trigger message did not answer. Lead each question with a reco
 ```
 
 It creates `.claude/{skills,agents,references,state}`, seeds `.claude/state/checkpoint.json`
-from the kit example, and copies `templates/CLAUDE.md.template` to `CLAUDE.md`. It refuses an
+from the kit example, and copies `templates/AGENTS.md.template` to `AGENTS.md` and writes a one-line `CLAUDE.md` (`@AGENTS.md`) so Claude Code and other agents (Codex, OpenBot, Cursor) read the same persona. It refuses an
 existing folder or a bad slug. Nothing else is touched.
 
-### 3. Write the persona `CLAUDE.md`
+### 3. Write the persona `AGENTS.md`
 
 Fill every `{{...}}` in the copied template from the interview, then delete unused optional sections.
 Keep the `Checkpoint (continue / retomar)` section as is: it makes `retomar` resume the bot's last task.
-Match the style of the live bots (`~/bots/social/CLAUDE.md`, `~/bots/money-maker/CLAUDE.md`,
-`~/bots/pucpr/CLAUDE.md`): short, imperative, hard rules first, a fixed reply format.
+Match the style of the live bots (`~/bots/social/AGENTS.md`, `~/bots/money-maker/AGENTS.md`,
+`~/bots/pucpr/AGENTS.md`): short, imperative, hard rules first, a fixed reply format.
 
 - The template's **Maria's hard limits** block is a bot-facing summary of `~/orquestrador/CLAUDE.md` → Hard limits,
   sometimes stricter. Check Maria's list for an item the block does not cover yet and add it; never drop or weaken
   an item. Skip Maria-only items (ai-memory authorization, account switching).
 - Keep the **draft-only** rule even when the bot has no outward channel today.
-- Bot data files (tables, pipelines, logs) live in the folder; name them in `CLAUDE.md` and say they never
+- Bot data files (tables, pipelines, logs) live in the folder; name them in `AGENTS.md` and say they never
   leave it (no memory, ai-memory or other bots).
-- No `{{` may remain: `grep -n '{{' CLAUDE.md` must print nothing.
+- No `{{` may remain: `grep -n '{{' AGENTS.md` must print nothing.
 
 ### 4. Project skills and agents (only what the job needs)
 
 - Prefer global skills already installed (`~/.claude/skill-index.md`). Name the ones the bot should use
-  in `CLAUDE.md`; do not copy them.
+  in `AGENTS.md`; do not copy them.
 - New third-party skill or agent: run `/prior-art-check` first, copy markdown only, pin the commit, keep the
   license file, and review any script before it runs (as recorded in `~/bots/README.md`).
 - A new skill written for this bot: follow `anthropic-skills:skill-creator` and place it in
@@ -119,9 +119,9 @@ If Enzo asks for something only Grok Bot does (runs with the Mac closed, event t
 
 **Scheduled task (L1, L2).** Confirm owner bot, schedule (cron in local time), input, expected output, approval
 boundary and missing-source behavior. Fill `templates/scheduled-task.md` into a self-contained prompt that names
-the bot folder by absolute path and starts by reading its `CLAUDE.md`; keep the L1 or L2 line, delete the other.
+the bot folder by absolute path and starts by reading its `AGENTS.md`; keep the L1 or L2 line, delete the other.
 Create it with `create_scheduled_task`, task id `<slug>-<what>`. Tell Enzo it runs only while the Claude app is
-open (a missed run fires on next launch). Record the level in the bot's `CLAUDE.md` (`## Autonomy`) and at the end
+open (a missed run fires on next launch). Record the level in the bot's `AGENTS.md` (`## Autonomy`) and at the end
 of the "What it does" cell of its `time.md` row (e.g. `L1: task <id> 07:00`); do not add a column.
 
 ### 6. Roster entries (diff, then Enzo's yes)
@@ -161,7 +161,7 @@ then delete the dry-run folder.
 ## Bot ready
 
 - Bot: <Name> (`~/bots/<slug>`), live | on-demand
-- Persona: CLAUDE.md (draft-only + Maria's hard limits); agnix: 0 errors
+- Persona: AGENTS.md (draft-only + Maria's hard limits); agnix: 0 errors
 - Skills / agents: (list or none); third-party pinned in README: yes | n/a
 - Secrets: none | `.env.example` (Enzo creates `.env`)
 - Autonomy: L0 | L1 | L2 | L3 (scheduled task <id> <cron> / loop prompt) and what Grok Bot would do that we do not

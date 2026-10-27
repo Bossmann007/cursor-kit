@@ -9,10 +9,10 @@ Source: the Grok Bot docs at https://docs.x.ai/grok-bot/overview (read 2026-10-2
 |---|---|
 | Bot: a name, one job, its own conversation | Folder `~/bots/<slug>/` + one Claude app session rooted there, sidebar group "Time" |
 | "Choose a job": separate Bot for a distinct goal, toolset, approval boundary or schedule; avoid a general helper | Step 0 of the skill: reuse an existing bot or role first |
-| First message: job, sources, approval boundaries, "remember this" | Persona `CLAUDE.md`: purpose, sources, reply format, hard rules |
+| First message: job, sources, approval boundaries, "remember this" | Persona `AGENTS.md`: purpose, sources, reply format, hard rules |
 | Starter prompt: owns / connects / start with; deliverable; explicit boundaries | Interview fields: purpose, sources, tools, evidence, limits |
-| Lasting rules saved to memory | `CLAUDE.md` (rules) + data files in the bot folder |
-| Memory is not authoritative; safety relies on approvals | Hard limits live in `CLAUDE.md` and Maria's file, not in memory |
+| Lasting rules saved to memory | `AGENTS.md` (rules) + data files in the bot folder |
+| Memory is not authoritative; safety relies on approvals | Hard limits live in `AGENTS.md` and Maria's file, not in memory |
 | Work summaries / resume | `.claude/state/checkpoint.json` (kit hooks keep `session.json` and `observability.jsonl`) |
 | Private skills library (`/` to reference) | Global `~/.claude/skills` + project `<bot>/.claude/skills` |
 | Specialist Bots, reviewer Bots | Project subagents `<bot>/.claude/agents/*.md` with the hard-limits preamble |
@@ -43,7 +43,7 @@ Per the docs ([skills-routines](https://docs.x.ai/grok-bot/skills-routines-and-a
 | Wakes up when another Bot hands it work | Maria (or Boss) messages the bot session with `SendMessage`; an idle session wakes and replies | Same idea; routed through Maria |
 | Runs tool calls without asking, under Auto Review "Allow automatically" rules and "Always allow" approvals | `permission_mode` `auto` (or `acceptEdits`) plus kit deny rules; never `bypassPermissions` | Never for outward actions here (see below) |
 | Sends drafts, approval requests and phone notifications | Push to Enzo's phone (`PushNotification` tool, when available) with a one-line summary | No approve-from-phone card; Enzo acts himself |
-| Memory that compounds per Bot (preferences, role, work summaries) | `CLAUDE.md` rules, data files in the bot folder, `.claude/state/checkpoint.json`; ai-memory hooks capture sessions automatically, durable ai-memory pages stay Maria's | No per-bot learned-memory store; lasting rules are edited into `CLAUDE.md` with Enzo's ok |
+| Memory that compounds per Bot (preferences, role, work summaries) | `AGENTS.md` rules, data files in the bot folder, `.claude/state/checkpoint.json`; ai-memory hooks capture sessions automatically, durable ai-memory pages stay Maria's | No per-bot learned-memory store; lasting rules are edited into `CLAUDE.md` with Enzo's ok |
 | Channels: desktop, mobile, Slack, X tag, voice | Claude app (desktop, and phone via Remote Control); push notifications | No Slack/X/voice channel for bots |
 | Sends, posts, buys or deletes after one approval or an "Always allow" rule | **Not allowed.** Drafts only; Enzo does every outward action himself | Deliberate gate |
 

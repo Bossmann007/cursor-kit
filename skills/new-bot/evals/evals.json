@@ -4,7 +4,7 @@
     {
       "id": 1,
       "prompt": "Cria um bot novo 'Leitor' que resume artigos de IA que eu colo e sugere 1 post pro Social. Só rascunho. Dry run em /tmp/x, não mexe em ~/bots.",
-      "expected_output": "Checks time.md for overlap (Social, Pesquisa); interview only for missing fields; scaffold-bot.sh with --bots-dir; CLAUDE.md filled with draft-only rule and Maria's hard limits, no '{{' left; agnix 0 errors; tree shown; roster diff printed, not written; no session started; dry-run folder deleted.",
+      "expected_output": "Checks time.md for overlap (Social, Pesquisa); interview only for missing fields; scaffold-bot.sh with --bots-dir; AGENTS.md filled (CLAUDE.md is `@AGENTS.md`) with draft-only rule and Maria's hard limits, no '{{' left; agnix 0 errors; tree shown; roster diff printed, not written; no session started; dry-run folder deleted.",
       "files": []
     },
     {
