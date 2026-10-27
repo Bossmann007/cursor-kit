@@ -64,7 +64,10 @@ if [[ "${SKIP_MCP:-}" != "1" ]] && command -v claude >/dev/null; then
   # stdio bridge forwards the Claude session id, so unscoped calls resolve to the session's project
   AIM_DATA="${AI_MEMORY_DATA_DIR:-${HOME}/Library/Application Support/ai-memory}"
   ADD_TAIL=(-- "${HOME}/Applications/ai-memory/ai-memory" mcp-bridge --server-url http://127.0.0.1:49374/mcp --data-dir "${AIM_DATA}")
-  [[ "${SKIP_AI_MEMORY:-}" == "1" ]] || add ai-memory --transport stdio
+  if [[ "${SKIP_AI_MEMORY:-}" != "1" ]]; then
+    claude mcp get ai-memory 2>/dev/null | grep -q 'Type: http' && claude mcp remove --scope user ai-memory  # 2.x entry
+    add ai-memory --transport stdio
+  fi
 else
   echo "skipped MCP registration (claude CLI missing or SKIP_MCP=1)"
 fi
