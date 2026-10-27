@@ -41,4 +41,4 @@ Fresh context between unrelated tasks (new session; CLI: `/clear`). After two fa
 
 ## pstack skills
 
-pstack skills (`poteto-mode`, `in-your-own-words`, ...) set `disable-model-invocation: true`, so the `Skill` tool refuses them. The user can type `/pstack:<name>`; the agent instead reads `docs/harness/claude-code.md` once, then `skills/<name>/SKILL.md`, from the newest `~/.claude/plugins/cache/*/pstack/*/` folder, and follows it.
+pstack skills (`poteto-mode`, `in-your-own-words`, ...) set `disable-model-invocation: true`, so the `Skill` tool refuses them. The user can type `/pstack:<name>`; the agent instead reads `docs/harness/claude-code.md` once, then `skills/<name>/SKILL.md`, from the folder in `installPath` of `pstack@cursor-plugins` in `~/.claude/plugins/installed_plugins.json` (the active version; older cache folders may remain), and follows it.
