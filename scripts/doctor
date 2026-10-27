@@ -1,0 +1,110 @@
+#!/usr/bin/env python3
+"""Is the installed harness healthy on this Mac? One line per check, exit 1 if any FAIL.
+
+`scripts/verify` tests this repo; `doctor` tests the install: MCP servers, skill links, hook files, ai-memory,
+RTK, and (when present) the OpenBot bot links and their safety rules.
+Usage: scripts/doctor [--quick]   (--quick skips `claude mcp list`, which takes ~20 s)
+"""
+from __future__ import annotations
+
+import json
+import re
+import shutil
+import subprocess
+import sys
+import urllib.request
+from pathlib import Path
+
+HOME = Path.home()
+MCP = ("token-engine", "codebase-memory", "context7", "ai-memory")
+results: list[tuple[str, str, str]] = []
+
+
+def report(status: str, name: str, detail: str = "") -> None:
+    results.append((status, name, detail))
+
+
+def check_mcp() -> None:
+    try:
+        out = subprocess.run(["claude", "mcp", "list"], capture_output=True, text=True, timeout=120).stdout
+    except (OSError, subprocess.SubprocessError) as e:
+        report("FAIL", "mcp", f"claude mcp list: {e}")
+        return
+    for name in MCP:
+        line = next((ln for ln in out.splitlines() if ln.startswith(f"{name}:")), "")
+        report("PASS" if "Connected" in line else "FAIL", f"mcp {name}", line.split(" - ")[-1].strip() or "missing")
+
+
+def check_skill_links(skills: Path) -> None:
+    broken = [p.name for p in skills.iterdir() if p.is_symlink() and not p.exists()] if skills.is_dir() else []
+    report("FAIL" if broken else "PASS", "skill links", ", ".join(broken) or f"{len(list(skills.iterdir()))} entries")
+
+
+def hook_files(settings: dict) -> list[str]:
+    paths = []
+    for groups in (settings.get("hooks") or {}).values():
+        for g in groups:
+            for h in g.get("hooks", []):
+                paths += re.findall(r"(/[\w./~-]+\.(?:py|sh))", h.get("command", ""))
+    return sorted(set(paths))
+
+
+def check_hooks(settings_path: Path) -> None:
+    try:
+        settings = json.loads(settings_path.read_text())
+    except (OSError, ValueError) as e:
+        report("FAIL", "hooks", f"{settings_path}: {e}")
+        return
+    files = hook_files(settings)
+    missing = [p for p in files if not Path(p).exists()]
+    report("FAIL" if missing else "PASS", "hook files", ", ".join(missing) or f"{len(files)} found")
+    names = {Path(p).name for p in files}
+    for need in ("backup-before-edit.py", "recommend-needs-source.py", "te-filter-output.py"):
+        report("PASS" if need in names else "FAIL", f"hook {need}", "" if need in names else "not registered")
+
+
+def check_ai_memory() -> None:
+    try:
+        code = urllib.request.urlopen("http://127.0.0.1:49374/healthz", timeout=3).status
+    except OSError as e:
+        code = str(e)
+    report("PASS" if code == 200 else "FAIL", "ai-memory healthz", str(code))
+
+
+def check_rtk() -> None:
+    report("PASS" if shutil.which("rtk") else "FAIL", "rtk on PATH", shutil.which("rtk") or "missing")
+
+
+def check_openbot(agents: Path, harden: Path) -> None:
+    if not agents.is_dir():
+        report("SKIP", "openbot", "no ~/OpenBot/Agents")
+        return
+    bad = []
+    for ws in sorted(agents.glob("agent-*")):
+        if not ws.is_symlink():
+            bad.append(f"{ws.name[:14]} unlinked")
+        elif not (ws / "AGENTS.md").is_file():
+            bad.append(f"{ws.name[:14]} no AGENTS.md")
+    report("WARN" if bad else "PASS", "openbot links", ", ".join(bad) or "all linked")
+    if harden.is_file():
+        r = subprocess.run([sys.executable, "-I", str(harden), "--check"], capture_output=True, text=True)
+        report("PASS" if r.returncode == 0 else "FAIL", "bot rules (openbot-harden --check)", f"exit {r.returncode}")
+
+
+def main() -> int:
+    if "--quick" not in sys.argv:
+        check_mcp()
+    check_skill_links(HOME / ".claude" / "skills")
+    check_hooks(HOME / ".claude" / "settings.json")
+    check_ai_memory()
+    check_rtk()
+    check_openbot(HOME / "OpenBot" / "Agents", HOME / "bots" / "scripts" / "openbot-harden.py")
+    for status, name, detail in results:
+        print(f"{status:4}  {name:40} {detail}")
+    fails = sum(s == "FAIL" for s, _, _ in results)
+    print(f"{fails} FAIL, {sum(s == 'WARN' for s, _, _ in results)} WARN")
+    return 1 if fails else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
