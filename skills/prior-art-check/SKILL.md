@@ -31,6 +31,11 @@ Goal: do not build what already exists, better and maintained. Search cheap laye
 4. **Public skills:** Anthropic's official sources first (`anthropics/skills`, `anthropics/knowledge-work-plugins`, the app's Customize skills/plugins via `SearchSkills` / `SearchPlugins`, partner-tier plugins), before any third-party list. Then `find-skills` (`npx skills find <query>`; check skills.sh leaderboard first).
 5. **Curated awesome lists:** [hesreallyhim/awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code), [BehiSecc/awesome-claude-skills](https://github.com/BehiSecc/awesome-claude-skills), [ComposioHQ/awesome-claude-skills](https://github.com/ComposioHQ/awesome-claude-skills) and [webfuse-com/awesome-claude](https://github.com/webfuse-com/awesome-claude) (site [awesomeclaude.ai](https://awesomeclaude.ai/)). Grep the README instead of reading it:
    `gh api repos/<owner>/<repo>/readme --jq .content | base64 -d | grep -i -E "<keywords>"`
+   **Hermes Agent catalogs** (NousResearch, MIT): [skills](https://hermes-agent.nousresearch.com/docs/skills) and
+   [plugins](https://hermes-agent.nousresearch.com/docs/plugins) docs, with sources in `NousResearch/hermes-agent`
+   (`skills/`, `optional-skills/<category>/`, `plugins/`, `plugin-catalog/`). Many items are agent-agnostic SKILL.md
+   files not listed elsewhere. Grep them with `gh search code <kw> --repo NousResearch/hermes-agent`. They are
+   written for Hermes, so check every tool name and path before you adapt one.
    Entries are leads only: every candidate still gets the full score below (license, last push, stars, scripts/postinstall review, pinned commit).
 6. **GitHub open source:**
    - `gh search repos "<keywords>" --sort stars --limit 10 --json fullName,description,stargazersCount,pushedAt,license`
