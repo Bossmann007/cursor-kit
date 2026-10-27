@@ -22,7 +22,10 @@ Short and direct: no preamble, no recap, no option menus, about 6 lines unless a
 
 - Big Bash output is filtered by hooks (RTK, `te-filter-output`); do not compress by hand. Full text stays in `~/.claude/te-cache`; read it there when the filtered text hides detail.
 - Code structure: codebase-memory first (`search_graph`, `get_code_snippet`); do not re-read files.
-- History and decisions: ai-memory MCP.
+- History and decisions: ai-memory MCP (session-aware bridge: omit scope for the current project). If a result says
+  `resolved_by: shared_slot` or `default_after_mismatch`, it hit another project: redo it with `workspace` + `project`
+  as the server instructions derive them (`.ai-memory.toml`, else `upstream` then `origin` repo path without host, else
+  the folder name).
 
 ## Compact instructions
 
