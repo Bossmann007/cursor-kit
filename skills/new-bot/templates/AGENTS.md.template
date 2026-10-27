@@ -44,7 +44,7 @@ Keep it short, in {{language}}.
 
 ## Autonomy
 
-Level {{L0 | L1 | L2 | L3}}: {{one line, e.g. "on demand only" or "scheduled task `<id>` weekdays 07:00, read only"}}.
+Level {{L0 | L1 | L2 | L3}}: {{one line, e.g. "on demand only" or "routine `<name>` weekdays 07:00 weekdays 07:00, read only"}}.
 At every level, anything outward stays a draft for Enzo.
 
 ## Tools

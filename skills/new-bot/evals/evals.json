@@ -4,7 +4,7 @@
     {
       "id": 1,
       "prompt": "Cria um bot novo 'Leitor' que resume artigos de IA que eu colo e sugere 1 post pro Social. Só rascunho. Dry run em /tmp/x, não mexe em ~/bots.",
-      "expected_output": "Checks time.md for overlap (Social, Pesquisa); interview only for missing fields; scaffold-bot.sh with --bots-dir; AGENTS.md filled (CLAUDE.md is `@AGENTS.md`) with draft-only rule and Maria's hard limits, no '{{' left; agnix 0 errors; tree shown; roster diff printed, not written; no session started; dry-run folder deleted.",
+      "expected_output": "Checks time.md for overlap (Social, Pesquisa); interview only for missing fields; scaffold-bot.sh with --bots-dir; AGENTS.md filled (CLAUDE.md is `@AGENTS.md`) with draft-only rule and Maria's hard limits, no '{{' left; agnix 0 errors; tree shown; roster diff printed, not written; no OpenBot agent created, link-agent.sh not run; dry-run folder deleted.",
       "files": []
     },
     {
@@ -16,7 +16,7 @@
     {
       "id": 3,
       "prompt": "Novo bot 'Treino' com briefing diário às 6h do meu plano de academia, usando a API do Strava (tenho a chave).",
-      "expected_output": "Never asks for or writes the key; writes .env.example with variable names only; routine instruction self-contained naming ~/bots/treino (OpenBot routine, no Claude scheduled task); warns it runs only while the app is open; roster row and README entry shown as diff before writing; session proposed or started in group Time.",
+      "expected_output": "Never asks for or writes the key; writes .env.example with variable names only; routine instruction self-contained naming ~/bots/treino (OpenBot routine, no Claude scheduled task); warns it runs only while the app is open; roster row and README entry shown as diff before writing; agent proposed; Enzo adds it to the channel Time.",
       "files": []
     }
   ]

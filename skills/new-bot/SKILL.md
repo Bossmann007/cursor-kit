@@ -155,7 +155,7 @@ of the "What it does" cell of its `time.md` row (e.g. `L1: routine 07:00`); do n
 4. `python3 -I ~/bots/scripts/openbot-harden.py --check` → exit 0.
 5. The first task's reply contains the evidence promised in `time.md`.
 
-Dry run (`--bots-dir` outside `~/bots`): run 1–3, print the step 5 setup without creating it, skip 6–7, print the roster diff instead of writing it,
+Dry run (`--bots-dir` outside `~/bots`): run checks 1–3 above, print the step 5 setup without creating it, skip steps 6–7, print the roster diff instead of writing it,
 then delete the dry-run folder.
 
 ### 9. Done report
