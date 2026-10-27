@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Scaffold one bot folder: <bots-dir>/<slug>/ with CLAUDE.md template and .claude/{skills,agents,references,state}.
+# Scaffold one bot folder: <bots-dir>/<slug>/ with AGENTS.md persona template, a CLAUDE.md importing it, and .claude/{skills,agents,references,state}.
 # Refuses an existing folder. Writes nothing outside the new folder. No secrets.
 # Usage: scaffold-bot.sh <slug> [--bots-dir DIR]   (default DIR: ~/bots)
 set -euo pipefail
@@ -18,7 +18,8 @@ bot="${dir%/}/${slug}"
 [[ -e "$bot" ]] && { echo "exists: $bot (not touched)" >&2; exit 1; }
 
 mkdir -p "$bot"/.claude/{skills,agents,references,state}
-cp "$SKILL/templates/CLAUDE.md.template" "$bot/CLAUDE.md"
+cp "$SKILL/templates/AGENTS.md.template" "$bot/AGENTS.md"
+printf '@AGENTS.md\n' > "$bot/CLAUDE.md"  # Claude Code reads CLAUDE.md; other agents read AGENTS.md
 if [[ -f "$KIT/state/checkpoint.json.example" ]]; then
   cp "$KIT/state/checkpoint.json.example" "$bot/.claude/state/checkpoint.json"
 else
