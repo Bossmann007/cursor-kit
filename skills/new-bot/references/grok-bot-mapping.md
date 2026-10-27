@@ -69,7 +69,7 @@ draft gate because:
   the risk, so consequential actions should stay behind approval; our bots read pasted screenshots and web pages all day.
 - Our bots touch high-cost domains: a medical clinic (CFM, ANVISA, LGPD), Enzo's money and his public X/LinkedIn
   accounts. One wrong send is not reversible; a draft costs Enzo one copy-paste.
-- Maria's hard limits (`~/orquestrador/CLAUDE.md`) require Enzo's approval of the final text, and a bot's rules can
+- Maria's hard limits (`~/orquestrador/AGENTS.md`) require Enzo's approval of the final text, and a bot's rules can
   only add limits.
 - Our runtime has no approval card with an audit trail; "Enzo does it himself" is the approval.
 
