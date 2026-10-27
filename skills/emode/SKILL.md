@@ -15,14 +15,14 @@ Short replies. "Done" needs evidence: the project's check output (tests, build, 
 ## 1. Size it
 
 - **Small** (diff fits one sentence): do it, run the check.
-- **Medium** (bug, 1-2 files): reproduce, find the root cause (`systematic-debugging`), write a failing test, fix, run the check.
+- **Medium** (bug, 1-2 files): reproduce, find the root cause (`diagnosing-bugs`), write a failing test, fix, run the check.
 - **Large** (multi-file, new feature, a phase): step 2.
 
 ## 2. Large task
 
-1. Goal: `/pstack:in-your-own-words` if the ask is vague. New tool or integration: `/prior-art-check`.
-2. Spec: interview with `AskUserQuestion`, write `SPEC.md` (files, out of scope, one end-to-end check). Then `/clear` and implement in a fresh session.
-3. Implement with `/pstack:poteto-mode`, one task at a time, commit per task only if asked.
+1. Goal: pstack `in-your-own-words` if the ask is vague. New tool or integration: `/prior-art-check`.
+2. Spec: interview with `AskUserQuestion`, write `SPEC.md` (files, out of scope, one end-to-end check). Then implement from a fresh context: a new session whose brief is `SPEC.md` (CLI: `/clear`).
+3. Implement in pstack `poteto-mode` style, one task at a time, commit per task only if asked.
 4. Unattended: `/goal <the check passes>` (tests, build and lint exit 0).
 
 ## 3. Verify
@@ -37,4 +37,8 @@ PR with evidence (`pr` skill: what changed, how it was verified). Never merge un
 
 ## 5. Context
 
-`/clear` between unrelated tasks. After two failed corrections: `/clear` and rewrite the prompt. Use subagents for investigation.
+Fresh context between unrelated tasks (new session; CLI: `/clear`). After two failed corrections: fresh context and rewrite the prompt. Use subagents for investigation.
+
+## pstack skills
+
+pstack skills (`poteto-mode`, `in-your-own-words`, ...) set `disable-model-invocation: true`, so the `Skill` tool refuses them. The user can type `/pstack:<name>`; the agent instead reads `docs/harness/claude-code.md` once, then `skills/<name>/SKILL.md`, from the folder in `installPath` of `pstack@cursor-plugins` in `~/.claude/plugins/installed_plugins.json` (the active version; older cache folders may remain), and follows it.
