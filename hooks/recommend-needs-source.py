@@ -14,10 +14,10 @@ import sys
 from pathlib import Path
 
 RECOMMENDS = re.compile(
-    r"(?<!não )(?<!nao )\b(recomendo|recomendaria|recomendação:|minha recomendação|sugiro|sugestão:|o certo é|"
-    r"I recommend|I suggest|my recommendation|the right (call|move) is)", re.I)
+    r"(?<!não )(?<!nao )\b(recomendo|recomendaria|recomendad[oa]:|recomendação:|minha recomendação|sugiro|"
+    r"sugestão:|o certo é|(I|I'd|I would|we) (recommend|suggest)|my recommendation|the right (call|move) is)", re.I)
 SOURCE = re.compile(
-    r"https?://|\b[\w./~-]*[A-Za-z][\w./~-]*\.[A-Za-z][A-Za-z0-9]{0,5}:\d+|não verifiquei|nao verifiquei|"
+    r"https?://|\b[\w./~-]+\.[A-Za-z][A-Za-z0-9]{0,5}:\d+|não verifiquei|nao verifiquei|"
     r"not verified|não testei", re.I)
 REASON = ("This reply recommends something without a source. Before stopping: cite the primary source you read in "
           "this session (URL or file:line) for each fact the recommendation rests on, name the one fact that would "
@@ -48,6 +48,7 @@ def _is_tool_result(entry: dict) -> bool:
 
 
 def verdict(text: str) -> dict:
+    text = text[-8000:]  # bound regex cost on huge replies (minified code, long path lists)
     if RECOMMENDS.search(text) and not SOURCE.search(text):
         return {"hookSpecificOutput": {"hookEventName": "Stop", "additionalContext": REASON}}
     return {}

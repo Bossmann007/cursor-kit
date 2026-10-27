@@ -74,6 +74,14 @@ class Recommend(unittest.TestCase):
         self.assertNotEqual(rec.verdict("Sugestão: usar X em todos."), {})
         self.assertNotEqual(rec.verdict("Recomendo X, roda em 127.0.0.1:8080."), {})
 
+    def test_more_wordings_and_fast_on_long_dotted_text(self):
+        import time
+        for s in ("I'd recommend X.", "We recommend X.", "Recomendado: X."):
+            self.assertNotEqual(rec.verdict(s), {}, s)
+        start = time.monotonic()
+        rec.verdict("Recomendo " + "a." * 20000)
+        self.assertLess(time.monotonic() - start, 1.0)
+
     def test_main_uses_last_assistant_message(self):
         out = run_main(rec, {"last_assistant_message": "Recomendo X.", "stop_hook_active": False})
         self.assertIn("additionalContext", out)
