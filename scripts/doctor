@@ -8,7 +8,8 @@ Usage: scripts/doctor [--quick]   (--quick skips `claude mcp list`, which takes 
 from __future__ import annotations
 
 import json
-import re
+import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -36,17 +37,27 @@ def check_mcp() -> None:
 
 
 def check_skill_links(skills: Path) -> None:
-    broken = [p.name for p in skills.iterdir() if p.is_symlink() and not p.exists()] if skills.is_dir() else []
+    if not skills.is_dir():
+        report("FAIL", "skill links", f"{skills} missing")
+        return
+    broken = [p.name for p in skills.iterdir() if p.is_symlink() and not p.exists()]
     report("FAIL" if broken else "PASS", "skill links", ", ".join(broken) or f"{len(list(skills.iterdir()))} entries")
 
 
 def hook_files(settings: dict) -> list[str]:
-    paths = []
+    """Script paths (.py/.sh) and the executable of each hook command, with ~ and $VARS expanded."""
+    paths = set()
     for groups in (settings.get("hooks") or {}).values():
         for g in groups:
             for h in g.get("hooks", []):
-                paths += re.findall(r"(/[\w./~-]+\.(?:py|sh))", h.get("command", ""))
-    return sorted(set(paths))
+                try:
+                    tokens = shlex.split(h.get("command", ""))
+                except ValueError:
+                    continue
+                if tokens and "/" in tokens[0] and not tokens[0].startswith("$("):
+                    paths.add(os.path.expanduser(os.path.expandvars(tokens[0])))
+                paths |= {os.path.expanduser(os.path.expandvars(t)) for t in tokens if t.endswith((".py", ".sh"))}
+    return sorted(p for p in paths if p.startswith("/"))
 
 
 def check_hooks(settings_path: Path) -> None:
@@ -86,13 +97,20 @@ def check_openbot(agents: Path, harden: Path) -> None:
         elif not (ws / "AGENTS.md").is_file():
             bad.append(f"{ws.name[:14]} no AGENTS.md")
     report("WARN" if bad else "PASS", "openbot links", ", ".join(bad) or "all linked")
-    if harden.is_file():
-        r = subprocess.run([sys.executable, "-I", str(harden), "--check"], capture_output=True, text=True)
+    if not harden.is_file():
+        report("SKIP", "bot rules (openbot-harden --check)", f"{harden} missing")
+        return
+    try:
+        r = subprocess.run([sys.executable, "-I", str(harden), "--check"], capture_output=True, text=True, timeout=60)
         report("PASS" if r.returncode == 0 else "FAIL", "bot rules (openbot-harden --check)", f"exit {r.returncode}")
+    except subprocess.TimeoutExpired:
+        report("FAIL", "bot rules (openbot-harden --check)", "timed out after 60 s")
 
 
 def main() -> int:
-    if "--quick" not in sys.argv:
+    if "--quick" in sys.argv:
+        report("SKIP", "mcp", "--quick")
+    else:
         check_mcp()
     check_skill_links(HOME / ".claude" / "skills")
     check_hooks(HOME / ".claude" / "settings.json")
