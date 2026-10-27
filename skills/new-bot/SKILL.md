@@ -138,7 +138,8 @@ of the "What it does" cell of its `time.md` row (e.g. `L1: routine 07:00`); do n
   `openbot-import.json` zip). Its description says to read `AGENTS.md` at the root of its workspace.
 - Link and harden it in one step (Enzo or Boss runs it; it backs up the original workspace, links it, and applies
   the deny rules + sandbox to this bot only as a canary): `~/bots/scripts/link-agent.sh <agent-id> <slug>`.
-- Access: Ask first (OpenBot's default). Not Workspace only: that mode ignores the folder's `.claude/settings.json`
+- Access: Full access (OpenBot offers only Full access or Workspace only for Claude agents). Never Workspace only:
+  that mode ignores the folder's `.claude/settings.json`
   and turns hooks off.
 - First message (Grok Bot "first task"): a real, small task with a clear finish line. Ask for the first line of
   its `AGENTS.md` first, to prove the link.

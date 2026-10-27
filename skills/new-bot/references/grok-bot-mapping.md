@@ -37,7 +37,7 @@ Sources: the Grok Bot docs at https://docs.x.ai/grok-bot/overview (read 2026-10-
 | **L3 event-driven** | Wakes on a webhook or another bot's routine answer | Webhook routine or routine flow; nothing more often than hourly |
 
 The hard limits do not change at any level: anything outward (send, post, comment, pay, trade, buy, delete outside
-its folder, submit) stays a draft for Enzo. Access is Ask first; never Workspace only (it ignores the folder's rules
+its folder, submit) stays a draft for Enzo. Access is Full access with the deny rules + sandbox; never Workspace only (it ignores the folder's rules
 and turns hooks off).
 
 ## Why the draft gate stays
