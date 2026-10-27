@@ -17,6 +17,11 @@ Short replies. "Done" needs evidence: the project's check output (tests, build, 
 - **Small** (diff fits one sentence): do it, run the check.
 - **Medium** (bug, 1-2 files): reproduce, find the root cause (`diagnosing-bugs`), write a failing test, fix, run the check.
 - **Large** (multi-file, new feature, a phase): step 2.
+- **Decision** (a recommendation, or a change to security, money, the clinic, global config or many folders):
+  1. Open the primary source now (README, LICENSE, docs, the code) and cite it (URL or `file:line`); no source, say "não verifiquei" and do not recommend.
+  2. Name the one fact that would make it wrong and prove it by running real code (pstack `blast-radius` idea), not by writing it up.
+  3. Say how to undo it. Apply to one canary (one bot, one folder) and check it before the rest.
+  4. If it gets reverted, add a row to `~/orquestrador/notes/reverts.tsv` (date, what, cause, check added) and turn the cause into a check, script or hook (pstack `correct`), not a new prompt rule.
 
 ## 2. Large task
 
