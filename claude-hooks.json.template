@@ -15,17 +15,82 @@
   },
   "hooks": {
     "SessionStart": [
-      { "hooks": [ { "type": "command", "command": "python3 __CLAUDE_HOOKS_DIR__/token-engine-session.py", "timeout": 5 } ] }
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 __CLAUDE_HOOKS_DIR__/token-engine-session.py",
+            "timeout": 5
+          }
+        ]
+      }
     ],
     "PostToolUse": [
-      { "matcher": "Bash", "hooks": [ { "type": "command", "command": "__TE_PY__ __CLAUDE_HOOKS_DIR__/te-filter-output.py", "timeout": 15 } ] },
-      { "matcher": "Edit|Write|MultiEdit|NotebookEdit", "hooks": [ { "type": "command", "command": "python3 __CLAUDE_HOOKS_DIR__/track-edits.py", "timeout": 5, "async": true } ] }
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "__TE_PY__ __CLAUDE_HOOKS_DIR__/te-filter-output.py",
+            "timeout": 15
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 __CLAUDE_HOOKS_DIR__/track-edits.py",
+            "timeout": 5,
+            "async": true
+          }
+        ]
+      }
     ],
     "PostToolUseFailure": [
-      { "hooks": [ { "type": "command", "command": "python3 __CLAUDE_HOOKS_DIR__/tool-failure.py", "timeout": 5, "async": true } ] }
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 __CLAUDE_HOOKS_DIR__/tool-failure.py",
+            "timeout": 5,
+            "async": true
+          }
+        ]
+      }
     ],
     "Stop": [
-      { "hooks": [ { "type": "command", "command": "python3 __CLAUDE_HOOKS_DIR__/checkpoint-stop.py", "timeout": 5 } ] }
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 __CLAUDE_HOOKS_DIR__/checkpoint-stop.py",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 __CLAUDE_HOOKS_DIR__/recommend-needs-source.py",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 __CLAUDE_HOOKS_DIR__/backup-before-edit.py",
+            "timeout": 5
+          }
+        ]
+      }
     ]
   }
 }
