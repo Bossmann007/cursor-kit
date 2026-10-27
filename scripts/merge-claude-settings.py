@@ -10,7 +10,8 @@ usage: merge-claude-settings.py --kit KIT.json --existing SETTINGS.json --out OU
 import argparse, json, pathlib
 
 KIT = ("token-engine-session.py", "compress-tool-output.py", "track-edits.py",
-       "tool-failure.py", "checkpoint-stop.py", "te-filter-output.py")
+       "tool-failure.py", "checkpoint-stop.py", "te-filter-output.py",
+       "backup-before-edit.py", "recommend-needs-source.py")  # tests check every template hook is listed
 DEFAULT_TIMEOUT = 10
 SESSION_END_TIMEOUT = 2
 

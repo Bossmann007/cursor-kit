@@ -13,9 +13,12 @@ import re
 import sys
 from pathlib import Path
 
-RECOMMENDS = re.compile(r"\b(recomend|recommend|sugiro|suggest|o certo é|the right (call|move) is)", re.I)
+RECOMMENDS = re.compile(
+    r"(?<!não )(?<!nao )\b(recomendo|recomendaria|recomendação:|minha recomendação|sugiro|sugestão:|o certo é|"
+    r"I recommend|I suggest|my recommendation|the right (call|move) is)", re.I)
 SOURCE = re.compile(
-    r"https?://|\b[\w./~-]+\.[A-Za-z0-9]{1,6}:\d+|não verifiquei|nao verifiquei|not verified|não testei", re.I)
+    r"https?://|\b[\w./~-]*[A-Za-z][\w./~-]*\.[A-Za-z][A-Za-z0-9]{0,5}:\d+|não verifiquei|nao verifiquei|"
+    r"not verified|não testei", re.I)
 REASON = ("This reply recommends something without a source. Before stopping: cite the primary source you read in "
           "this session (URL or file:line) for each fact the recommendation rests on, name the one fact that would "
           "make it wrong and how you checked it, and say whether it is reversible. If you did not check, say "
