@@ -61,8 +61,10 @@ if [[ "${SKIP_MCP:-}" != "1" ]] && command -v claude >/dev/null; then
   ADD_TAIL=(-- "${HOME}/.local/bin/codebase-memory-mcp")
   add codebase-memory
   ADD_TAIL=(https://mcp.context7.com/mcp);  add context7 --transport http
-  ADD_TAIL=(http://127.0.0.1:49374/mcp)
-  [[ "${SKIP_AI_MEMORY:-}" == "1" ]] || add ai-memory --transport http
+  # stdio bridge forwards the Claude session id, so unscoped calls resolve to the session's project
+  AIM_DATA="${AI_MEMORY_DATA_DIR:-${HOME}/Library/Application Support/ai-memory}"
+  ADD_TAIL=(-- "${HOME}/Applications/ai-memory/ai-memory" mcp-bridge --server-url http://127.0.0.1:49374/mcp --data-dir "${AIM_DATA}")
+  [[ "${SKIP_AI_MEMORY:-}" == "1" ]] || add ai-memory --transport stdio
 else
   echo "skipped MCP registration (claude CLI missing or SKIP_MCP=1)"
 fi
