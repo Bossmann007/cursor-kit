@@ -2,7 +2,7 @@
 """Is the installed harness healthy on this Mac? One line per check, exit 1 if any FAIL.
 
 `scripts/verify` tests this repo; `doctor` tests the install: MCP servers, skill links, hook files, ai-memory,
-RTK, and (when present) the OpenBot bot links and their safety rules.
+RTK, and (when present) the OpenBot agent folders and their safety rules.
 Usage: scripts/doctor [--quick]   (--quick skips `claude mcp list`, which takes ~20 s)
 """
 from __future__ import annotations

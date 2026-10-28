@@ -15,7 +15,7 @@ chmod +x "$DST"/*.py
 SETTINGS="${CL}/settings.json"
 [[ -f "$SETTINGS" ]] && cp "$SETTINGS" "${SETTINGS}.bak.$(date +%Y%m%d%H%M%S)"
 KIT_RESOLVED="$(mktemp)"; MERGED="$(mktemp)"
-TE_PY="${HOME}/.cursor/repos/token-engine/.venv/bin/python"; [[ -x "$TE_PY" ]] || TE_PY=python3
+TE_PY="${HOME}/Projects/token-engine/.venv/bin/python"; [[ -x "$TE_PY" ]] || TE_PY=python3
 sed -e "s|__CLAUDE_HOOKS_DIR__|${DST}|g" -e "s|__TE_PY__|${TE_PY}|g" "$ROOT/claude-hooks.json.template" > "$KIT_RESOLVED"
 python3 "$ROOT/scripts/merge-claude-settings.py" --kit "$KIT_RESOLVED" --existing "$SETTINGS" --out "$MERGED"
 mv "$MERGED" "$SETTINGS"; rm -f "$KIT_RESOLVED"
@@ -47,6 +47,7 @@ for d in "$ROOT"/skills/*/; do
     [[ -L "${CL}/skills/${n}" && "$(readlink "${CL}/skills/${n}")" == "${d%/}" ]] && rm "${CL}/skills/${n}"
     continue
   fi
+  [[ -L "${CL}/skills/${n}" && ! -e "${CL}/skills/${n}" ]] && rm "${CL}/skills/${n}"  # broken link (repo moved)
   [[ -e "${CL}/skills/${n}" ]] || ln -s "${d%/}" "${CL}/skills/${n}"
 done
 echo "linked skills into ${CL}/skills"
@@ -55,7 +56,7 @@ echo "linked skills into ${CL}/skills"
 if [[ "${SKIP_MCP:-}" != "1" ]] && command -v claude >/dev/null; then
   # add NAME [claude mcp add args before name...] -- usage: add NAME "flags..." then rest handled below
   add() { local name="$1"; shift; if claude mcp get "$name" >/dev/null 2>&1; then echo "mcp $name: exists"; else claude mcp add --scope user "$name" "$@" "${ADD_TAIL[@]}"; fi; }
-  TE="${HOME}/.cursor/repos/token-engine"
+  TE="${HOME}/Projects/token-engine"
   ADD_TAIL=(-- "${TE}/.venv/bin/python" -m token_engine.mcp.server)
   add token-engine -e "PYTHONPATH=${TE}/src"
   ADD_TAIL=(-- "${HOME}/.local/bin/codebase-memory-mcp")

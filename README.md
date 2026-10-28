@@ -30,7 +30,7 @@ Não inclui Obsidian, Graphify visual, agent-browser nem proxy CLI tipo RTK. Par
 ## Instalação rápida (Claude Code, Cursor, Codex)
 
 ```bash
-cd ~/cursor-kit && ./sync-all.sh   # TOOLS="claude cursor codex gemini" para escolher
+cd ~/Projects/cursor-kit && ./sync-all.sh   # TOOLS="claude cursor codex gemini" para escolher
 ```
 
 ## Atalhos depois do onboarding
@@ -56,9 +56,9 @@ Cursor rejeita symlink cujo target fica fora de `~/.cursor/plugins/local/`. Sync
 
 ```bash
 rsync -a --delete --exclude '.git/' --exclude '__pycache__/' \
-  ~/cursor-kit/ ~/.cursor/plugins/local/cursor-kit/
-~/cursor-kit/sync-hooks.sh
-~/cursor-kit/sync-rules.sh   # opcional se o plugin já carrega rules/
+  ~/Projects/cursor-kit/ ~/.cursor/plugins/local/cursor-kit/
+~/Projects/cursor-kit/sync-hooks.sh
+~/Projects/cursor-kit/sync-rules.sh   # opcional se o plugin já carrega rules/
 # depois: Developer → Reload Window
 ```
 
@@ -67,7 +67,7 @@ Branch de trabalho pessoal (Enzo). `enzo`. Default do repo continua `master` at�
 ## Testes do kit
 
 ```bash
-python -m unittest discover -s ~/cursor-kit/tests
+python -m unittest discover -s ~/Projects/cursor-kit/tests
 ```
 
 ## Licença

@@ -32,7 +32,7 @@ Resolve the CLI in this order (do not use the ancient system `python3` on macOS 
 
 1. `$MARKITDOWN` if set
 2. `command -v markitdown`
-3. `~/token-engine/.venv/bin/markitdown` (common on this stack)
+3. `~/Projects/token-engine/.venv/bin/markitdown` (common on this stack)
 4. Else install into a real 3.10+ venv:
 
 ```bash
@@ -65,7 +65,7 @@ markitdown "/path/to/file.pdf" > "/path/to/output.md"
 ```bash
 bash "$(dirname "$0")/scripts/digest.sh" /path/to/file_or_dir [--out DIR]
 # or from cursor-kit:
-# bash ~/cursor-kit/skills/digest-files/scripts/digest.sh ./Modulos --out ./digest
+# bash ~/Projects/cursor-kit/skills/digest-files/scripts/digest.sh ./Modulos --out ./digest
 ```
 
 **Python API** (when you need programmatic control):

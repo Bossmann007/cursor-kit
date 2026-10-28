@@ -2,7 +2,7 @@
 # Install cursor-kit scaffold into a project (macOS/Linux)
 set -euo pipefail
 PROJECT_ROOT="${1:-$(pwd)}"
-KIT="${HOME}/cursor-kit"
+KIT="${HOME}/Projects/cursor-kit"
 mkdir -p "${PROJECT_ROOT}/.claude/state"
 [[ -f "${PROJECT_ROOT}/AGENTS.md" ]] || cp "${KIT}/AGENTS.md.template" "${PROJECT_ROOT}/AGENTS.md"
 [[ -f "${PROJECT_ROOT}/PROJECT.md" ]] || cp "${KIT}/PROJECT.md.template" "${PROJECT_ROOT}/PROJECT.md"

@@ -19,7 +19,7 @@ A bot here = one OpenBot agent whose folder `~/OpenBot/Agents/agent-<id>` holds 
 Steps 2-6 draft it in `~/bots/<slug>/`; step 7 moves the draft into the agent folder.
 Maria (`~/OpenBot/Agents/agent-2ab7683d-1761-4580-ac5f-39c11dfea523`) leads the OpenBot channel "Time"; Boss (`~/OpenBot/Agents/agent-ac795158-5cfb-4c26-9461-71da5bbb3af7`) sits above her.
 
-Kit root: `~/cursor-kit`. Read `references/grok-bot-mapping.md` before step 1: it says which
+Kit root: `~/Projects/cursor-kit`. Read `references/grok-bot-mapping.md` before step 1: it says which
 Grok Bot concepts map to what here and which have no equivalent.
 
 ## Locked decisions (this skill)
@@ -61,8 +61,8 @@ Ask only what the trigger message did not answer. Lead each question with a reco
 ### 2. Scaffold the folder
 
 ```bash
-~/cursor-kit/skills/new-bot/scripts/scaffold-bot.sh <slug>                    # ~/bots/<slug>
-~/cursor-kit/skills/new-bot/scripts/scaffold-bot.sh <slug> --bots-dir <dir>   # dry run elsewhere
+~/Projects/cursor-kit/skills/new-bot/scripts/scaffold-bot.sh <slug>                    # ~/bots/<slug>
+~/Projects/cursor-kit/skills/new-bot/scripts/scaffold-bot.sh <slug> --bots-dir <dir>   # dry run elsewhere
 ```
 
 It creates `.claude/{skills,agents,references,state}`, seeds `.claude/state/checkpoint.json`

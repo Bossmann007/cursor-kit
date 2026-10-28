@@ -7,7 +7,8 @@ ROOT = Path(__file__).resolve().parents[1]
 class T(unittest.TestCase):
     def test_install_scaffolds_claude_state(self):
         with tempfile.TemporaryDirectory() as d, tempfile.TemporaryDirectory() as home:
-            os.symlink(ROOT, Path(home) / "cursor-kit")
+            (Path(home) / "Projects").mkdir()
+            os.symlink(ROOT, Path(home) / "Projects" / "cursor-kit")
             r = subprocess.run(["bash", str(ROOT / "install.sh"), d], env={**os.environ, "HOME": home}, capture_output=True, text=True)
             self.assertEqual(r.returncode, 0, r.stderr)
             self.assertTrue((Path(d) / ".claude/state/checkpoint.json").exists())

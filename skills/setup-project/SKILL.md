@@ -17,7 +17,7 @@ disable-model-invocation: false
 Orchestrate one coherent per-repo setup on top of the global Cursor environment.
 Compose existing skills and templates — do not rewrite them inline.
 
-Canonical kit root: `~/cursor-kit` (symlink to this repo when installed that way).
+Canonical kit root: `~/Projects/cursor-kit` (the git checkout itself, no symlink).
 If missing, resolve from the plugin/repo path that contains `AGENTS.md.template`.
 
 Read `references/layers.md` before writing files so global vs per-repo stays clear.
@@ -48,14 +48,14 @@ If the user already stated mode/depth in the trigger message, skip the matching 
 
 ### 1. Global pré-check (repair only if broken)
 
-On Claude Code the table below maps to: MCP → `claude mcp list` (token-engine, codebase-memory, context7, ai-memory); hooks → `~/.claude/settings.json`; pstack/superpowers → `claude plugin list`. Repair any tool in one go with `~/cursor-kit/sync-all.sh` (merge-safe). Cursor-only paths (`~/.cursor/...`) apply when Cursor is the active tool.
+On Claude Code the table below maps to: MCP → `claude mcp list` (token-engine, codebase-memory, context7, ai-memory); hooks → `~/.claude/settings.json`; pstack/superpowers → `claude plugin list`. Repair any tool in one go with `~/Projects/cursor-kit/sync-all.sh` (merge-safe). Cursor-only paths (`~/.cursor/...`) apply when Cursor is the active tool.
 
 Check, do not duplicate:
 
 | Check | Healthy signal | Repair |
 |-------|----------------|--------|
 | pstack models | `~/.cursor/rules/pstack-models.mdc` exists | Follow `/setup-pstack` (detect models → confirm → write rule) |
-| token-engine MCP | `~/.cursor/mcp.json` has `token-engine` pointing at a real Python/venv | Point at `~/token-engine` / `~/.cursor/repos/token-engine`; remind user to enable MCP + reload if needed |
+| token-engine MCP | `~/.cursor/mcp.json` has `token-engine` pointing at a real Python/venv | Point at `~/Projects/token-engine` / `~/Projects/token-engine`; remind user to enable MCP + reload if needed |
 | Hooks | `~/.cursor/hooks.json` has sessionStart / postToolUse / stop | Restore via kit `./sync-hooks.sh` (**merge-safe** — preserves companions like ai-memory); do not invent a second hook system inside the repo; do not overwrite hooks.json from scratch when companions are present |
 | ai-memory companion | Binary on PATH or `~/Applications/ai-memory/ai-memory`; `curl` `http://127.0.0.1:49374/mcp` → 405; MCP `ai-memory` in `~/.cursor/mcp.json`; hooks.json has kit **and** ai-memory commands | **Repair if broken** via `/setup-ai-memory` (or `scripts/install-ai-memory.sh`). If never installed: depth 1 → one-line note + skip; depth 2 → install/repair in §6c (default recommend yes on this stack). Keep AGENTS/PROJECT/checkpoint authoritative |
 | Plugins | cursor-team-kit, continual-learning, pstack available | If missing, tell user to `/add-plugin` (or install this `cursor-kit` plugin); do not fake plugin install |
@@ -74,7 +74,7 @@ From kit templates (`AGENTS.md.template`, `PROJECT.md.template`, `state/checkpoi
 4. Create `.claude/state/checkpoint.json` only if absent
 5. Append kit gitignore snippet if `checkpoint.json` ignore is missing
 
-Prefer the kit's `install.sh` when the machine has `~/cursor-kit` linked; otherwise copy the same files from this plugin repo root.
+Prefer the kit's `install.sh` when the machine has `~/Projects/cursor-kit` linked; otherwise copy the same files from this plugin repo root.
 
 Do **not** copy global `~/.cursor/rules` into the project.
 
@@ -155,7 +155,7 @@ Part of stack setup. Delegate to `/setup-ai-memory` — do not reimplement upstr
 2. **Depth 2 only:** if companion was never installed, **install** it (recommended default on this stack; user may decline once). Point at `docs/prompts/07-ai-memory-wire.md` + `docs/tools/10-ai-memory.md`.
 3. **Depth 1:** if never installed, one line: long-horizon wiki skipped; use depth 2 or `/setup-ai-memory` later.
 4. Reminder: new Cursor repos auto-capture once companion is healthy — no per-repo reinstall. Optional `.ai-memory.toml` only if the user wants custom workspace/project naming.
-5. **Seed the new project (all depths, when ai-memory is healthy):** run `~/cursor-kit/scripts/seed-project.sh <repo>`. It installs the ai-memory routing snippet + managed skills into the repo (`install-instructions --compact`), applies the cross-project **profile** as a managed block via `ai-memory profile apply` (no-op until >=2 projects share a habit), and, only with `AI_MEMORY_BOOTSTRAP=1` on an existing git repo and user consent (sends repo text to the configured LLM), runs `ai-memory bootstrap`. Handoff/brief delivery at SessionStart needs no repo step.
+5. **Seed the new project (all depths, when ai-memory is healthy):** run `~/Projects/cursor-kit/scripts/seed-project.sh <repo>`. It installs the ai-memory routing snippet + managed skills into the repo (`install-instructions --compact`), applies the cross-project **profile** as a managed block via `ai-memory profile apply` (no-op until >=2 projects share a habit), and, only with `AI_MEMORY_BOOTSTRAP=1` on an existing git repo and user consent (sends repo text to the configured LLM), runs `ai-memory bootstrap`. Handoff/brief delivery at SessionStart needs no repo step.
 6. Keep AGENTS / PROJECT / checkpoint authoritative. Report: OK | repaired | installed | declined | N/A (non-macOS / blocked).
 
 Do not reinvent matt-pocock, pstack, or ai-memory core here.

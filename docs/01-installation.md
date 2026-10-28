@@ -5,20 +5,17 @@ Referência rápida. Para o caminho narrado, use o [playbook](02-playbook-onboar
 ## 1. Clonar
 
 ```bash
+cd ~/Projects
 git clone https://github.com/Bossmann007/cursor-kit.git
 git clone https://github.com/Bossmann007/token-engine.git
-
-# opcional (atalhos usados na docs)
-ln -sfn /ABS/PATH/TO/cursor-kit ~/cursor-kit
-ln -sfn /ABS/PATH/TO/token-engine ~/token-engine
 ```
 
-Substitua `/ABS/PATH/TO/...` pelo caminho real. Não commite paths da sua máquina em templates públicos.
+Os dois repos vivem direto em `~/Projects` (sem symlink). Não commite paths da sua máquina em templates públicos.
 
 ## 2. token-engine (venv + MCP)
 
 ```bash
-cd ~/token-engine   # ou o clone real
+cd ~/Projects/token-engine   # ou o clone real
 python3 -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e ".[cursor,dev]"
@@ -36,7 +33,7 @@ Em Cursor. Settings → MCP → enable `token-engine` (e `codebase-memory` / `co
 ## 3. Hooks do kit → `~/.cursor`
 
 ```bash
-~/cursor-kit/sync-hooks.sh
+~/Projects/cursor-kit/sync-hooks.sh
 # Windows: ~\cursor-kit\sync-hooks.ps1
 ```
 
@@ -44,7 +41,7 @@ Isto copia `hooks/*.py` para `~/.cursor/hooks/` **e** gera `~/.cursor/hooks.json
 
 ## 4. Plugin cursor-kit + rules + skills
 
-Cursor **rejeita** symlink em `~/.cursor/plugins/local/` cujo target fica **fora** dessa pasta (log: `loadUserLocalPlugin cursor-kit rejected: symlink target … is outside …/plugins/local`). Não use `ln -sfn ~/cursor-kit ~/.cursor/plugins/local/cursor-kit` se o clone vive em `~/.cursor/repos/` ou similar.
+Cursor **rejeita** symlink em `~/.cursor/plugins/local/` cujo target fica **fora** dessa pasta (log: `loadUserLocalPlugin cursor-kit rejected: symlink target … is outside …/plugins/local`). Não use `ln -sfn ~/Projects/cursor-kit ~/.cursor/plugins/local/cursor-kit` se o clone vive em `~/Projects/` ou similar.
 
 Opção A — sync (clone fica onde está; re-rode após mudar skills/rules/hooks):
 
@@ -52,15 +49,14 @@ Opção A — sync (clone fica onde está; re-rode após mudar skills/rules/hook
 mkdir -p ~/.cursor/plugins/local
 rsync -a --delete \
   --exclude '.git/' --exclude '__pycache__/' --exclude 'node_modules/' \
-  ~/cursor-kit/ ~/.cursor/plugins/local/cursor-kit/
+  ~/Projects/cursor-kit/ ~/.cursor/plugins/local/cursor-kit/
 ```
 
 Opção B — desenvolver o plugin in-place (target dentro de `plugins/local`):
 
 ```bash
-# clone (ou move) o repo para cá, depois atalho opcional:
-#   ~/.cursor/plugins/local/cursor-kit   ← git checkout real
-ln -sfn ~/.cursor/plugins/local/cursor-kit ~/cursor-kit
+# o plugin local é uma cópia (rsync) de ~/Projects/cursor-kit, não um symlink:
+#   ~/.cursor/plugins/local/cursor-kit
 ```
 
 O plugin declara `skills/`, `rules/` e `hooks/cursor-hooks.json`. Rules do kit (ponytail, caveman, token-engine, cbm-first, session-continuity, memory-security) aplicam com o plugin ligado. Depois: **Developer: Reload Window**.
@@ -68,7 +64,7 @@ O plugin declara `skills/`, `rules/` e `hooks/cursor-hooks.json`. Rules do kit (
 Opcional (espelho global, se preferir rules fora do plugin):
 
 ```bash
-~/cursor-kit/sync-rules.sh
+~/Projects/cursor-kit/sync-rules.sh
 # Windows: ~\cursor-kit\sync-rules.ps1
 ```
 
@@ -100,7 +96,7 @@ Preferível. `/setup-project` no chat do Cursor.
 Fallback:
 
 ```bash
-~/cursor-kit/install.sh /ABS/PATH/TO/your-repo
+~/Projects/cursor-kit/install.sh /ABS/PATH/TO/your-repo
 ```
 
 ## 7. Aba Projects (Cloud)

@@ -17,9 +17,9 @@
 
 ## Learned Workspace Facts
 
-- Kit lives at `~/cursor-kit` → `~/.cursor/repos/cursor-kit` (GitHub `Bossmann007/cursor-kit`)
+- Kit lives at `~/Projects/cursor-kit` (git checkout, no symlink; GitHub `Bossmann007/cursor-kit`)
 - Working branch for Enzo's personal kit config: `enzo` (default shipping branch remains `master` until merged)
-- Pairs with [token-engine](https://github.com/Bossmann007/token-engine) at `~/token-engine` (GitHub `Bossmann007/token-engine`)
+- Pairs with [token-engine](https://github.com/Bossmann007/token-engine) at `~/Projects/token-engine` (GitHub `Bossmann007/token-engine`)
 - Hooks + rules source of truth: `cursor-kit/hooks/` + `hooks.json.template` → `sync-hooks.sh` / `.ps1` (merge-safe; preserves companion hooks); `cursor-kit/rules/` (+ optional `sync-rules.sh`); pstack seed at `templates/pstack/pstack-models.mdc.example`
 - Plugin entry: `.cursor-plugin/plugin.json` with `skills`, `rules`, `hooks` (setup orchestrators including `setup-matt-pocock-skills`, quality skills, and promoted engineering skills under `skills/`); desktop sync via rsync → `~/.cursor/plugins/local/cursor-kit/`; keep `~/.cursor/skills` and Agent Store empty of skill copies
 - Companion plugins (UI install): continual-learning, cursor-team-kit, **pstack** as usage companion (skills stay in pstack plugin — not vendored into cursor-kit; then `/setup-pstack`); inventory in `docs/EXTERNAL-COMPONENTS.md`

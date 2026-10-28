@@ -14,7 +14,7 @@ Fonte. `templates/quality-gates/` neste repo.
 Install cursor-kit quality gates into this repo and MEASURE only. Do not fix violations.
 
 Kit path (resolve one):
-- ~/cursor-kit/templates/quality-gates/
+- ~/Projects/cursor-kit/templates/quality-gates/
 - or the plugin/repo root that contains templates/quality-gates/
 
 Steps:

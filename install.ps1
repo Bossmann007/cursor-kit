@@ -7,7 +7,7 @@ Per-repo state only:
 ```powershell
 param([string]$ProjectRoot = (Get-Location))
 
-$kit = "$env:USERPROFILE\cursor-kit"
+$kit = "$env:USERPROFILE\Projects\cursor-kit"
 New-Item -ItemType Directory -Force "$ProjectRoot\.claude\state" | Out-Null
 
 if (-not (Test-Path "$ProjectRoot\AGENTS.md")) {

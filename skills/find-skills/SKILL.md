@@ -32,7 +32,7 @@ The Skills CLI (`npx skills`) is the package manager for the open agent skills e
 
 ## Step 0: Check what is already installed (cheap)
 
-Read `~/.claude/skill-index.md` (one compact file, ~1k tokens: every enabled skill, one line each). Do NOT open individual SKILL.md files or list plugin directories to browse. If the file is missing or older than 7 days, run `python3 ~/cursor-kit/scripts/build-skill-index.py` first. If an installed skill fits, name it and stop; only continue to the public search below when nothing installed matches.
+Read `~/.claude/skill-index.md` (one compact file, ~1k tokens: every enabled skill, one line each). Do NOT open individual SKILL.md files or list plugin directories to browse. If the file is missing or older than 7 days, run `python3 ~/Projects/cursor-kit/scripts/build-skill-index.py` first. If an installed skill fits, name it and stop; only continue to the public search below when nothing installed matches.
 
 ## How to Help Users Find Skills
 
