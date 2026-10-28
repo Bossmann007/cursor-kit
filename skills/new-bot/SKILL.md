@@ -130,7 +130,7 @@ of the "What it does" cell of its `time.md` row (e.g. `L1: routine 07:00`); do n
 - `~/OpenBot/Agents/agent-2ab7683d-1761-4580-ac5f-39c11dfea523/time.md`: one row in **Live bots** (`| Bot | Folder | OpenBot agent | What it does | Evidence it returns |`)
   or **On-demand roles**. If the bot came from the Grok Bot roster, set its "Status here" to **live** with a pointer.
 - `~/bots/README.md`: one line under `## Bots` (create that section after the intro if missing):
-  ``- **<Name>** (`~/bots/<slug>`): <purpose>. Draft only.`` Plus a row in the matching third-party table for
+  ``- **<Name>** (`~/OpenBot/Agents/agent-<id>`): <purpose>. Draft only.`` Plus a row in the matching third-party table for
   every skill or agent copied in step 4 (source, commit, license).
 
 ### 7. OpenBot agent (channel "Time")
@@ -172,7 +172,7 @@ then delete the dry-run folder.
 - Secrets: none | `.env.example` (Enzo creates `.env`)
 - Autonomy: L0 | L1 | L2 | L3 (routine <name> <time> / webhook) and what Grok Bot would do that we do not
 - Roster: time.md row, README entry = written | proposed
-- Agent: <id> linked + hardened (`openbot-harden.py --check` exit 0) | proposed | n/a
+- Agent: <id> moved in + hardened (`openbot-harden.py --check` exit 0) | proposed | n/a
 - No equivalent here: (Grok Bot features Enzo asked for that we cannot do, from references/grok-bot-mapping.md)
 - Next: first task result / what waits on Enzo
 ```
