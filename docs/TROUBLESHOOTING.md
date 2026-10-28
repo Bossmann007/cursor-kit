@@ -3,9 +3,9 @@
 ## MCP token-engine not loading
 
 - Clone/install [token-engine](https://github.com/Bossmann007/token-engine) and create a venv:
-  - macOS/Linux: `~/token-engine/.venv/bin/python`
+  - macOS/Linux: `~/Projects/token-engine/.venv/bin/python`
   - Windows: `~\token-engine\.venv\Scripts\python.exe`
-- Run: `pip install -e "~/token-engine[cursor,dev]"` (adjust path)
+- Run: `pip install -e "~/Projects/token-engine[cursor,dev]"` (adjust path)
 - Point `~/.cursor/mcp.json` `token-engine.command` at that Python; set `PYTHONPATH` to `…/token-engine/src`
 - Reload Cursor window
 

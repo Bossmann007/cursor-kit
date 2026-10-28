@@ -13,13 +13,13 @@ disable-model-invocation: false
 
 # Setup ai-memory
 
-**Multi-tool (primary path):** run `~/cursor-kit/sync-all.sh` (subset via `TOOLS="claude cursor codex gemini"`). It installs/repairs the binary + LaunchAgent and wires every tool. Verify with `claude mcp list`, `codex mcp list`, `ai-memory doctor`. Cursor-specific steps below apply only to Cursor.
+**Multi-tool (primary path):** run `~/Projects/cursor-kit/sync-all.sh` (subset via `TOOLS="claude cursor codex gemini"`). It installs/repairs the binary + LaunchAgent and wires every tool. Verify with `claude mcp list`, `codex mcp list`, `ai-memory doctor`. Cursor-specific steps below apply only to Cursor.
 
 Opt-in **companion** for long-horizon project memory. Compose upstream
 [ai-memory](https://github.com/akitaonrails/ai-memory) with cursor-kit — do not
 fork, do not vendor their SKILL.md, do not replace kit episodic state.
 
-Canonical kit root: `~/cursor-kit` (or this plugin repo). Human doc (PT):
+Canonical kit root: `~/Projects/cursor-kit` (or this plugin repo). Human doc (PT):
 `docs/tools/10-ai-memory.md`. Pasteable prompt: `docs/prompts/07-ai-memory-wire.md`.
 
 ## Ownership (do not blur)

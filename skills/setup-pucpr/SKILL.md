@@ -22,7 +22,7 @@ Compose existing skills and templates — do not rewrite them inline, do not shi
 a monolith skill that reimplements `/setup-project` or `/teach`.
 
 Canonical course parent: `~/PUCPR` when present; else ask (e.g. `~/ADAPUCPR`,
-`~/Courses/`). Canonical kit root: `~/cursor-kit` (symlink to this repo when
+`~/Courses/`). Canonical kit root: `~/Projects/cursor-kit` (symlink to this repo when
 installed that way).
 
 Read `references/layers-faculdade.md` before writing files so global vs
@@ -105,7 +105,7 @@ Check, summarize in one short block, then continue:
 | Other study skills | `grilling`/`grill-me`, `research`, `diagnosing-bugs`, `wait-what`, `domain-modeling`, `handoff`; plugin `create-learning-path`; optional `pucpr-canvas` | List present vs missing per `references/skills-wiring.md`; **do not invent** |
 | `/setup-project` already applied | `AGENTS.md` continual-learning sections + `.claude/state/` present | If absent: **offer** run `/setup-project` first (full Cursor stack) **or** continue with **academic-only** scaffold |
 | ai-memory companion (when full stack) | MCP `ai-memory` + server `127.0.0.1:49374` healthy if user also wants kit agent stack | If broken/missing and user chose full stack / already ran `/setup-project`: **repair/arrumar** via `/setup-ai-memory`. Academic-only path: skip with one line |
-| Kit templates | `~/cursor-kit/templates/faculdade/` (or this skill’s bundled copies) | Prefer kit path; fall back to files beside this skill |
+| Kit templates | `~/Projects/cursor-kit/templates/faculdade/` (or this skill’s bundled copies) | Prefer kit path; fall back to files beside this skill |
 | Parent courses dir | `~/PUCPR` exists | Use as default parent for new folders |
 
 Never invent a second hook/MCP system inside the course folder. Do not fork ai-memory into the folder.
@@ -284,10 +284,10 @@ Always end with a compact checklist:
 
 Prefer:
 
-- `~/cursor-kit/templates/faculdade/AGENTS.md.faculdade.template`
-- `~/cursor-kit/templates/faculdade/COURSE.md.template`
-- `~/cursor-kit/templates/faculdade/README.md.faculdade.template`
-- `~/cursor-kit/templates/faculdade/gitignore.faculdade.snippet`
+- `~/Projects/cursor-kit/templates/faculdade/AGENTS.md.faculdade.template`
+- `~/Projects/cursor-kit/templates/faculdade/COURSE.md.template`
+- `~/Projects/cursor-kit/templates/faculdade/README.md.faculdade.template`
+- `~/Projects/cursor-kit/templates/faculdade/gitignore.faculdade.snippet`
 
 If the kit path is missing, use copies under this skill’s
 `references/templates/` (when vendored) or the same filenames beside

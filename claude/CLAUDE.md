@@ -1,6 +1,6 @@
 # Global Claude instructions (Enzo Bossmann)
 
-Source: `~/cursor-kit/claude/CLAUDE.md`, installed by `sync-claude.sh`.
+Source: `~/Projects/cursor-kit/claude/CLAUDE.md`, installed by `sync-claude.sh`.
 
 @~/AGENTS.md
 
@@ -15,7 +15,7 @@ Short and direct: no preamble, no recap, no option menus, about 6 lines unless a
 - Before building a new tool, skill or integration: `/prior-art-check`.
 - No commit or push unless asked; ship by PR. Never merge unless asked.
 - Smallest change that works; fix the root cause.
-- Delegating with `/goal`: the project needs an executable `scripts/verify` (exit 0 = done). Run `~/cursor-kit/scripts/goal-run.sh <dir> <usd> [turns]` for a budget, turn cap and worktree. The `/goal` evaluator only reads the transcript, so the condition must make Claude run `scripts/verify` and show its exit code.
+- Delegating with `/goal`: the project needs an executable `scripts/verify` (exit 0 = done). Run `~/Projects/cursor-kit/scripts/goal-run.sh <dir> <usd> [turns]` for a budget, turn cap and worktree. The `/goal` evaluator only reads the transcript, so the condition must make Claude run `scripts/verify` and show its exit code.
 - On `continue` / `retomar` in a project repo: follow `.claude/state/checkpoint.json` (`task`, `next_action`) when it has a task; otherwise ask what to resume.
 
 ## Context

@@ -7,7 +7,7 @@ continual-learning, pstack/team-kit).
 
 | Component | Source | Where it lives | Update procedure |
 |-----------|--------|----------------|------------------|
-| token-engine | [Bossmann007/token-engine](https://github.com/Bossmann007/token-engine) | `~/token-engine` + MCP in `~/.cursor/mcp.json` | pull repo; keep venv; reload MCP |
+| token-engine | [Bossmann007/token-engine](https://github.com/Bossmann007/token-engine) | `~/Projects/token-engine` + MCP in `~/.cursor/mcp.json` | pull repo; keep venv; reload MCP |
 | ai-memory | [akitaonrails/ai-memory](https://github.com/akitaonrails/ai-memory) | Companion binary (default `~/Applications/ai-memory`) + LaunchAgent + MCP/hooks via `/setup-ai-memory` | re-run `scripts/install-ai-memory.sh` or upgrade release tarball; reload MCP; see `docs/tools/10-ai-memory.md` |
 | codebase-memory | MCP (see `mcp.json.template`) | `~/.cursor/mcp.json` | update MCP entry / package per upstream |
 | continual-learning | Cursor plugin | UI plugins | update in Cursor plugin UI |
@@ -40,7 +40,7 @@ On desktop with the plugin installed, keep `~/.cursor/skills/` empty and do **no
 ```bash
 # Desktop (preferred): sync repo → local plugin, then Reload Window
 rsync -a --delete --exclude '.git/' --exclude '__pycache__/' \
-  ~/cursor-kit/ ~/.cursor/plugins/local/cursor-kit/
+  ~/Projects/cursor-kit/ ~/.cursor/plugins/local/cursor-kit/
 
 # Cloud / Projects VM only (no plugin): copy skills → ~/.cursor/skills inside the VM
 ./scripts/install-cloud-skills.sh

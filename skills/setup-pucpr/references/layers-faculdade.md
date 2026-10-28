@@ -32,11 +32,11 @@ or teach skills.
 
 ## External sources (do not fork into the skill body)
 
-- Generic stack: `/setup-project` + `~/cursor-kit`
+- Generic stack: `/setup-project` + `~/Projects/cursor-kit`
 - Teaching UX: Matt `teach`, `grilling`, learning-path; pstack `how`/`why`/`teach`/`recall`
 - Wiring matrix: `skills/setup-pucpr/references/skills-wiring.md`
 - Course parent default: `~/PUCPR` when present
-- Templates: `~/cursor-kit/templates/faculdade/`
+- Templates: `~/Projects/cursor-kit/templates/faculdade/`
 
 ## Conflict policy
 

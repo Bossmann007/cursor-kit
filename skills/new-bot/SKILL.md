@@ -18,7 +18,7 @@ Start a bot the way `/setup-project` starts a repo: one interview, one scaffold,
 A bot here = one folder under `~/bots/<slug>/` + one OpenBot agent whose workspace links to it.
 Maria (`~/orquestrador`) leads the OpenBot channel "Time"; Boss (`~/bots/boss`) sits above her.
 
-Kit root: `~/cursor-kit`. Read `references/grok-bot-mapping.md` before step 1: it says which
+Kit root: `~/Projects/cursor-kit`. Read `references/grok-bot-mapping.md` before step 1: it says which
 Grok Bot concepts map to what here and which have no equivalent.
 
 ## Locked decisions (this skill)
@@ -60,8 +60,8 @@ Ask only what the trigger message did not answer. Lead each question with a reco
 ### 2. Scaffold the folder
 
 ```bash
-~/cursor-kit/skills/new-bot/scripts/scaffold-bot.sh <slug>                    # ~/bots/<slug>
-~/cursor-kit/skills/new-bot/scripts/scaffold-bot.sh <slug> --bots-dir <dir>   # dry run elsewhere
+~/Projects/cursor-kit/skills/new-bot/scripts/scaffold-bot.sh <slug>                    # ~/bots/<slug>
+~/Projects/cursor-kit/skills/new-bot/scripts/scaffold-bot.sh <slug> --bots-dir <dir>   # dry run elsewhere
 ```
 
 It creates `.claude/{skills,agents,references,state}`, seeds `.claude/state/checkpoint.json`

@@ -30,7 +30,7 @@ Long-horizon wiki (opt-in) lives in the **ai-memory** data dir / server — not 
 
 ## External sources (do not fork into the skill body)
 
-- Templates: `$CURSOR_KIT` → `~/cursor-kit` or this plugin repo root
+- Templates: `$CURSOR_KIT` → `~/Projects/cursor-kit` or this plugin repo root
 - Compression: [token-engine](https://github.com/Bossmann007/token-engine)
 - Long-horizon memory: [ai-memory](https://github.com/akitaonrails/ai-memory) via `/setup-ai-memory`
 - Models: `/setup-pstack` → `~/.cursor/rules/pstack-models.mdc`

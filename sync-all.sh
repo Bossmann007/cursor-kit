@@ -6,7 +6,7 @@ set -euo pipefail
 umask 077
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 TOOLS="${TOOLS:-claude cursor codex}"
-TE="${HOME}/.cursor/repos/token-engine"
+TE="${HOME}/Projects/token-engine"
 has() { [[ " $TOOLS " == *" $1 "* ]]; }
 say() { echo "sync-all: $*"; }
 

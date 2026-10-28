@@ -12,7 +12,7 @@ User approved Phase 7 build. Reference for future sessions.
 | 6 | Notion | **Integrate** via MCP OAuth |
 | 7 | Observability | **Minimal tokens** — caveman_stats on demand only |
 | 8 | Checkpoints | **Yes** — `.cursor/state/checkpoint.json` |
-| 9 | cursor-kit | **Yes** — `~/cursor-kit` replaces dotagents |
+| 9 | cursor-kit | **Yes** — `~/Projects/cursor-kit` replaces dotagents |
 | 10 | Plugins | User already configured — leave as-is |
 
 ## Built in Phase 7
@@ -22,7 +22,7 @@ User approved Phase 7 build. Reference for future sessions.
 - `~/.cursor/hooks.json` — sessionStart, postToolUse, afterFileEdit
 - `~/.cursor/hooks/token-engine-session.py`, `compress-tool-output.py`
 - `~/.cursor/skills/pucpr-canvas/SKILL.md`
-- `~/cursor-kit/` — template repo
+- `~/Projects/cursor-kit/` — template repo
 - `token-engine/docs/CURSOR-ENV.md` (replaced HARNESS_PROMPT.md)
 - `token-engine/AGENTS.md`, `PROJECT.md`, checkpoint scaffold
 
@@ -39,7 +39,7 @@ User approved Phase 7 build. Reference for future sessions.
 
 1. Reload Cursor window
 2. Connect Notion MCP (OAuth prompt)
-3. `python -m unittest discover -s ~/cursor-kit/tests`
+3. `python -m unittest discover -s ~/Projects/cursor-kit/tests`
 
 ## Built on branch `enzo` (2026-09-12)
 

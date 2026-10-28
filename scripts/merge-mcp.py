@@ -13,7 +13,7 @@ import time
 from pathlib import Path
 
 HOME = Path.home()
-TE = HOME / ".cursor/repos/token-engine"
+TE = HOME / "Projects/token-engine"
 SECRET_KEY = re.compile(r"(pass|secret|token|apikey|api_key|auth|cookie|credential)", re.I)
 
 

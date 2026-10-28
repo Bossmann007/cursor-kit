@@ -42,8 +42,8 @@ resolve_markitdown() {
     return
   fi
   for candidate in \
-    "${HOME}/token-engine/.venv/bin/markitdown" \
-    "${HOME}/.cursor/repos/token-engine/.venv/bin/markitdown"
+    "${HOME}/Projects/token-engine/.venv/bin/markitdown" \
+    "${HOME}/Projects/token-engine/.venv/bin/markitdown"
   do
     if [[ -x "$candidate" ]]; then
       echo "$candidate"
