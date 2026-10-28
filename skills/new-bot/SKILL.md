@@ -2,10 +2,10 @@
 name: new-bot
 description: >
   Create a new bot for Enzo's agent team in OpenBot: a folder
-  ~/bots/BOT-SLUG/ with a persona AGENTS.md (CLAUDE.md imports it) (draft-only rule + Maria's hard
-  limits), project skills and agents, .claude/state, optional routines, an OpenBot
-  agent whose workspace links to the folder (with the bot safety rules applied),
-  a row in ~/orquestrador/time.md and an entry in ~/bots/README.md. Grok Bot concepts adapted. Use when
+  drafted in ~/bots/BOT-SLUG/ and moved into its OpenBot agent folder, with a persona AGENTS.md (CLAUDE.md
+  imports it) (draft-only rule + Maria's hard limits), project skills and agents, .claude/state, optional
+  routines and the bot safety rules applied,
+  a row in ~/OpenBot/Agents/agent-2ab7683d-1761-4580-ac5f-39c11dfea523/time.md and an entry in ~/bots/README.md. Grok Bot concepts adapted. Use when
   the user says "new bot", "novo bot", "cria um bot", "porta o bot X do Grok",
   "add a bot to the team", or wants a persona agent for a recurring job,
   even if they do not say "new-bot". Not for code repos (use /setup-project).
@@ -15,8 +15,9 @@ disable-model-invocation: false
 # New bot
 
 Start a bot the way `/setup-project` starts a repo: one interview, one scaffold, one report.
-A bot here = one folder under `~/bots/<slug>/` + one OpenBot agent whose workspace links to it.
-Maria (`~/orquestrador`) leads the OpenBot channel "Time"; Boss (`~/bots/boss`) sits above her.
+A bot here = one OpenBot agent whose folder `~/OpenBot/Agents/agent-<id>` holds the bot (no links, Enzo 2026-10-28).
+Steps 2-6 draft it in `~/bots/<slug>/`; step 7 moves the draft into the agent folder.
+Maria (`~/OpenBot/Agents/agent-2ab7683d-1761-4580-ac5f-39c11dfea523`) leads the OpenBot channel "Time"; Boss (`~/OpenBot/Agents/agent-ac795158-5cfb-4c26-9461-71da5bbb3af7`) sits above her.
 
 Kit root: `~/cursor-kit`. Read `references/grok-bot-mapping.md` before step 1: it says which
 Grok Bot concepts map to what here and which have no equivalent.
@@ -25,7 +26,7 @@ Grok Bot concepts map to what here and which have no equivalent.
 
 - **Draft only.** Every bot drafts; Enzo sends, posts, pays or submits himself. No bot logs in to his accounts.
 - **Maria's hard limits** are copied into every persona. A bot's rules only add limits, never relax them
-  (precedence: Enzo > `~/orquestrador/AGENTS.md` > `time.md` > the bot's `AGENTS.md`).
+  (precedence: Enzo > `~/OpenBot/Agents/agent-2ab7683d-1761-4580-ac5f-39c11dfea523/AGENTS.md` > `time.md` > the bot's `AGENTS.md`).
 - **One job per bot.** A new bot only when the work has its own goal, tools, approval boundary or schedule.
 - **Roster is Enzo's.** `time.md` and `~/bots/README.md` changes are shown as a diff and written only after his yes.
 - **Idempotent.** Never overwrite an existing bot folder or file. The scaffold refuses an existing folder; to finish
@@ -36,7 +37,7 @@ Grok Bot concepts map to what here and which have no equivalent.
 
 ### 0. Is a new bot needed?
 
-Read `~/orquestrador/time.md` (live bots, on-demand roles, Grok Bot roster to port) and `~/bots/README.md`.
+Read `~/OpenBot/Agents/agent-2ab7683d-1761-4580-ac5f-39c11dfea523/time.md` (live bots, on-demand roles, Grok Bot roster to port) and `~/bots/README.md`.
 If an existing bot or on-demand role already owns the job, say so in one line and stop unless Enzo insists.
 If the bot is in the Grok Bot roster, reuse its purpose and key rules from that table.
 
@@ -72,10 +73,10 @@ existing folder or a bad slug. Nothing else is touched.
 
 Fill every `{{...}}` in the copied template from the interview, then delete unused optional sections.
 Keep the `Checkpoint (continue / retomar)` section as is: it makes `retomar` resume the bot's last task.
-Match the style of the live bots (`~/bots/social/AGENTS.md`, `~/bots/money-maker/AGENTS.md`,
-`~/bots/pucpr/AGENTS.md`): short, imperative, hard rules first, a fixed reply format.
+Match the style of the live bots (`~/OpenBot/Agents/agent-fd1ff77d-1a79-4b95-805b-116650325ee3/AGENTS.md`, `~/OpenBot/Agents/agent-76a7a7b0-c3f4-4a15-8bc7-f55a42d66604/AGENTS.md`,
+`~/OpenBot/Agents/agent-8fa3ee95-26f6-49f0-a2e1-fc176b81f30d/AGENTS.md`): short, imperative, hard rules first, a fixed reply format.
 
-- The template's **Maria's hard limits** block is a bot-facing summary of `~/orquestrador/AGENTS.md` → Hard limits,
+- The template's **Maria's hard limits** block is a bot-facing summary of `~/OpenBot/Agents/agent-2ab7683d-1761-4580-ac5f-39c11dfea523/AGENTS.md` → Hard limits,
   sometimes stricter. Check Maria's list for an item the block does not cover yet and add it; never drop or weaken
   an item. Skip Maria-only items (ai-memory authorization, account switching).
 - Keep the **draft-only** rule even when the bot has no outward channel today.
@@ -107,7 +108,7 @@ one-time task → reliable → skill → routine).
 |---|---|
 | **L0 on-demand** | Nothing extra. Enzo or Maria messages the bot in OpenBot (`send_message`). |
 | **L1 scheduled read-only report** | OpenBot routine (below); instruction says read only, edit nothing, reply with the report, `routine_no_update` when nothing is new. |
-| **L2 scheduled work in its folder + push** | OpenBot routine; instruction allows writes only inside `~/bots/<slug>`; OpenBot's iPhone notifications (`needs-me`) carry the alert. |
+| **L2 scheduled work in its folder + push** | OpenBot routine; instruction allows writes only inside its agent folder; OpenBot's iPhone notifications (`needs-me`) carry the alert. |
 | **L3 event-driven** | OpenBot webhook routine (`create_webhook_routine`, only when Enzo asks), or a routine flow from another bot's routine. Nothing more often than hourly. |
 
 **The hard limits do not change at any level.** Anything outward (send, post, comment, pay, trade, buy, submit,
@@ -117,8 +118,8 @@ If Enzo asks for something only Grok Bot does (runs with the Mac closed, event t
 "Always allow"), say it has no equivalent here and why the gate stays (see the reference).
 
 **Routine (L1, L2).** Confirm owner bot, schedule (local time), input, expected output, approval
-boundary and missing-source behavior. Fill `templates/scheduled-task.md` into a self-contained instruction that
-names the bot folder by absolute path and starts by reading its `AGENTS.md`; keep the L1 or L2 line, delete the
+boundary and missing-source behavior. Fill `templates/scheduled-task.md` (`{{agent-id}}` = the id without the `agent-` prefix; do this after step 7,
+when the agent exists) into a self-contained instruction that names the bot folder by absolute path and starts by reading its `AGENTS.md`; keep the L1 or L2 line, delete the
 other. Enzo asks the bot (or Boss) in OpenBot to create it (`create_routine`); agents create routines only when a
 person asks. Routines run only while the Mac is awake with OpenBot open. Never also keep a Claude scheduled task
 for the same job. Record the level in the bot's `AGENTS.md` (`## Autonomy`) and at the end
@@ -126,32 +127,33 @@ of the "What it does" cell of its `time.md` row (e.g. `L1: routine 07:00`); do n
 
 ### 6. Roster entries (diff, then Enzo's yes)
 
-- `~/orquestrador/time.md`: one row in **Live bots** (`| Bot | Folder | OpenBot agent | What it does | Evidence it returns |`)
+- `~/OpenBot/Agents/agent-2ab7683d-1761-4580-ac5f-39c11dfea523/time.md`: one row in **Live bots** (`| Bot | Folder | OpenBot agent | What it does | Evidence it returns |`)
   or **On-demand roles**. If the bot came from the Grok Bot roster, set its "Status here" to **live** with a pointer.
 - `~/bots/README.md`: one line under `## Bots` (create that section after the intro if missing):
-  ``- **<Name>** (`~/bots/<slug>`): <purpose>. Draft only.`` Plus a row in the matching third-party table for
+  ``- **<Name>** (`~/OpenBot/Agents/agent-<id>`): <purpose>. Draft only.`` Plus a row in the matching third-party table for
   every skill or agent copied in step 4 (source, commit, license).
 
 ### 7. OpenBot agent (channel "Time")
 
 - Create the agent: Dr. Eggbot (`create_agent`), or Enzo in OpenBot (New agent, or Import of an
   `openbot-import.json` zip). Its description says to read `AGENTS.md` at the root of its workspace.
-- Link and harden it in one step (Enzo or Boss runs it; it backs up the original workspace, links it, and applies
-  the deny rules + sandbox to this bot only as a canary): `~/bots/scripts/link-agent.sh <agent-id> <slug>`.
+- Move and harden it in one step (Enzo or Boss runs it, OpenBot closed; it backs up the workspace, copies the
+  draft into it without overwriting, moves the draft to ~/Backups, and applies the deny rules + sandbox to this bot
+  only as a canary): `~/bots/scripts/adopt-agent.sh <agent-id> <slug>`.
 - Access: Full access (OpenBot offers only Full access or Workspace only for Claude agents). Never Workspace only:
   that mode ignores the folder's `.claude/settings.json`
   and turns hooks off.
 - First message (Grok Bot "first task"): a real, small task with a clear finish line. Ask for the first line of
-  its `AGENTS.md` first, to prove the link.
+  its `AGENTS.md` first, to prove the move.
 - Enzo adds it to the right channel (a person-only action). Put the first 8 characters of the agent id in the
   `time.md` row.
 - On-demand role: no agent now; the `time.md` row says how to create one.
 
 ### 8. Verify
 
-1. `agnix ~/bots/<slug>` → 0 errors (list warnings in the report).
-2. `find ~/bots/<slug> | sort` (show the tree).
-3. `grep -rliE --exclude=.env '(api[_-]?key|token|secret|password)[[:space:]]*[:=][[:space:]]*[^<[:space:]]' ~/bots/<slug>`
+1. `agnix <bot folder>` (the draft before step 7, the agent folder after) → 0 errors (list warnings in the report).
+2. `find <bot folder> | sort` (show the tree).
+3. `grep -rliE --exclude=.env '(api[_-]?key|token|secret|password)[[:space:]]*[:=][[:space:]]*[^<[:space:]]' <bot folder>`
    → no files listed (`-l` prints file names only, so a real value never reaches the transcript; `.env` is Enzo's).
 4. `python3 -I ~/bots/scripts/openbot-harden.py --check` → exit 0.
 5. The first task's reply contains the evidence promised in `time.md`.
@@ -164,13 +166,13 @@ then delete the dry-run folder.
 ```markdown
 ## Bot ready
 
-- Bot: <Name> (`~/bots/<slug>`), live | on-demand
+- Bot: <Name> (`~/OpenBot/Agents/agent-<id>`), live | on-demand
 - Persona: AGENTS.md (draft-only + Maria's hard limits); agnix: 0 errors
 - Skills / agents: (list or none); third-party pinned in README: yes | n/a
 - Secrets: none | `.env.example` (Enzo creates `.env`)
 - Autonomy: L0 | L1 | L2 | L3 (routine <name> <time> / webhook) and what Grok Bot would do that we do not
 - Roster: time.md row, README entry = written | proposed
-- Agent: <id> linked + hardened (`openbot-harden.py --check` exit 0) | proposed | n/a
+- Agent: <id> moved in + hardened (`openbot-harden.py --check` exit 0) | proposed | n/a
 - No equivalent here: (Grok Bot features Enzo asked for that we cannot do, from references/grok-bot-mapping.md)
 - Next: first task result / what waits on Enzo
 ```
