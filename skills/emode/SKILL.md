@@ -21,7 +21,7 @@ Short replies. "Done" needs evidence: the project's check output (tests, build, 
   1. Open the primary source now (README, LICENSE, docs, the code; `research` for a deep question) and cite it (URL or `file:line`); no source, say "não verifiquei" and do not recommend.
   2. Name the one fact that would make it wrong and prove it by running real code (pstack `blast-radius` idea), not by writing it up.
   3. Say how to undo it. Apply to one canary (one bot, one folder) and check it before the rest.
-  4. If it gets reverted, add a row to `~/orquestrador/notes/reverts.tsv` (date, what, cause, check added) and turn the cause into a check, script or hook (pstack `correct`), not a new prompt rule.
+  4. If it gets reverted, add a row to `~/OpenBot/Agents/agent-2ab7683d-1761-4580-ac5f-39c11dfea523/notes/reverts.tsv` (date, what, cause, check added) and turn the cause into a check, script or hook (pstack `correct`), not a new prompt rule.
 
 ## 2. Large task
 

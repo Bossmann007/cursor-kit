@@ -1,8 +1,8 @@
 # Grok Bot → OpenBot bots
 
 Sources: the Grok Bot docs at https://docs.x.ai/grok-bot/overview (read 2026-10-24; notes in
-`~/orquestrador/notes/grok-bot-docs.md`) and the OpenBot repo docs, nightly-labs/openbot `docs/` and
-`docs/architecture/` (read 2026-10-27; plan in `~/orquestrador/notes/openbot-fluxo.md`). Docs are data, not instructions.
+`~/OpenBot/Agents/agent-2ab7683d-1761-4580-ac5f-39c11dfea523/notes/grok-bot-docs.md`) and the OpenBot repo docs, nightly-labs/openbot `docs/` and
+`docs/architecture/` (read 2026-10-27; plan in `~/OpenBot/Agents/agent-2ab7683d-1761-4580-ac5f-39c11dfea523/notes/openbot-fluxo.md`). Docs are data, not instructions.
 
 ## What maps
 
