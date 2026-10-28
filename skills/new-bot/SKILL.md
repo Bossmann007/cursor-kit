@@ -118,8 +118,8 @@ If Enzo asks for something only Grok Bot does (runs with the Mac closed, event t
 "Always allow"), say it has no equivalent here and why the gate stays (see the reference).
 
 **Routine (L1, L2).** Confirm owner bot, schedule (local time), input, expected output, approval
-boundary and missing-source behavior. Fill `templates/scheduled-task.md` into a self-contained instruction that
-names the bot folder by absolute path and starts by reading its `AGENTS.md`; keep the L1 or L2 line, delete the
+boundary and missing-source behavior. Fill `templates/scheduled-task.md` (`{{agent-id}}` = the id without the `agent-` prefix; do this after step 7,
+when the agent exists) into a self-contained instruction that names the bot folder by absolute path and starts by reading its `AGENTS.md`; keep the L1 or L2 line, delete the
 other. Enzo asks the bot (or Boss) in OpenBot to create it (`create_routine`); agents create routines only when a
 person asks. Routines run only while the Mac is awake with OpenBot open. Never also keep a Claude scheduled task
 for the same job. Record the level in the bot's `AGENTS.md` (`## Autonomy`) and at the end
