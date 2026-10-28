@@ -47,6 +47,7 @@ for d in "$ROOT"/skills/*/; do
     [[ -L "${CL}/skills/${n}" && "$(readlink "${CL}/skills/${n}")" == "${d%/}" ]] && rm "${CL}/skills/${n}"
     continue
   fi
+  [[ -L "${CL}/skills/${n}" && ! -e "${CL}/skills/${n}" ]] && rm "${CL}/skills/${n}"  # broken link (repo moved)
   [[ -e "${CL}/skills/${n}" ]] || ln -s "${d%/}" "${CL}/skills/${n}"
 done
 echo "linked skills into ${CL}/skills"

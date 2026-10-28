@@ -5,15 +5,12 @@ Referência rápida. Para o caminho narrado, use o [playbook](02-playbook-onboar
 ## 1. Clonar
 
 ```bash
+cd ~/Projects
 git clone https://github.com/Bossmann007/cursor-kit.git
 git clone https://github.com/Bossmann007/token-engine.git
-
-# opcional (atalhos usados na docs)
-ln -sfn /ABS/PATH/TO/cursor-kit ~/Projects/cursor-kit
-ln -sfn /ABS/PATH/TO/token-engine ~/Projects/token-engine
 ```
 
-Substitua `/ABS/PATH/TO/...` pelo caminho real. Não commite paths da sua máquina em templates públicos.
+Os dois repos vivem direto em `~/Projects` (sem symlink). Não commite paths da sua máquina em templates públicos.
 
 ## 2. token-engine (venv + MCP)
 
@@ -44,7 +41,7 @@ Isto copia `hooks/*.py` para `~/.cursor/hooks/` **e** gera `~/.cursor/hooks.json
 
 ## 4. Plugin cursor-kit + rules + skills
 
-Cursor **rejeita** symlink em `~/.cursor/plugins/local/` cujo target fica **fora** dessa pasta (log: `loadUserLocalPlugin cursor-kit rejected: symlink target … is outside …/plugins/local`). Não use `ln -sfn ~/Projects/cursor-kit ~/.cursor/plugins/local/cursor-kit` se o clone vive em `~/.cursor/repos/` ou similar.
+Cursor **rejeita** symlink em `~/.cursor/plugins/local/` cujo target fica **fora** dessa pasta (log: `loadUserLocalPlugin cursor-kit rejected: symlink target … is outside …/plugins/local`). Não use `ln -sfn ~/Projects/cursor-kit ~/.cursor/plugins/local/cursor-kit` se o clone vive em `~/Projects/` ou similar.
 
 Opção A — sync (clone fica onde está; re-rode após mudar skills/rules/hooks):
 
@@ -58,9 +55,8 @@ rsync -a --delete \
 Opção B — desenvolver o plugin in-place (target dentro de `plugins/local`):
 
 ```bash
-# clone (ou move) o repo para cá, depois atalho opcional:
-#   ~/.cursor/plugins/local/cursor-kit   ← git checkout real
-ln -sfn ~/.cursor/plugins/local/cursor-kit ~/Projects/cursor-kit
+# o plugin local é uma cópia (rsync) de ~/Projects/cursor-kit, não um symlink:
+#   ~/.cursor/plugins/local/cursor-kit
 ```
 
 O plugin declara `skills/`, `rules/` e `hooks/cursor-hooks.json`. Rules do kit (ponytail, caveman, token-engine, cbm-first, session-continuity, memory-security) aplicam com o plugin ligado. Depois: **Developer: Reload Window**.

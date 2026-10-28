@@ -22,8 +22,7 @@ Compose existing skills and templates — do not rewrite them inline, do not shi
 a monolith skill that reimplements `/setup-project` or `/teach`.
 
 Canonical course parent: `~/PUCPR` when present; else ask (e.g. `~/ADAPUCPR`,
-`~/Courses/`). Canonical kit root: `~/Projects/cursor-kit` (symlink to this repo when
-installed that way).
+`~/Courses/`). Canonical kit root: `~/Projects/cursor-kit` (the git checkout itself, no symlink).
 
 Read `references/layers-faculdade.md` before writing files so global vs
 discipline-folder stays clear.

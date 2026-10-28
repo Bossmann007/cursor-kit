@@ -17,7 +17,7 @@ disable-model-invocation: false
 Orchestrate one coherent per-repo setup on top of the global Cursor environment.
 Compose existing skills and templates — do not rewrite them inline.
 
-Canonical kit root: `~/Projects/cursor-kit` (symlink to this repo when installed that way).
+Canonical kit root: `~/Projects/cursor-kit` (the git checkout itself, no symlink).
 If missing, resolve from the plugin/repo path that contains `AGENTS.md.template`.
 
 Read `references/layers.md` before writing files so global vs per-repo stays clear.

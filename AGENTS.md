@@ -17,7 +17,7 @@
 
 ## Learned Workspace Facts
 
-- Kit lives at `~/Projects/cursor-kit` → `~/Projects/cursor-kit` (GitHub `Bossmann007/cursor-kit`)
+- Kit lives at `~/Projects/cursor-kit` (git checkout, no symlink; GitHub `Bossmann007/cursor-kit`)
 - Working branch for Enzo's personal kit config: `enzo` (default shipping branch remains `master` until merged)
 - Pairs with [token-engine](https://github.com/Bossmann007/token-engine) at `~/Projects/token-engine` (GitHub `Bossmann007/token-engine`)
 - Hooks + rules source of truth: `cursor-kit/hooks/` + `hooks.json.template` → `sync-hooks.sh` / `.ps1` (merge-safe; preserves companion hooks); `cursor-kit/rules/` (+ optional `sync-rules.sh`); pstack seed at `templates/pstack/pstack-models.mdc.example`
