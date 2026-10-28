@@ -15,10 +15,10 @@ Short replies. "Done" needs evidence: the project's check output (tests, build, 
 ## 1. Size it
 
 - **Small** (diff fits one sentence): do it, run the check.
-- **Medium** (bug, 1-2 files): reproduce, find the root cause (`diagnosing-bugs`), write a failing test, fix, run the check.
+- **Medium** (bug, 1-2 files): `diagnosing-bugs` (its loop and regression test before the fix), then run the check.
 - **Large** (multi-file, new feature, a phase): step 2.
 - **Decision** (a recommendation, or a change to security, money, the clinic, global config or many folders):
-  1. Open the primary source now (README, LICENSE, docs, the code) and cite it (URL or `file:line`); no source, say "não verifiquei" and do not recommend.
+  1. Open the primary source now (README, LICENSE, docs, the code; `research` for a deep question) and cite it (URL or `file:line`); no source, say "não verifiquei" and do not recommend.
   2. Name the one fact that would make it wrong and prove it by running real code (pstack `blast-radius` idea), not by writing it up.
   3. Say how to undo it. Apply to one canary (one bot, one folder) and check it before the rest.
   4. If it gets reverted, add a row to `~/orquestrador/notes/reverts.tsv` (date, what, cause, check added) and turn the cause into a check, script or hook (pstack `correct`), not a new prompt rule.
@@ -26,21 +26,33 @@ Short replies. "Done" needs evidence: the project's check output (tests, build, 
 ## 2. Large task
 
 1. Goal: pstack `in-your-own-words` if the ask is vague. New tool or integration: `/prior-art-check`.
-2. Spec: interview with `AskUserQuestion`, write `SPEC.md` (files, out of scope, one end-to-end check). Then implement from a fresh context: a new session whose brief is `SPEC.md` (CLI: `/clear`).
-3. Implement in pstack `poteto-mode` style, one task at a time, commit per task only if asked.
+2. Spec: `grilling` the open decisions, then `verification-planning` (skip its step 0) for the end-to-end check; write `SPEC.md` (files, out of scope, that check). Then implement from a fresh context: a new session whose brief is `SPEC.md` (CLI: `/clear`).
+3. Implement in pstack `poteto-mode` style, one task at a time, new behavior via `tdd`; commit per task only if asked.
 4. Unattended: `/goal <the check passes>` (tests, build and lint exit 0).
 
 ## 3. Verify
 
-- Run the check and show the output.
-- Large change: fresh-context review with `/code-review`. Tell the reviewer to flag only correctness or requirement gaps, not style.
+- Run the check on the real artifact (output, value, diff), not a proxy or "it compiles", and show the output.
+- Large change: `blindspot-pass`, then a fresh-context `/code-review`. Tell the reviewer to flag only correctness or requirement gaps, not style.
 - UI: screenshot and compare in the browser.
 
-## 4. Ship
+## 4. When to reach for more (only when it fits)
+
+| Situation | Use |
+|---|---|
+| Large migration or a change a human reviews after stepping away | pstack `figure-it-out` |
+| Architecture choice with trade-offs | `engineering:architecture` (ADR) |
+| Diff touches auth, secrets, patient data or the clinic | `/security-review` before the PR |
+| Big or risky PR (costly: one reviewer per model) | pstack `interrogate`, only then |
+| Release, migration or install day | `engineering:deploy-checklist` (rollback written first) |
+| Long unattended run | pstack `show-me-your-work` (decision log) |
+| Prose others read (README, PR body, docs) | pstack `technical-writing` |
+
+## 5. Ship
 
 PR with evidence (`pr` skill: what changed, how it was verified). Never merge unless asked.
 
-## 5. Context
+## 6. Context
 
 Fresh context between unrelated tasks (new session; CLI: `/clear`). After two failed corrections: fresh context and rewrite the prompt. Use subagents for investigation.
 
