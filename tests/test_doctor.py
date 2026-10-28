@@ -63,13 +63,24 @@ class Doctor(unittest.TestCase):
         self.assertEqual(by["mcp codebase-memory"], "FAIL")
         self.assertEqual(by["mcp ai-memory"], "FAIL")  # missing from the list
 
-    def test_unlinked_agent_warns(self):
+    def test_agent_without_persona_warns(self):
         with tempfile.TemporaryDirectory() as d:
             agents = Path(d) / "Agents"
             (agents / "agent-1234").mkdir(parents=True)
             doctor.check_openbot(agents, Path(d) / "no-harden.py")
             self.assertEqual(doctor.results[-2][0], "WARN")
             self.assertEqual(doctor.results[-1][0], "SKIP")
+
+    def test_real_agent_folder_passes_and_link_warns(self):
+        with tempfile.TemporaryDirectory() as d:
+            agents = Path(d) / "Agents"
+            (agents / "agent-1234").mkdir(parents=True)
+            (agents / "agent-1234" / "AGENTS.md").write_text("x")
+            doctor.check_openbot(agents, Path(d) / "no-harden.py")
+            self.assertEqual(doctor.results[-2][0], "PASS")
+            (agents / "agent-5678").symlink_to(agents / "agent-1234")
+            doctor.check_openbot(agents, Path(d) / "no-harden.py")
+            self.assertEqual(doctor.results[-2][0], "WARN")
 
 
 if __name__ == "__main__":

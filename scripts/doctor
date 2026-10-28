@@ -91,12 +91,12 @@ def check_openbot(agents: Path, harden: Path) -> None:
         report("SKIP", "openbot", "no ~/OpenBot/Agents")
         return
     bad = []
-    for ws in sorted(agents.glob("agent-*")):
-        if not ws.is_symlink():
-            bad.append(f"{ws.name[:14]} unlinked")
+    for ws in sorted(agents.glob("agent-*")):  # bots live in their agent folder, no links (2026-10-28)
+        if ws.is_symlink():
+            bad.append(f"{ws.name[:14]} still a link")
         elif not (ws / "AGENTS.md").is_file():
             bad.append(f"{ws.name[:14]} no AGENTS.md")
-    report("WARN" if bad else "PASS", "openbot links", ", ".join(bad) or "all linked")
+    report("WARN" if bad else "PASS", "openbot agents", ", ".join(bad) or "all have AGENTS.md")
     if not harden.is_file():
         report("SKIP", "bot rules (openbot-harden --check)", f"{harden} missing")
         return
