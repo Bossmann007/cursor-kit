@@ -13,7 +13,7 @@ Short and direct: no preamble, no recap, no option menus, about 6 lines unless a
 - Done means evidence: run the project's check (tests, build, lint) and show the output.
 - Non-trivial task: `/emode`. Plan only if the change spans more than one file.
 - Before building a new tool, skill or integration: `/prior-art-check`.
-- No commit or push unless asked; ship by PR. Never merge unless asked.
+- No commit or push unless asked; ship by PR. Never merge unless asked, except where a bot's own Hard rules carry the Commit and merge rule (independent review of the exact head commit + local checks green, or Enzo's approval); that rule wins over this line for that bot.
 - Smallest change that works; fix the root cause.
 - Delegating with `/goal`: the project needs an executable `scripts/verify` (exit 0 = done). Run `~/Projects/cursor-kit/scripts/goal-run.sh <dir> <usd> [turns]` for a budget, turn cap and worktree. The `/goal` evaluator only reads the transcript, so the condition must make Claude run `scripts/verify` and show its exit code.
 - On `continue` / `retomar` in a project repo: follow `.claude/state/checkpoint.json` (`task`, `next_action`) when it has a task; otherwise ask what to resume.
