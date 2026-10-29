@@ -67,7 +67,7 @@ Only in a session running in OpenBot (`openbot.send_message`); elsewhere use the
 
 ## 5. Ship
 
-PR with evidence (`pr` skill: what changed, how it was verified). Merge only under the Commit and merge rule in the bot's Hard rules (independent review of the exact head commit + local checks green, or Enzo's approval); without that rule, never merge unless asked.
+PR with evidence (`pr` skill: what changed, how it was verified). Commit, push, PR and merge follow the Commit and merge rule in the bot's own Hard rules, with every condition it lists (reviews, checks, clinic repos, Enzo's approval); without that rule, no commit or push unless asked, and never merge unless asked.
 
 ## 6. Context
 
