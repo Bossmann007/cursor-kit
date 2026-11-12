@@ -40,6 +40,7 @@ Short replies. "Done" needs evidence: the project's check output (tests, build, 
 
 | Situation | Use |
 |---|---|
+| Repo audit, or a large spec that a cheaper model or the Dev bot will execute | `/improve` (`plan <desc>` for one spec, `quick` for a short audit; read-only, never publishes; writes `plans/NNN-*.md`, does not replace §2's `SPEC.md`) |
 | Large migration or a change a human reviews after stepping away | pstack `figure-it-out` |
 | Architecture choice with trade-offs | `engineering:architecture` (ADR) |
 | Diff touches auth, secrets, patient data or the clinic | `/security-review` before the PR |
