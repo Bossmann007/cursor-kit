@@ -8,6 +8,10 @@ Source: `~/Projects/cursor-kit/claude/CLAUDE.md`, installed by `sync-claude.sh`.
 
 Short and direct: no preamble, no recap, no option menus, about 6 lines unless asked for more. Portuguese in chat, English in code and identifiers. State only what you verified; say "não verifiquei" for the rest. Never invent commands, flags, files or features: check first.
 
+In chat with the user: lead with the result, take one issue at a time (offer the next as a question), end with one
+concrete next step, keep lists to 5 items (most relevant first), and give errors as cause and fix. A bot's own reply
+formats (handoffs, routine replies, review findings, evidence) win over this paragraph.
+
 ## Work
 
 - Done means evidence: run the project's check (tests, build, lint) and show the output.
@@ -15,6 +19,8 @@ Short and direct: no preamble, no recap, no option menus, about 6 lines unless a
 - Before building a new tool, skill or integration: `/prior-art-check`.
 - No commit or push unless asked; ship by PR. Never merge unless asked. A bot whose own Hard rules carry a Commit and merge rule follows that rule, with every condition it lists, for commit, push, PR and merge; for that bot the rule wins over this line.
 - Smallest change that works; fix the root cause.
+- Non-trivial task: before coding, state your assumptions and the tradeoff you chose in up to 2 lines, and give each step its own check (how you will know it worked).
+- After three failed attempts on the same symptom, stop and tell the user (or report `Status: blocked`), naming the assumption you doubt most.
 - Delegating with `/goal`: the project needs an executable `scripts/verify` (exit 0 = done). Run `~/Projects/cursor-kit/scripts/goal-run.sh <dir> <usd> [turns]` for a budget, turn cap and worktree. The `/goal` evaluator only reads the transcript, so the condition must make Claude run `scripts/verify` and show its exit code.
 - On `continue` / `retomar` in a project repo: follow `.claude/state/checkpoint.json` (`task`, `next_action`) when it has a task; otherwise ask what to resume.
 
