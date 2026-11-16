@@ -3,7 +3,19 @@
    python3 -I ncs.py                 -> table
    python3 -I ncs.py get "<title>" out.mp3
 The page lists recent releases; data-preview is the second NCS marks as the strong part (0 = not set)."""
-import html, json, re, sys, urllib.request
+import html, json, os, re, shutil, sys, urllib.request
+
+def download(url, dest):
+    """Save url to dest: https only, dest inside the current folder and not existing yet."""
+    if not url.lower().startswith("https://"): sys.exit(f"error: only https:// urls are accepted, got: {url}")
+    here, target = os.path.realpath(os.getcwd()), os.path.realpath(dest)
+    if os.path.commonpath([here, target]) != here: sys.exit(f"error: destination is outside the current folder: {target}")
+    if os.path.lexists(dest): sys.exit(f"error: destination already exists, pick another name or delete it: {dest}")
+    try:
+        with urllib.request.urlopen(url, timeout=30) as r, open(target, "xb") as f: shutil.copyfileobj(r, f)
+    except Exception as e:
+        if os.path.exists(target): os.remove(target)
+        sys.exit(f"error: download failed: {e}")
 
 def tracks():
     req = urllib.request.Request("https://ncs.io/", headers={"User-Agent": "Mozilla/5.0"})
@@ -26,6 +38,6 @@ if __name__ == "__main__":
     if len(sys.argv) == 4 and sys.argv[1] == "get":
         t = next((t for t in ts if t["title"].lower() == sys.argv[2].lower()), None)
         if not t: sys.exit("not found: " + sys.argv[2])
-        urllib.request.urlretrieve(t["url"], sys.argv[3]); print(json.dumps(t, ensure_ascii=False))
+        download(t["url"], sys.argv[3]); print(json.dumps(t, ensure_ascii=False))
     else:
         for t in ts: print(f'{t["title"]:<36} | {t["artist"]:<28} | {t["genre"]:<18} | {t["preview"]:>3}s | {"ncs.io/" + t["slug"] if t["slug"] else "slug: abrir a faixa no site"}')
