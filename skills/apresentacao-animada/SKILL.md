@@ -7,7 +7,7 @@ description: Motion graphics em HTML renderizado para MP4. Dois modos. Entrega -
 
 ## Pré-requisitos
 
-- **Node** 18 ou mais novo, com `playwright-core@1.65.1` instalado na pasta do vídeo (seção 5).
+- **Node** 20 ou mais novo, com `playwright-core@1.65.1` instalado na pasta do vídeo (seção 5).
 - **ffmpeg** e **ffprobe** no `PATH` (render, mixagem e conferência).
 - **`rsvg-convert`** (pacote `librsvg`; macOS `brew install librsvg`, Debian/Ubuntu `apt install librsvg2-bin`), só no modo Entrega: desenha a legenda de cada cena como PNG, porque muitos builds do ffmpeg vêm sem o filtro `drawtext`. Se `ffmpeg -filters | grep drawtext` achar o filtro, pode usar `drawtext` no lugar.
 - **Navegador Chromium** (Chrome, Brave ou Chromium); o render não baixa navegador. No macOS ele acha o app em `/Applications`; em outro caso, aponte o executável com `--navegador <caminho>` ou `NAVEGADOR=<caminho>` (ex.: `NAVEGADOR=$(command -v chromium) node render.mjs ...`).
@@ -28,7 +28,7 @@ Sem pedido de formato: Entrega para trabalho acadêmico, Redes para produto. Nã
 2. **Dados:** dados reais do projeto (log, saída de comando) quando forem do projeto; dados de pessoa (notas, nomes, RA, e-mail) sempre inventados. Números de exemplo seguem as regras do produto (arredondamento, pesos): calcule e confira.
 3. **Determinístico:** `window.renderAt(t)` desenha cada quadro como função pura do tempo; nada de contador de quadros, `Date.now()` ou aleatório sem semente; `window.TOTAL` em segundos; `window.pronto = true` depois de `document.fonts.ready`. Aberto no navegador, a página toca sozinha (Espaço pausa, ← → 1 s).
 4. **Visual com números:** paleta hex em `:root`, uma cor de destaque, curva `cubic-bezier` nomeada, margens fixas. Se o projeto tem identidade (site, extensão), copie os tokens, as fontes (`@font-face` com caminho relativo ao `.woff2` do repositório) e o logo (`<symbol>` SVG); não invente outro estilo.
-5. **Disciplina:** em coursework, siga o `AGENTS.md` da pasta do curso (o que é do aluno e o que pode ser feito por IA).
+5. **Disciplina:** em coursework, siga o `AGENTS.md` da pasta do curso, se existir (o que é do aluno e o que pode ser feito por IA).
 
 ## 3. Modo Entrega
 
@@ -63,7 +63,7 @@ Sem folhas, roteiro, `montar.sh` nem gravações. Se o usuário tiver um vídeo 
     -map 0:v -map "[a]" -c:v copy -c:a aac -b:a 192k -shortest -movflags +faststart <nome>-video-ncs.mp4
   ```
 
-  Mantenha a versão muda. Você não ouve a faixa: diga qual escolheu e por quê (gênero, trecho marcado) e ofereça trocar. **Uso e crédito ([política NCS](https://ncs.io/usage-policy)):** livre para criadores independentes no YouTube e na Twitch, inclusive monetizado, com o crédito do artista e da faixa na descrição. Copie o crédito da página da faixa (`ncs.io/<slug>`; se o slug saiu vazio, procure a faixa no ncs.io) ou da descrição do vídeo dela no canal oficial; não monte de memória. Se não houver crédito para copiar, a política pede o link da faixa. A política não cita TikTok, Reels, Shorts nem LinkedIn, e marca ou serviço promovendo um produto deve falar com o time de parcerias da NCS: nesses casos, diga ao usuário para conferir a política (ou pedir licença) antes de publicar.
+  Mantenha a versão muda. Você não ouve a faixa: diga qual escolheu e por quê (gênero, trecho marcado) e ofereça trocar. **Uso e crédito ([política NCS](https://ncs.io/usage-policy)):** livre para criadores independentes no YouTube e na Twitch, inclusive monetizado, com o crédito do artista e da faixa na descrição. Copie o crédito da página da faixa (`ncs.io/<slug>`; se o slug saiu vazio, procure a faixa no ncs.io) ou da descrição do vídeo dela no canal oficial; não monte de memória. A política também pede o link do upload da NCS (o vídeo da faixa no canal oficial) na descrição; em live na Twitch ou no YouTube, use a linha que ela dá: "Music provided by http://spoti.fi/NCS". A política não cita TikTok, Reels, Shorts nem LinkedIn, e marca ou serviço promovendo um produto deve falar com o time de parcerias da NCS: nesses casos, diga ao usuário para conferir a política (ou pedir licença) antes de publicar.
 
 ## 5. Ferramentas desta skill
 

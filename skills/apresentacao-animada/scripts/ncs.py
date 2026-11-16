@@ -3,19 +3,30 @@
    python3 -I ncs.py                 -> table
    python3 -I ncs.py get "<title>" out.mp3
 The page lists recent releases; data-preview is the second NCS marks as the strong part (0 = not set)."""
-import html, json, os, re, shutil, sys, urllib.request
+import html, json, os, re, shutil, sys, urllib.error, urllib.request
+
+class _HttpsOnly(urllib.request.HTTPRedirectHandler):
+    """Refuse a redirect that leaves https."""
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        if not newurl.lower().startswith("https://"): raise urllib.error.URLError(f"redirect to non-https url: {newurl}")
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 def download(url, dest):
-    """Save url to dest: https only, dest inside the current folder and not existing yet."""
+    """Save url to dest: https only (redirects too), dest inside the current folder and not existing yet."""
     if not url.lower().startswith("https://"): sys.exit(f"error: only https:// urls are accepted, got: {url}")
     here, target = os.path.realpath(os.getcwd()), os.path.realpath(dest)
     if os.path.commonpath([here, target]) != here: sys.exit(f"error: destination is outside the current folder: {target}")
     if os.path.lexists(dest): sys.exit(f"error: destination already exists, pick another name or delete it: {dest}")
+    created, done = False, False
     try:
-        with urllib.request.urlopen(url, timeout=30) as r, open(target, "xb") as f: shutil.copyfileobj(r, f)
+        with open(target, "xb") as f:
+            created = True
+            with urllib.request.build_opener(_HttpsOnly).open(url, timeout=30) as r: shutil.copyfileobj(r, f)
+        done = True
     except Exception as e:
-        if os.path.exists(target): os.remove(target)
         sys.exit(f"error: download failed: {e}")
+    finally:
+        if created and not done and os.path.exists(target): os.remove(target)
 
 def tracks():
     req = urllib.request.Request("https://ncs.io/", headers={"User-Agent": "Mozilla/5.0"})
