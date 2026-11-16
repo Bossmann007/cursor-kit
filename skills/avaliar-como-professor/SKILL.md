@@ -9,6 +9,8 @@ O avaliador é um agente separado (contexto limpo), para não herdar a simpatia 
 
 ## 1. Juntar as fontes (você, antes de chamar o agente)
 
+Pré-requisito: a pasta da disciplina organizada pela skill `setup-pucpr` (ou equivalente). Sem ela, peça ao aluno quatro coisas antes de seguir: o enunciado com a rubrica, o plano de ensino, o material de aula ligado ao trabalho e a entrega (pasta ou link).
+
 1. **Pasta da disciplina:** a pasta acima da entrega que tem `Plano-de-Ensino.md` (ou o PDF do plano) e `AGENTS.md`. Anote o nome do professor (plano de ensino ou `AGENTS.md`).
 2. **Enunciado e rubrica:** o arquivo do trabalho (geralmente em `Atividades/`, ou na pasta da entrega, como `Projeto CSCF - 2026.2.md`). Se a rubrica não estiver no enunciado, procure no Canvas exportado ou pergunte ao aluno. **Sem rubrica, não invente pesos:** avalie por exigência e diga que a nota é estimada.
 3. **O que o professor ensinou:** `Slides/`, `Modulos/`, `Formativas/`, `Plano-de-Ensino.md`, `COURSE.md`. Liste só os arquivos ligados ao tema do trabalho (pelo título). PDFs grandes: o agente pode converter com `markitdown` (skill `digest-files`) ou ler as páginas que importam.
@@ -19,7 +21,7 @@ O avaliador é um agente separado (contexto limpo), para não herdar a simpatia 
 
 Use a ferramenta Agent (`general-purpose`, foreground) com o texto de `prompt-professor.md`, preenchendo os campos entre `{chaves}`. Regras do brief:
 
-- Somente leitura: não editar, não fazer commit, não publicar em serviços externos (broker, site) fora de prefixos de teste.
+- Somente leitura: não editar, não fazer commit, não publicar nada em serviços externos.
 - Evidência para cada ponto (`arquivo:linha`, saída de comando, trecho do enunciado). Sem evidência, o critério não recebe o nível.
 - Ser exigente como o professor: dúvida entre dois níveis, fica com o menor e explica o que faltou.
 - Nada que o professor não pediu nem ensinou pesa na nota (pode virar comentário).
