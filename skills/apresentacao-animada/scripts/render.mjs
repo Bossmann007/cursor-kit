@@ -1,5 +1,6 @@
 // Render any page with window.renderAt(t) + window.TOTAL to MP4 with a virtual clock (one screenshot per frame, piped to ffmpeg).
-// Same video on any machine. Needs `npm i playwright-core` next to it (or in the project) and ffmpeg; uses Brave, else Chrome.
+// Same video on any machine. Needs `npm i playwright-core@1.65.1` next to it (or in the project) and ffmpeg; uses --navegador, NAVEGADOR, Brave, Chrome or Chromium.
+// Refuses to replace an existing output MP4 unless --sobrescrever is given.
 //   node render.mjs --html social.html                       -> ~/Downloads/<html name>-video.mp4 (1080x1920)
 //   node render.mjs --html slides.html --w 1920 --h 1080 --saida x.mp4
 //   node render.mjs --html social.html --saida x.mp4 --de 7 --ate 13
@@ -19,9 +20,12 @@ const args = Object.fromEntries(process.argv.slice(2).reduce((acc, a, i, xs) => 
 const fps = Number(args.fps || 30), W = Number(args.w || 1080), H = Number(args.h || 1920);
 if (!args.html) { console.error("Use --html <page with window.renderAt and window.TOTAL>"); process.exit(1); }
 const html = path.resolve(String(args.html)), base = path.basename(html, ".html");
+const out = path.resolve(args.saida || path.join(os.homedir(), "Downloads", base + "-video.mp4"));
+if (!args.quadros && existsSync(out) && !args.sobrescrever) { console.error(`${out} already exists. Use --saida <other file> or --sobrescrever.`); process.exit(1); }
 const exe = [args.navegador, process.env.NAVEGADOR, "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser",
-  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"].filter(Boolean).find(p => existsSync(p));
-if (!exe) { console.error("No Chromium browser found (Brave or Chrome). Use --navegador <path>."); process.exit(1); }
+  "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  "/Applications/Chromium.app/Contents/MacOS/Chromium"].filter(Boolean).find(p => existsSync(p));
+if (!exe) { console.error("No Chromium browser found (Brave, Chrome or Chromium). Use --navegador <path> or NAVEGADOR=<path>."); process.exit(1); }
 
 const browser = await chromium.launch({ executablePath: exe, headless: true, args: ["--hide-scrollbars", "--force-color-profile=srgb"] });
 const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
@@ -48,7 +52,6 @@ if (args.quadros) {
 
 const a = Number(args.de || 0), b = Number(args.ate || total), times = [];
 for (let i = 0; a + i / fps < b - 1e-9; i++) times.push(a + i / fps);
-const out = path.resolve(args.saida || path.join(os.homedir(), "Downloads", base + "-video.mp4"));
 const ff = spawn("ffmpeg", ["-y", "-hide_banner", "-loglevel", "error", "-f", "image2pipe", "-framerate", String(fps), "-c:v", "mjpeg", "-i", "-",
   "-vf", "scale=in_range=pc:out_range=tv,format=yuv420p", "-color_range", "tv", "-c:v", "libx264", "-preset", "medium", "-crf", "18",
   "-r", String(fps), "-movflags", "+faststart", out], { stdio: ["pipe", "inherit", "inherit"] });
