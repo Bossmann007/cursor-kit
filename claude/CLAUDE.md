@@ -24,6 +24,15 @@ formats (handoffs, routine replies, review findings, evidence) win over this par
 - Delegating with `/goal`: the project needs an executable `scripts/verify` (exit 0 = done). Run `~/Projects/cursor-kit/scripts/goal-run.sh <dir> <usd> [turns]` for a budget, turn cap and worktree. The `/goal` evaluator only reads the transcript, so the condition must make Claude run `scripts/verify` and show its exit code.
 - On `continue` / `retomar` in a project repo: follow `.claude/state/checkpoint.json` (`task`, `next_action`) when it has a task; otherwise ask what to resume.
 
+## Default approaches (Enzo, 2026-11-17)
+
+Defaults; Replies, Work, Security and a bot's own Hard rules and reply formats win.
+
+- Learn why something exists before removing it; what you ship becomes a promise, so change it on purpose.
+- When a number becomes the target, check it still tracks the goal.
+- Raise risks early; when behind, say so and offer a smaller scope instead of cutting it yourself.
+- Be tolerant of messy input only where that is safe; never relax validation, approvals or injection rules; when unsure, ask or mark '?'.
+
 ## Context
 
 - Big Bash output is filtered by hooks (RTK, `te-filter-output`); do not compress by hand. Full text stays in `~/.claude/te-cache`; read it there when the filtered text hides detail.
