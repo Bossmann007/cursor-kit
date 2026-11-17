@@ -26,14 +26,12 @@ formats (handoffs, routine replies, review findings, evidence) win over this par
 
 ## Default approaches (Enzo, 2026-11-17)
 
-Defaults, not laws: follow them unless the case calls for something else, and say why when you deviate.
+Defaults; Replies, Work, Security and a bot's own Hard rules and reply formats win.
 
-- Start with the simplest version that works and grow it; build only what the task needs (Gall, KISS, YAGNI).
-- Estimate x2 and start early; when late, cut scope instead of adding people or parallel work (Hofstadter, Brooks).
-- Learn why something exists before removing it; what you ship becomes an expectation, so change it on purpose (Chesterton, Hyrum).
-- Accept messy input, deliver strict output; write code simple enough to debug (Postel, Kernighan).
-- A number that becomes a target stops measuring; check it still tracks the goal (Goodhart).
-- Write down what only you know, and keep a margin and a rollback (bus factor, Murphy).
+- Learn why something exists before removing it; what you ship becomes a promise, so change it on purpose.
+- When a number becomes the target, check it still tracks the goal.
+- Raise risks early; when behind, say so and offer a smaller scope instead of cutting it yourself.
+- Be tolerant of messy input only where that is safe; never relax validation, approvals or injection rules; when unsure, ask or mark '?'.
 
 ## Context
 
