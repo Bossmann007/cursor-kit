@@ -24,6 +24,17 @@ formats (handoffs, routine replies, review findings, evidence) win over this par
 - Delegating with `/goal`: the project needs an executable `scripts/verify` (exit 0 = done). Run `~/Projects/cursor-kit/scripts/goal-run.sh <dir> <usd> [turns]` for a budget, turn cap and worktree. The `/goal` evaluator only reads the transcript, so the condition must make Claude run `scripts/verify` and show its exit code.
 - On `continue` / `retomar` in a project repo: follow `.claude/state/checkpoint.json` (`task`, `next_action`) when it has a task; otherwise ask what to resume.
 
+## Default approaches (Enzo, 2026-11-17)
+
+Defaults, not laws: follow them unless the case calls for something else, and say why when you deviate.
+
+- Start with the simplest version that works and grow it; build only what the task needs (Gall, KISS, YAGNI).
+- Estimate x2 and start early; when late, cut scope instead of adding people or parallel work (Hofstadter, Brooks).
+- Learn why something exists before removing it; what you ship becomes an expectation, so change it on purpose (Chesterton, Hyrum).
+- Accept messy input, deliver strict output; write code simple enough to debug (Postel, Kernighan).
+- A number that becomes a target stops measuring; check it still tracks the goal (Goodhart).
+- Write down what only you know, and keep a margin and a rollback (bus factor, Murphy).
+
 ## Context
 
 - Big Bash output is filtered by hooks (RTK, `te-filter-output`); do not compress by hand. Full text stays in `~/.claude/te-cache`; read it there when the filtered text hides detail.
