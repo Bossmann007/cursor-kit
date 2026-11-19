@@ -26,6 +26,9 @@ Goal: do not build what already exists, better and maintained. Search cheap laye
 ## Layers (cheap first, stop when something fits)
 
 1. **Already installed:** read `~/.claude/skill-index.md` (all enabled skills, ~1k tokens). Also `ai-memory` (`memory_query`, including `decisions/` pages about the need), `codebase-memory` (`search_graph`), the kit, the repo itself. Reuse past audits so nothing already owned or rejected is re-recommended: `~/OpenBot/Agents/agent-2ab7683d-1761-4580-ac5f-39c11dfea523/notes/skills-*.md`, `~/bots/README.md` (third-party skills and pinned commits), and `ls ~/OpenBot/Agents/*/.claude/skills`.
+   **The user's GitHub stars** (repos Enzo already picked as interesting; cheap, one call per 100 stars):
+   `gh api --paginate 'user/starred?per_page=100' --jq '.[]|[.full_name,.stargazers_count,.pushed_at[:10],(.license.spdx_id//"none"),(.description//"")]|@tsv' | grep -i -E "<keywords>"`
+   A starred repo is a lead, not an approval: it still gets the full score below.
 2. **Claude plugin catalog (offline, 300+ plugins):** `python3 ~/Projects/cursor-kit/scripts/find-plugins.py <keywords> -n 8`. Shows installs, **always-on token cost per turn**, components, install command. Prefer high installs and low always-on cost.
 3. **Connectors / MCP registry (claude.ai):** load the tools with ToolSearch (`select:mcp__mcp-registry__search_mcp_registry,mcp__mcp-registry__suggest_connectors,mcp__mcp-registry__list_connectors`), then search by the need ("calendar", "database", "figma"). `list_connectors` shows what is already connected. The `SearchPlugins` tool also searches the user's claude.ai plugin catalog.
 4. **Public skills:** Anthropic's official sources first (`anthropics/skills`, `anthropics/knowledge-work-plugins`, the app's Customize skills/plugins via `SearchSkills` / `SearchPlugins`, partner-tier plugins), before any third-party list. Then `find-skills` (`npx skills find <query>`; check skills.sh leaderboard first).
@@ -68,7 +71,7 @@ Goal: do not build what already exists, better and maintained. Search cheap laye
 
 ```
 Need: <one sentence>
-Checked: installed, plugin catalog (<queries>), connectors (<queries>), awesome lists (<queries>), GitHub (<queries>)
+Checked: installed, GitHub stars (<queries>), plugin catalog (<queries>), connectors (<queries>), awesome lists (<queries>), GitHub (<queries>)
 Candidates: <name> (kind, installs/stars, last push, license, always-on tok) — fit/risk in 1 line each
 Decision: adopt | adapt | build — <name@version> — <why>
 Risks: <supply chain / data / permissions / lock-in>
