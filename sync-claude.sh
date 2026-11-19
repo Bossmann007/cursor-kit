@@ -40,9 +40,11 @@ echo "installed ${CL}/CLAUDE.md"
 # 4. skills: link kit skills into ~/.claude/skills (plugin install is the alternative)
 mkdir -p "${CL}/skills"
 OFF=" $(python3 -c 'import json,sys; print(" ".join(json.load(open(sys.argv[1]))["off"]))' "$ROOT/claude/skill-overrides.json") "
+PUCPR_ONLY="setup-pucpr avaliar-como-professor"  # coursework skills: only inside ~/PUCPR
 for d in "$ROOT"/skills/*/; do
   n="$(basename "$d")"
-  case " code-review simplify setup-matt-pocock-skills setup-pucpr " in *" $n "*) continue ;; esac  # shadowed by built-ins
+  case " code-review simplify setup-matt-pocock-skills " in *" $n "*) continue ;; esac  # shadowed by built-ins
+  case " $PUCPR_ONLY " in *" $n "*) continue ;; esac  # linked into ~/PUCPR below
   if [[ "$OFF" == *" $n "* ]]; then  # curated off: do not link; drop a link the kit made earlier
     [[ -L "${CL}/skills/${n}" && "$(readlink "${CL}/skills/${n}")" == "${d%/}" ]] && rm "${CL}/skills/${n}"
     continue
@@ -51,6 +53,15 @@ for d in "$ROOT"/skills/*/; do
   [[ -e "${CL}/skills/${n}" ]] || ln -s "${d%/}" "${CL}/skills/${n}"
 done
 echo "linked skills into ${CL}/skills"
+if [[ -d "$HOME/PUCPR" ]]; then
+  mkdir -p "$HOME/PUCPR/.claude/skills"
+  for n in $PUCPR_ONLY; do
+    l="$HOME/PUCPR/.claude/skills/$n"
+    [[ -L "$l" && "$(readlink "$l")" != "$ROOT/skills/$n" ]] && rm "$l"  # stale link (repo moved)
+    [[ -e "$l" ]] || ln -s "$ROOT/skills/$n" "$l"
+  done
+  echo "linked coursework skills into ~/PUCPR/.claude/skills"
+fi
 
 # 5. MCP servers (user scope). Secrets are never written here; add TiDB yourself via env.
 if [[ "${SKIP_MCP:-}" != "1" ]] && command -v claude >/dev/null; then
