@@ -40,8 +40,11 @@ Code-only work with no outside user (a fix, a refactor, a skill) is done when bu
    (options and design approved and written as ADRs before any spec). New tool or integration: `/prior-art-check`.
    Pick the scope mode with Enzo up front: expand, hold or reduce (idea from gstack `/plan-ceo-review`).
 2. Spec: `grilling` the open decisions, then `verification-planning` (skip its step 0) for the end-to-end check; write `SPEC.md` (files, out of scope, that check). Then implement from a fresh context: a new session whose brief is `SPEC.md` (CLI: `/clear`).
-   Before implementing, show the plan (`SPEC.md` summary) in a question box (OpenBot `openbot.ask_ui` or
-   `AskUserQuestion`) with Aprovar, Ajustar and Rejeitar; implement only after Aprovar. Outside OpenBot: `ExitPlanMode`.
+   Approve once: the session that wrote `SPEC.md` asks before `/clear` or the handoff. In OpenBot: an `openbot.ask_ui`
+   confirm card, plan summary in `preview`, buttons Aprovar, Ajustar (revise `SPEC.md`, ask again) and Rejeitar (stop and
+   report, no code); outside OpenBot: a plain chat question on the written `SPEC.md`. Aprovar writes the line
+   `Status: approved by Enzo <date>` in `SPEC.md`; the implementer (new session, Dev, T3 thread, `/goal`, routine) checks
+   it and does not ask again; no line and no user present: report `blocked: SPEC not approved`. The start card (`acknowledge_request`) is not this Aprovar.
 3. Implement in pstack `poteto-mode` style, one task at a time, new behavior via `tdd`; commit per task only if asked.
    Scope is frozen while a PR is open: a decision that adds scope goes to the decision table and the next phase, not
    into this PR. A decision that changes this PR's own behavior (e.g. from review) updates its ADR/SPEC in this PR (§5).
