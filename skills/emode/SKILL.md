@@ -20,6 +20,7 @@ Code-only work with no outside user (a fix, a refactor, a skill) is done when bu
 - **Medium** (bug, 1-2 files): `diagnosing-bugs` (its loop and regression test before the fix), then run the check.
 - **Performance** (slow, heavy, big bundle, memory, cost): `performance` (budget, baseline, one change, lock it in
   `scripts/verify`), on top of the size it has (Small, Medium or Large).
+- Choosing a design (any size, and each Decision option): `principles` part A (KISS, reuse, guards, pinned versions); differ only in writing.
 - **Large** (multi-file, new feature, a phase): step 2. First ask if it fits Enzo's time this week (exams, other
   fronts); if not, propose the smallest slice that does. No user present: say it in the report.
 - **Decision** (a recommendation, or a change to security, money, the clinic, global config or many folders):
@@ -59,7 +60,8 @@ Code-only work with no outside user (a fix, a refactor, a skill) is done when bu
 
 - Run the check on the real artifact (output, value, diff), not a proxy or "it compiles", and show the output.
 - Large change: `blindspot-pass`, then a fresh-context `/code-review`. A change with a performance budget: the
-  `performance` before/after numbers in the report. Tell the reviewer to flag only correctness or requirement gaps, not style.
+  `performance` before/after numbers in the report. Before review, run each `principles` part A Check on the diff.
+  Tell the reviewer to flag only correctness or requirement gaps, not style.
 - UI: screenshot and compare in the browser.
 - Generated files (PNG, PDF, DXF, previews) are output too: scan them for personal or regulated data (names, CREA,
   ART, chassis, patients) before showing or sharing; references and inputs never get pasted into an output.
