@@ -20,7 +20,7 @@ Code-only work with no outside user (a fix, a refactor, a skill) is done when bu
 - **Medium** (bug, 1-2 files): `diagnosing-bugs` (its loop and regression test before the fix), then run the check.
 - **Performance** (slow, heavy, big bundle, memory, cost): `performance` (budget, baseline, one change, lock it in
   `scripts/verify`), on top of the size it has (Small, Medium or Large).
-- Choosing a design (any size): `principles` part A (KISS, reuse, guards, pinned versions); differ only in writing.
+- Choosing a design (any size, and each Decision option): `principles` part A (KISS, reuse, guards, pinned versions); differ only in writing.
 - **Large** (multi-file, new feature, a phase): step 2. First ask if it fits Enzo's time this week (exams, other
   fronts); if not, propose the smallest slice that does. No user present: say it in the report.
 - **Decision** (a recommendation, or a change to security, money, the clinic, global config or many folders):

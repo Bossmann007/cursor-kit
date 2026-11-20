@@ -16,7 +16,7 @@ def kit_refs(skill):
 
 class T(unittest.TestCase):
     def test_referenced_skills_exist(self):
-        for skill in ("emode", "senior-check"):
+        for skill in ("emode", "senior-check", "principles"):
             for name in kit_refs(skill):
                 self.assertTrue((ROOT / "skills" / name / "SKILL.md").exists(), f"{skill} references missing skill {name}")
 

@@ -5,7 +5,7 @@ description: >
   has proof, small PRs, reuse, guards as tools, pinned versions, Hyrum, Postel (RFC 9413), Goodhart, Gall, YAGNI,
   Chesterton, Lindy, bus factor. Part B, Work and life: deadlines, study, projects, relationships, money, health,
   numbers. Use when choosing a design (emode Size/Decision), before review (emode Verify), in senior-check, or on
-  "princípios", "boas práticas", "KISS", "estamos complicando?".
+  "princípios", "KISS", "estamos complicando?".
 ---
 
 # principles
@@ -37,10 +37,10 @@ Each block: **Default**, **Different when**, **Check** (a command, a file, or a 
 
 ### 3. Done has proof: verify exit 0 and a review of the exact head
 
-- Default: built = `scripts/verify` exit 0 with the output shown; done = a real user used it on a real case. Built is
-  not done. Merge only with a review of the exact commit and verify green on it; nothing pushed after the review.
-  Source: emode + [90-90 rule](https://lawsofsoftwareengineering.com/laws/ninety-ninety-rule/). Method: pstack
-  `principle-prove-it-works`.
+- Default: built = `scripts/verify` exit 0 with the output shown; done = a real user used it on a real case (code-only
+  work with no outside user is done when built). Built is not done. Merge only with a review of the exact commit and
+  verify green on it; nothing pushed after the review. Source: emode +
+  [90-90 rule](https://lawsofsoftwareengineering.com/laws/ninety-ninety-rule/). Method: pstack `principle-prove-it-works`.
 - Different when: a throwaway draft or prototype, marked as such.
 - Check: `scripts/verify; echo $?` prints 0; the reviewed SHA equals `git rev-parse HEAD`.
 
@@ -60,8 +60,8 @@ Each block: **Default**, **Different when**, **Check** (a command, a file, or a 
 
 ### 6. The guard is a tool, not goodwill
 
-- Default: a rule that matters becomes an automatic check (verify, hook, CI) that fails on its own, e.g. verify rejects
-  an AI co-author trailer. What can fail once will ([Murphy](https://lawsofsoftwareengineering.com/laws/murphys-law/),
+- Default: a rule that matters becomes an automatic check (verify, hook, CI) that fails on its own, e.g. a verify step
+  that fails on a forbidden commit trailer. What can fail once will ([Murphy](https://lawsofsoftwareengineering.com/laws/murphys-law/),
   as margin). When it broke: pstack `principle-fix-root-causes`.
 - Different when: a harmless style preference; it stays in the rule text.
 - Check: "which command fails if this rule is broken?" No command, no guard.
