@@ -18,6 +18,8 @@ Code-only work with no outside user (a fix, a refactor, a skill) is done when bu
 
 - **Small** (diff fits one sentence): do it, run the check.
 - **Medium** (bug, 1-2 files): `diagnosing-bugs` (its loop and regression test before the fix), then run the check.
+- **Performance** (slow, heavy, big bundle, memory, cost): `performance` (budget, baseline, one change, lock it in
+  `scripts/verify`), on top of the size it has (Small, Medium or Large).
 - **Large** (multi-file, new feature, a phase): step 2. First ask if it fits Enzo's time this week (exams, other
   fronts); if not, propose the smallest slice that does. No user present: say it in the report.
 - **Decision** (a recommendation, or a change to security, money, the clinic, global config or many folders):
@@ -56,7 +58,8 @@ Code-only work with no outside user (a fix, a refactor, a skill) is done when bu
 ## 3. Verify
 
 - Run the check on the real artifact (output, value, diff), not a proxy or "it compiles", and show the output.
-- Large change: `blindspot-pass`, then a fresh-context `/code-review`. Tell the reviewer to flag only correctness or requirement gaps, not style.
+- Large change: `blindspot-pass`, then a fresh-context `/code-review`. A change with a performance budget: the
+  `performance` before/after numbers in the report. Tell the reviewer to flag only correctness or requirement gaps, not style.
 - UI: screenshot and compare in the browser.
 - Generated files (PNG, PDF, DXF, previews) are output too: scan them for personal or regulated data (names, CREA,
   ART, chassis, patients) before showing or sharing; references and inputs never get pasted into an output.
@@ -105,6 +108,9 @@ PR with evidence (`pr` skill: what changed, how it was verified). Commit, push, 
 - Docs ship with the code: when a decision changed, the same PR updates the decision table/ADR and `SPEC.md`; a PR
   whose code contradicts its SPEC is not ready. Before the PR, read the changed behavior against README/SPEC/docs and
   fix any gap (idea from gstack `/document-release`).
+- End of a phase, or when asked "are we doing it right?": `senior-check` (process, versions, docs, git hygiene,
+  secrets, default approaches); its FAILs block closing the phase, not the "built" of one change. It is the
+  quick self-check; `/improve` stays the deep audit with plans, and the Application Security Reviewer the security sweep.
 - End of a phase: `retro` (what cost rework, which check prevents it next time); write the lesson where the next change
   reads it (a check, an ADR, ai-memory), as in compound-engineering. Explain the why to Enzo with pstack `teach`.
 - Editing a skill (this one too): fix the tool first, edit the line instead of appending, rule not story (idea from
