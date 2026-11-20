@@ -1,22 +1,5 @@
 {
   "off": [
-    "superpowers:using-superpowers",
-    "superpowers:writing-skills",
-    "superpowers:dispatching-parallel-agents",
-    "superpowers:executing-plans",
-    "pstack:arena",
-    "pstack:swarm",
-    "pstack:make-bot-ui",
-    "pstack:automate-me",
-    "pstack:recall",
-    "pstack:reflect",
-    "pstack:poteto-help",
-    "pstack:tdd",
-    "code-review:code-review",
-    "anthropic-skills:morning",
-    "anthropic-skills:setup-claude",
-    "anthropic-skills:import-memory",
-    "orca-cli",
     "orchestration",
     "varlock",
     "vibesec"
@@ -29,11 +12,7 @@
     "domain-modeling",
     "asd-ste100",
     "resolving-merge-conflicts",
-    "find-skills",
-    "pstack:benchmark-checklist",
-    "pstack:figure-it-out",
-    "pstack:create-verification-skill",
-    "pstack:maintain-verification-skill"
+    "find-skills"
   ],
   "name-only": [
     "setup-ai-memory"

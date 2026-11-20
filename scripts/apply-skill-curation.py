@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """Merge claude/skill-overrides.json into ~/.claude/settings.json skillOverrides. Backup first, mode 600.
 
+Kit and user skills only: skillOverrides does not apply to plugin skills (manage those through /plugin).
+
 'off' and 'name-only' set that override; 'on' deletes the override (skill back to default, i.e. on).
 Overrides for names not in the file are never touched.
 """
-import json, os, shutil, time
+import json, os, shutil, tempfile
+from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -16,18 +19,21 @@ def apply(settings: Path, cfg: dict) -> tuple[int, int, int]:
     if both:
         raise SystemExit(f"skill curation: in 'on' and in 'off'/'name-only': {sorted(both)}")
     want = {n: "off" for n in cfg["off"]} | {n: "name-only" for n in cfg.get("name-only", [])}
-    d = json.loads(settings.read_text())
+    d = json.loads(settings.read_text(encoding="utf-8"))
     o = d.setdefault("skillOverrides", {})
     changed = [n for n, v in want.items() if o.get(n) != v]
     removed = [n for n in cfg.get("on", []) if n in o]
     if changed or removed:
-        b = settings.with_name(settings.name + f".bak.{time.strftime('%Y%m%d%H%M%S')}")
+        b = settings.with_name(settings.name + f".bak.{datetime.now().strftime('%Y%m%d%H%M%S%f')}")
         shutil.copy2(settings, b); os.chmod(b, 0o600)
         for n in changed:
             o[n] = want[n]
         for n in removed:
             del o[n]
-        settings.write_text(json.dumps(d, indent=2) + "\n"); os.chmod(settings, 0o600)
+        fd, tmp = tempfile.mkstemp(dir=settings.parent, prefix=settings.name + ".")  # mode 600
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(json.dumps(d, indent=2, ensure_ascii=False) + "\n")
+        os.replace(tmp, settings)
     return len(changed), len(removed), len(want) - len(changed)
 
 
