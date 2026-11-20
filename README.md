@@ -42,6 +42,8 @@ cd ~/Projects/cursor-kit && ./sync-all.sh   # TOOLS="claude cursor codex gemini"
 | Companion ai-memory | `/setup-ai-memory` + [docs/tools/10-ai-memory.md](docs/tools/10-ai-memory.md) |
 | Evidence path (pré-implement) | `/verification-planning` |
 | Fluxo de trabalho padrão | `/emode` |
+| Auditoria "estamos fazendo certo?" (processo, versões, docs, leis) | `/senior-check` |
+| App mais rápido e leve, com números | `/performance` |
 | O que está provado e o que não | [docs/EVIDENCE.md](docs/EVIDENCE.md) |
 | Reutilizar antes de construir | `/prior-art-check` |
 | Inventário de plugins/companions | [docs/EXTERNAL-COMPONENTS.md](docs/EXTERNAL-COMPONENTS.md) |
