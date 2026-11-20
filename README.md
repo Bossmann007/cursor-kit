@@ -52,6 +52,8 @@ cd ~/Projects/cursor-kit && ./sync-all.sh   # TOOLS="claude cursor codex gemini"
 | Card de ferramenta | [docs/tools/](docs/tools/) |
 | Referência profunda | [ARCHITECTURE](docs/ARCHITECTURE.md), [MEMORY](docs/MEMORY.md), [WORKFLOWS](docs/WORKFLOWS.md), [TROUBLESHOOTING](docs/TROUBLESHOOTING.md) |
 
+Nenhuma skill do kit fica em `off` (`claude/skill-overrides.json`; a lista `on` apaga overrides antigos); `sync-claude.sh` pula `code-review`, `simplify` e `setup-matt-pocock-skills` porque as built-ins de mesmo nome as sombreiam.
+
 ## Plugin local
 
 Cursor rejeita symlink cujo target fica fora de `~/.cursor/plugins/local/`. Sync ou clone in-place (detalhes em [docs/01-installation.md](docs/01-installation.md)):
