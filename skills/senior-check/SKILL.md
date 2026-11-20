@@ -3,7 +3,7 @@ name: senior-check
 description: >
   Read-only audit of whether a repo is built the way a senior engineer would: process (emode steps, verify, CI, PR
   flow), versions (lockfile, pinned runtime, tags matching the manifest, changelog), docs (README, SPEC, ADRs),
-  git hygiene, secrets, and Enzo's default approaches (manual-abordagens). Use on "senior check", "estamos fazendo
+  git hygiene, secrets, and the default approaches in `principles` part A. Use on "senior check", "estamos fazendo
   certo?", "boas práticas", "auditoria do projeto", before a PR that ends a phase, or when emode §5 calls it.
 ---
 
@@ -37,17 +37,8 @@ Only for the current phase or the open PR, not the whole history:
 2. **Tests prove behavior**: new behavior has a test that would fail without it; no skipped or deleted tests to get green.
 3. **Dependencies**: run the ecosystem's audit (`npm audit --omit=dev`, `uv pip list --outdated` or `pip-audit`,
    `dotnet list package --vulnerable`); report high/critical only. A major version behind with a known CVE is a FAIL.
-4. **Default approaches** (`~/OpenBot/Agents/agent-2ab7683d-1761-4580-ac5f-39c11dfea523/notes/manual-abordagens.md`):
-   check the ones that apply to code. Each is a default, not a law: a different choice is fine when it is written
-   down (ADR or PR body) with the reason.
-   - Gall: the smallest end-to-end version works before it grows.
-   - YAGNI/KISS: no feature or abstraction without a use today (except data formats, security, consent).
-   - Kernighan: simple, readable code; clever code only where performance was measured, with a comment.
-   - Chesterton: nothing removed without knowing why it existed.
-   - Bus factor: how to run, deploy and recover is written (README, runbook), not only in a head.
-   - Hyrum: public behavior (API, CLI flags, file formats) changes on purpose, with a version bump and a CHANGELOG line.
-   - Lindy: new dependencies are mature unless an ADR says why not.
-   - Goodhart: the metric still tracks the goal (coverage, scores, benchmarks).
+4. **Default approaches**: `principles` part A (Engineering); check the ones that apply to code. Each is a default,
+   not a law: a different choice is fine when it is written down (ADR or PR body) with the reason.
 5. **Performance**: if the project has a budget, it is checked in `scripts/verify`; if not, say so (see `performance`).
 
 ## 3. Report
