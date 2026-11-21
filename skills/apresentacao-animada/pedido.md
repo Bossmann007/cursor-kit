@@ -2,6 +2,8 @@
 
 # Pedido de vídeo em um minuto
 
+Exceção intencional à regra do kit de prompts para colar em inglês: este modelo fica em português porque é o Enzo quem o preenche, em português.
+
 Copie o esqueleto, troque os `<...>` e cole as linhas da tabela. Tudo o que ficar de fora vira o padrão da skill (seção 1 do `SKILL.md`).
 
 ```text
