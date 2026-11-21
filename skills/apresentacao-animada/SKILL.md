@@ -80,7 +80,7 @@ Sem folhas, roteiro, `montar.sh` nem gravações. Se o usuário tiver um vídeo 
   - `--leitura` só confere o tempo de leitura de `window.TEXTS` (função `t => [{text, kind}]` ou lista `[{text, kind, from, to}]`): imprime cada texto curto com o tempo que teve e o que precisa, e sai com código 3.
   - `--relogio` para página animada por GSAP, CSS ou `requestAnimationFrame` sem `renderAt`: relógio virtual (`performance.now`, `Date.now` e rAF falsos; animações CSS/Web Animations pausadas no tempo de cada quadro). Duração de `window.TOTAL` ou `--duracao <s>`. Não cobre `setTimeout`/`setInterval`, iframes, animação ligada ao scroll, nem os eventos de fim (`finished`, `animationend`): encadeie cenas pelo tempo. Setup assíncrono (fetch, imagem): comece com `window.pronto = false` e marque `true` sem depender de rAF ou animação (o relógio só anda depois). `new Date()` continua no tempo real. Tempos de `--quadros`/`--de` caem no quadro mais próximo. Com GSAP, prefira o modo padrão: timeline pausada e `window.renderAt = t => tl.seek(t)`.
   - Sai com código 2 se a página teve erro ou se alguma `@font-face` não carregou (a fonte reserva entra calada sem esse aviso).
-- **Folha de contato:** `ffmpeg -pattern_type glob -i 'frames/t*.png' -vf "scale=432:768,tile=5x2:padding=8:color=gray" frames/sheet.png` e leia a imagem (10 quadros num print só).
+- **Folha de contato:** `ffmpeg -pattern_type glob -i 'frames/t*.png' -vf "scale=432:768,tile=5x2:padding=8:color=gray" frames/sheet.png` e leia a imagem (10 quadros num print só; 16:9: `scale=768:432,tile=3x3`).
 - **Prévia leve:** `ffmpeg -i x.mp4 -vf "scale=540:960,fps=24" -c:v libx264 -crf 30 -an previa.mp4` (16:9: `scale=854:480`).
 
 ## 6. Rodadas e conferência

@@ -97,13 +97,13 @@ if (args.leitura) {
   const frames = await page.evaluate(([n, f]) => {
     const T = window.TEXTS;
     if (typeof T !== "function" && !Array.isArray(T)) return null;
-    if (Array.isArray(T) && T.some(x => !Number.isFinite(x.from) || !Number.isFinite(x.to))) return "fromto";
+    if (Array.isArray(T) && T.some(x => !x || !Number.isFinite(x.from) || !Number.isFinite(x.to))) return "fromto";
     const at = t => [].concat((typeof T === "function" ? T(t) : T.filter(x => t >= x.from && t < x.to)) ?? []).filter(Boolean);
     return Array.from({ length: n }, (_, i) => at(i / f).map(x => typeof x === "string" ? { text: x, kind: "text" } : x));
   }, [Math.round(total * fps), fps]);
   if (frames === "fromto") { console.error("--leitura: every item of the window.TEXTS list needs numeric from and to (seconds)."); await browser.close(); process.exit(1); }
   if (!frames) { console.error("--leitura needs window.TEXTS: a function t -> [{text, kind}] or a list [{text, kind, from, to}]."); await browser.close(); process.exit(1); }
-  const unknown = [...new Set(frames.flat().map(x => x.kind || "text"))].filter(k => !(k in floor));
+  const unknown = [...new Set(frames.flat().map(x => x.kind || "text"))].filter(k => !Object.hasOwn(floor, k));
   if (unknown.length) { console.error(`--leitura: unknown kind ${unknown.join(", ")}; use title, subtitle or text.`); await browser.close(); process.exit(1); }
   const open = new Map(), runs = [];
   const close = (key, end) => { const [kind, text] = JSON.parse(key); runs.push({ kind, text, from: open.get(key), end }); open.delete(key); };
@@ -124,7 +124,7 @@ if (args.leitura) {
 
 if (args.quadros) {
   const raw = String(args.quadros).split(","), list = raw.map(Number);
-  if (raw.some(x => x.trim() === "") || !list.every(Number.isFinite)) { console.error("--quadros needs seconds separated by commas, e.g. --quadros 2,5.5,9"); await browser.close(); process.exit(1); }
+  if (raw.some(x => x.trim() === "") || !list.every(x => Number.isFinite(x) && x >= 0)) { console.error("--quadros needs seconds separated by commas, e.g. --quadros 2,5.5,9"); await browser.close(); process.exit(1); }
   const dir = path.resolve(path.dirname(html), args.pasta || "frames"); mkdirSync(dir, { recursive: true });
   for (const s of list.sort((x, y) => x - y)) {
     await draw(s);
