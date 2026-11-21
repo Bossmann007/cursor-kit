@@ -8,7 +8,7 @@
 //   node render.mjs --html social.html --quadros 2,5,10 --pasta frames   (PNGs only, for review)
 //   node render.mjs --html social.html --leitura             (reading-time check of window.TEXTS only; exit 3 on a short text)
 //   node render.mjs --html anim.html --relogio [--duracao 6] (page animated by GSAP, CSS or rAF, no renderAt: virtual clock)
-// Exit codes: 0 ok, 1 usage or setup error, 2 page error or @font-face not loaded, 3 reading-time violation.
+// Exit codes: 0 ok, 1 usage or setup error, 2 page error or @font-face not loaded, 3 reading-time violation (wins over 2).
 import { chromium } from "playwright-core";
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync } from "node:fs";
@@ -33,7 +33,8 @@ if (!exe) { console.error("No Chromium browser found (Brave, Chrome or Chromium)
 
 // Virtual clock for pages without renderAt (idea from https://awesomeclaude.ai/claude-video, MIT; written from scratch).
 // Time stands still until __clock.tick(t): it runs the queued rAF callbacks at t and pauses every CSS/Web Animation at
-// its own age (t minus the time it was first seen). setTimeout/setInterval are not virtualized.
+// its own age (t minus the time it was first seen). setTimeout/setInterval are not virtualized. The page's real-time
+// animation rate is set to 0 before loading, so no CSS animation runs (or ends) before the first tick sees it.
 function installClock() {
   let now = 0, queue = [], nextId = 1;
   const epoch = Date.UTC(2026, 0, 1), born = new WeakMap();
@@ -57,10 +58,15 @@ const page = await browser.newPage({ viewport: { width: W, height: H }, deviceSc
 const errs = [];
 page.on("pageerror", e => errs.push(String(e)));
 page.on("console", m => { if (m.type() === "error") errs.push(m.text()); });
-if (clock) await page.addInitScript(installClock);
+if (clock) {
+  await page.addInitScript(installClock);
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("Animation.enable"); await cdp.send("Animation.setPlaybackRate", { playbackRate: 0 });
+}
 await page.goto(pathToFileURL(html).href + "?render", { waitUntil: "load" });
 // polling by interval: the default rAF polling would wait on the virtual clock forever
 if (!clock) await page.waitForFunction(() => window.pronto === true, null, { timeout: 30000, polling: 100 });
+if (args.duracao !== undefined && !(typeof args.duracao === "string" && Number(args.duracao) > 0)) { console.error("--duracao needs a number of seconds, e.g. --duracao 6"); await browser.close(); process.exit(1); }
 const total = Number(args.duracao) || await page.evaluate(() => window.TOTAL);
 if (!(total > 0)) { console.error("No duration: set window.TOTAL (seconds) in the page or pass --duracao <s>."); await browser.close(); process.exit(1); }
 // a @font-face that failed to load renders in the fallback font without any error: fail loudly instead
@@ -73,6 +79,7 @@ let clockFrame = -1;
 async function draw(t) {
   if (!clock) return page.evaluate(t => window.renderAt(t), t);
   const target = Math.round(t * fps);
+  if (Math.abs(t * fps - target) > 1e-6) throw new Error(`with --relogio, times must fall on the frame grid (multiples of 1/${fps} s): ${t}`);
   if (target < clockFrame) throw new Error("the virtual clock cannot go back in time");
   await page.evaluate(([a, b, f]) => { for (let i = a; i <= b; i++) window.__clock.tick(i / f); }, [clockFrame + 1, target, fps]);
   clockFrame = target;
@@ -85,9 +92,11 @@ if (args.leitura) {
   const frames = await page.evaluate(([n, f]) => {
     const T = window.TEXTS;
     if (typeof T !== "function" && !Array.isArray(T)) return null;
+    if (Array.isArray(T) && T.some(x => !Number.isFinite(x.from) || !Number.isFinite(x.to))) return "fromto";
     const at = t => (typeof T === "function" ? T(t) : T.filter(x => t >= x.from && t < x.to)) || [];
     return Array.from({ length: n }, (_, i) => at(i / f).map(x => typeof x === "string" ? { text: x, kind: "text" } : x));
   }, [Math.round(total * fps), fps]);
+  if (frames === "fromto") { console.error("--leitura: every item of the window.TEXTS list needs numeric from and to (seconds)."); await browser.close(); process.exit(1); }
   if (!frames) { console.error("--leitura needs window.TEXTS: a function t -> [{text, kind}] or a list [{text, kind, from, to}]."); await browser.close(); process.exit(1); }
   const open = new Map(), runs = [];
   const close = (key, end) => { const [kind, text] = JSON.parse(key); runs.push({ kind, text, from: open.get(key), end }); open.delete(key); };
@@ -103,7 +112,7 @@ if (args.leitura) {
     if (shown + 1 / fps < need) { bad++; console.log(`SHORT ${r.kind} t=${(r.from / fps).toFixed(2)}-${(r.end / fps).toFixed(2)} s: on screen ${shown.toFixed(2)} s, needs ${need.toFixed(2)} s: "${r.text}"`); }
   }
   console.log(bad ? `${bad} of ${runs.length} texts too short to read` : `reading time OK: ${runs.length} texts`);
-  await browser.close(); process.exit(errs.length ? 2 : bad ? 3 : 0);
+  await browser.close(); process.exit(bad ? 3 : errs.length ? 2 : 0);
 }
 
 if (args.quadros) {

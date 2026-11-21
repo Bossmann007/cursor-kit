@@ -45,7 +45,7 @@ Storyboard com tempos primeiro; espere meu OK.
 | LinkedIn, X (1:1) | 1080x1080 | margem de 5% (54 px) |
 | Feed do Instagram (4:5) | 1080x1350 | margem de 5% (54 px) |
 
-Fora de 9:16 e 16:9, passe `--w` e `--h` ao `render.mjs`.
+O `render.mjs` sai em 9:16 por padrão; em qualquer outra proporção passe `--w` e `--h` (16:9: `--w 1920 --h 1080`).
 
 ## Correções em rodadas
 
