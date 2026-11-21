@@ -32,7 +32,7 @@ const exe = [args.navegador, process.env.NAVEGADOR, "/Applications/Brave Browser
   "/Applications/Chromium.app/Contents/MacOS/Chromium"].filter(Boolean).find(p => existsSync(p));
 if (!exe) { console.error("No Chromium browser found (Brave, Chrome or Chromium). Use --navegador <path> or NAVEGADOR=<path>."); process.exit(1); }
 
-// Virtual clock for pages without renderAt (idea from https://awesomeclaude.ai/claude-video, MIT; written from scratch).
+// Virtual clock for pages without renderAt (idea from https://awesomeclaude.ai/claude-video; site footer: MIT, repository LICENSE: CC0 1.0; written from scratch).
 // Time stands still until __clock.tick(t): it runs the queued rAF callbacks at t and pauses every CSS/Web Animation at
 // its own age (t minus the time it was first seen). setTimeout/setInterval are not virtualized, and paused animations never
 // fire finished/animationend (chain scenes by time, not by those events). new Date() stays real time; iframes and

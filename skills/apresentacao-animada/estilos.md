@@ -1,4 +1,4 @@
-<!-- Ideia de "estilo como números" e regras de alguns estilos adaptadas, em paráfrase, de https://awesomeclaude.ai/claude-motion-graphics (MIT). -->
+<!-- Ideia de "estilo como números" e regras de alguns estilos adaptadas, em paráfrase, de https://awesomeclaude.ai/claude-motion-graphics (rodapé do site: MIT; LICENSE do repositório: CC0 1.0). -->
 
 # Estilos em números
 

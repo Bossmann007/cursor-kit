@@ -1,4 +1,4 @@
-<!-- Ideia de esqueleto fixo + blocos por tipo adaptada, em paráfrase, de https://awesomeclaude.ai/opus-video-prompts (MIT). -->
+<!-- Ideia de esqueleto fixo + blocos por tipo adaptada, em paráfrase, de https://awesomeclaude.ai/opus-video-prompts (rodapé do site: MIT; LICENSE do repositório: CC0 1.0). -->
 
 # Pedido de vídeo em um minuto
 
