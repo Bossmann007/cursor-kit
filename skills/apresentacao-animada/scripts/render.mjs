@@ -35,7 +35,8 @@ if (!exe) { console.error("No Chromium browser found (Brave, Chrome or Chromium)
 // Virtual clock for pages without renderAt (idea from https://awesomeclaude.ai/claude-video, MIT; written from scratch).
 // Time stands still until __clock.tick(t): it runs the queued rAF callbacks at t and pauses every CSS/Web Animation at
 // its own age (t minus the time it was first seen). setTimeout/setInterval are not virtualized, and paused animations never
-// fire finished/animationend (chain scenes by time, not by those events). The page's real-time
+// fire finished/animationend (chain scenes by time, not by those events). new Date() and document.timeline stay real time.
+// The page's real-time
 // animation rate is set to 0 before loading, so no CSS animation runs (or ends) before the first tick sees it.
 function installClock() {
   let now = 0, queue = [], nextId = 1, cancelled = new Set();
@@ -43,11 +44,12 @@ function installClock() {
   performance.now = () => now;
   Date.now = () => epoch + now;
   window.requestAnimationFrame = cb => { queue.push([nextId, cb]); return nextId++; };
-  window.cancelAnimationFrame = id => { cancelled.add(id); };
+  window.cancelAnimationFrame = id => { queue = queue.filter(([i]) => i !== id); cancelled.add(id); };
   window.__clock = { tick(t) {
     now = t * 1000;
     const run = queue; queue = [];
-    for (const [id, cb] of run) if (!cancelled.delete(id)) cb(now);
+    for (const [id, cb] of run) if (!cancelled.has(id)) try { cb(now); } catch (e) { console.error("rAF callback: " + (e && e.stack || e)); }
+    cancelled.clear();
     for (const a of document.getAnimations()) {
       if (!born.has(a)) born.set(a, now);
       a.pause(); a.currentTime = now - born.get(a);
@@ -63,7 +65,7 @@ page.on("console", m => { if (m.type() === "error") errs.push(m.text()); });
 if (clock) {
   await page.addInitScript(installClock);
   const cdp = await page.context().newCDPSession(page);
-  await cdp.send("Animation.enable"); await cdp.send("Animation.setPlaybackRate", { playbackRate: 0 });
+  await cdp.send("Animation.enable"); await cdp.send("Animation.setPlaybackRate", { playbackRate: 0 }); await cdp.send("Animation.disable");
 }
 await page.goto(pathToFileURL(html).href + "?render", { waitUntil: "load" });
 // polling by interval: the default rAF polling would wait on the virtual clock forever. With --relogio, a page with async
@@ -75,6 +77,7 @@ if (!(total > 0)) { console.error("No duration: set window.TOTAL (seconds) in th
 const badFonts = await page.evaluate(async () => { await document.fonts.ready; return [...document.fonts].filter(f => f.status !== "loaded").map(f => `${f.family} ${f.weight} ${f.style}: ${f.status}`); });
 if (badFonts.length) errs.push("fonts not loaded (check the url() paths): " + badFonts.join(", "));
 if (errs.length) console.warn("Page warnings:\n  " + errs.join("\n  "));
+const shown = errs.length, late = () => { if (errs.length > shown) console.warn("Page warnings while drawing:\n  " + errs.slice(shown).join("\n  ")); };
 
 // renderAt jumps to any t; the virtual clock only moves forward, one frame at a time, so rAF loops see every step
 // (times are sorted before drawing).
@@ -94,7 +97,7 @@ if (args.leitura) {
     const T = window.TEXTS;
     if (typeof T !== "function" && !Array.isArray(T)) return null;
     if (Array.isArray(T) && T.some(x => !Number.isFinite(x.from) || !Number.isFinite(x.to))) return "fromto";
-    const at = t => (typeof T === "function" ? T(t) : T.filter(x => t >= x.from && t < x.to)) || [];
+    const at = t => [].concat((typeof T === "function" ? T(t) : T.filter(x => t >= x.from && t < x.to)) ?? []).filter(Boolean);
     return Array.from({ length: n }, (_, i) => at(i / f).map(x => typeof x === "string" ? { text: x, kind: "text" } : x));
   }, [Math.round(total * fps), fps]);
   if (frames === "fromto") { console.error("--leitura: every item of the window.TEXTS list needs numeric from and to (seconds)."); await browser.close(); process.exit(1); }
@@ -113,17 +116,19 @@ if (args.leitura) {
     if (shown + 1 / fps < need) { bad++; console.log(`SHORT ${r.kind} t=${(r.from / fps).toFixed(2)}-${(r.end / fps).toFixed(2)} s: on screen ${shown.toFixed(2)} s, needs ${need.toFixed(2)} s: "${r.text}"`); }
   }
   console.log(bad ? `${bad} of ${runs.length} texts too short to read` : `reading time OK: ${runs.length} texts`);
-  await browser.close(); process.exit(bad ? 3 : errs.length ? 2 : 0);
+  late(); await browser.close(); process.exit(bad ? 3 : errs.length ? 2 : 0);
 }
 
 if (args.quadros) {
+  const list = String(args.quadros).split(",").map(Number);
+  if (!list.length || !list.every(Number.isFinite)) { console.error("--quadros needs seconds separated by commas, e.g. --quadros 2,5.5,9"); await browser.close(); process.exit(1); }
   const dir = path.resolve(path.dirname(html), args.pasta || "frames"); mkdirSync(dir, { recursive: true });
-  for (const s of String(args.quadros).split(",").map(Number).sort((x, y) => x - y)) {
+  for (const s of list.sort((x, y) => x - y)) {
     await draw(s);
     const f = path.join(dir, `t${s.toFixed(2).padStart(6, "0")}.png`);
     await page.screenshot({ path: f, type: "png" }); console.log(f);
   }
-  await browser.close(); process.exit(errs.length ? 2 : 0);
+  late(); await browser.close(); process.exit(errs.length ? 2 : 0);
 }
 
 const a = Number(args.de || 0), b = Number(args.ate || total), times = [];
@@ -145,4 +150,4 @@ for (let i = 0; i < times.length; i++) {
 }
 ff.stdin.end(); await done; await browser.close();
 console.log(`\n${out} · ${times.length} frames · ${(times.length / fps).toFixed(1)} s`);
-if (errs.length) process.exit(2);
+late(); if (errs.length) process.exit(2);
