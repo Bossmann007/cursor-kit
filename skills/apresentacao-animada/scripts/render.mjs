@@ -23,7 +23,7 @@ const args = Object.fromEntries(process.argv.slice(2).reduce((acc, a, i, xs) => 
 }, []));
 const fps = Number(args.fps || 30), W = Number(args.w || 1080), H = Number(args.h || 1920), clock = Boolean(args.relogio);
 if (!args.html) { console.error("Use --html <page with window.renderAt and window.TOTAL>"); process.exit(1); }
-if (args.duracao !== undefined && !(typeof args.duracao === "string" && Number(args.duracao) > 0)) { console.error("--duracao needs a number of seconds, e.g. --duracao 6"); process.exit(1); }
+if (args.duracao !== undefined && !(typeof args.duracao === "string" && Number.isFinite(Number(args.duracao)) && Number(args.duracao) > 0)) { console.error("--duracao needs a number of seconds, e.g. --duracao 6"); process.exit(1); }
 const html = path.resolve(String(args.html)), base = path.basename(html, ".html");
 const out = path.resolve(args.saida || path.join(os.homedir(), "Downloads", base + "-video.mp4"));
 if (!args.quadros && !args.leitura && existsSync(out) && !args.sobrescrever) { console.error(`${out} already exists. Use --saida <other file> or --sobrescrever.`); process.exit(1); }
@@ -73,7 +73,7 @@ await page.goto(pathToFileURL(html).href + "?render", { waitUntil: "load" });
 // setup starts with window.pronto = false and sets it true when ready; a page without pronto starts at load.
 await page.waitForFunction(c => c ? window.pronto !== false : window.pronto === true, clock, { timeout: 30000, polling: 100 });
 const total = Number(args.duracao) || await page.evaluate(() => window.TOTAL);
-if (!(total > 0)) { console.error("No duration: set window.TOTAL (seconds) in the page or pass --duracao <s>."); await browser.close(); process.exit(1); }
+if (!(Number.isFinite(total) && total > 0)) { console.error("No duration: set window.TOTAL (seconds) in the page or pass --duracao <s>."); await browser.close(); process.exit(1); }
 // a @font-face that failed to load renders in the fallback font without any error: fail loudly instead
 const badFonts = await page.evaluate(async () => { await document.fonts.ready; return [...document.fonts].filter(f => f.status !== "loaded").map(f => `${f.family} ${f.weight} ${f.style}: ${f.status}`); });
 if (badFonts.length) errs.push("fonts not loaded (check the url() paths): " + badFonts.join(", "));
@@ -97,11 +97,11 @@ if (args.leitura) {
   const frames = await page.evaluate(([n, f]) => {
     const T = window.TEXTS;
     if (typeof T !== "function" && !Array.isArray(T)) return null;
-    if (Array.isArray(T) && T.some(x => !x || !Number.isFinite(x.from) || !Number.isFinite(x.to))) return "fromto";
+    if (Array.isArray(T) && T.some(x => !x || !Number.isFinite(x.from) || !Number.isFinite(x.to) || x.from < 0 || x.to <= x.from || x.from >= n / f)) return "fromto";
     const at = t => [].concat((typeof T === "function" ? T(t) : T.filter(x => t >= x.from && t < x.to)) ?? []).filter(Boolean);
     return Array.from({ length: n }, (_, i) => at(i / f).map(x => typeof x === "string" ? { text: x, kind: "text" } : x));
   }, [Math.round(total * fps), fps]);
-  if (frames === "fromto") { console.error("--leitura: every item of the window.TEXTS list needs numeric from and to (seconds)."); await browser.close(); process.exit(1); }
+  if (frames === "fromto") { console.error("--leitura: every item of the window.TEXTS list needs numeric from < to (seconds), starting inside the video."); await browser.close(); process.exit(1); }
   if (!frames) { console.error("--leitura needs window.TEXTS: a function t -> [{text, kind}] or a list [{text, kind, from, to}]."); await browser.close(); process.exit(1); }
   const unknown = [...new Set(frames.flat().map(x => x.kind || "text"))].filter(k => !Object.hasOwn(floor, k));
   if (unknown.length) { console.error(`--leitura: unknown kind ${unknown.join(", ")}; use title, subtitle or text.`); await browser.close(); process.exit(1); }
