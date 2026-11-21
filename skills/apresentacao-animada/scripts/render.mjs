@@ -35,9 +35,9 @@ if (!exe) { console.error("No Chromium browser found (Brave, Chrome or Chromium)
 // Virtual clock for pages without renderAt (idea from https://awesomeclaude.ai/claude-video, MIT; written from scratch).
 // Time stands still until __clock.tick(t): it runs the queued rAF callbacks at t and pauses every CSS/Web Animation at
 // its own age (t minus the time it was first seen). setTimeout/setInterval are not virtualized, and paused animations never
-// fire finished/animationend (chain scenes by time, not by those events). new Date() and document.timeline stay real time.
-// The page's real-time
-// animation rate is set to 0 before loading, so no CSS animation runs (or ends) before the first tick sees it.
+// fire finished/animationend (chain scenes by time, not by those events). new Date() stays real time; iframes and
+// scroll-driven animations are not driven. The page's animation rate is set to 0 over CDP before loading (and the
+// Animation domain stays enabled: disabling it resets the rate), so no CSS animation runs or ends before the first tick.
 function installClock() {
   let now = 0, queue = [], nextId = 1, cancelled = new Set();
   const epoch = Date.UTC(2026, 0, 1), born = new WeakMap();
@@ -51,6 +51,7 @@ function installClock() {
     for (const [id, cb] of run) if (!cancelled.has(id)) try { cb(now); } catch (e) { console.error("rAF callback: " + (e && e.stack || e)); }
     cancelled.clear();
     for (const a of document.getAnimations()) {
+      if (a.timeline !== document.timeline) continue;
       if (!born.has(a)) born.set(a, now);
       a.pause(); a.currentTime = now - born.get(a);
     }
@@ -65,7 +66,7 @@ page.on("console", m => { if (m.type() === "error") errs.push(m.text()); });
 if (clock) {
   await page.addInitScript(installClock);
   const cdp = await page.context().newCDPSession(page);
-  await cdp.send("Animation.enable"); await cdp.send("Animation.setPlaybackRate", { playbackRate: 0 }); await cdp.send("Animation.disable");
+  await cdp.send("Animation.enable"); await cdp.send("Animation.setPlaybackRate", { playbackRate: 0 });
 }
 await page.goto(pathToFileURL(html).href + "?render", { waitUntil: "load" });
 // polling by interval: the default rAF polling would wait on the virtual clock forever. With --relogio, a page with async
@@ -102,6 +103,8 @@ if (args.leitura) {
   }, [Math.round(total * fps), fps]);
   if (frames === "fromto") { console.error("--leitura: every item of the window.TEXTS list needs numeric from and to (seconds)."); await browser.close(); process.exit(1); }
   if (!frames) { console.error("--leitura needs window.TEXTS: a function t -> [{text, kind}] or a list [{text, kind, from, to}]."); await browser.close(); process.exit(1); }
+  const unknown = [...new Set(frames.flat().map(x => x.kind || "text"))].filter(k => !(k in floor));
+  if (unknown.length) { console.error(`--leitura: unknown kind ${unknown.join(", ")}; use title, subtitle or text.`); await browser.close(); process.exit(1); }
   const open = new Map(), runs = [];
   const close = (key, end) => { const [kind, text] = JSON.parse(key); runs.push({ kind, text, from: open.get(key), end }); open.delete(key); };
   frames.forEach((list, i) => {
@@ -112,20 +115,21 @@ if (args.leitura) {
   for (const key of [...open.keys()]) close(key, frames.length);
   let bad = 0;
   for (const r of runs) {
-    const shown = (r.end - r.from) / fps, need = Math.max(floor[r.kind] ?? 0, [...r.text].length / 15 + 1.5);
-    if (shown + 1 / fps < need) { bad++; console.log(`SHORT ${r.kind} t=${(r.from / fps).toFixed(2)}-${(r.end / fps).toFixed(2)} s: on screen ${shown.toFixed(2)} s, needs ${need.toFixed(2)} s: "${r.text}"`); }
+    const onScreen = (r.end - r.from) / fps, need = Math.max(floor[r.kind] ?? 0, [...r.text].length / 15 + 1.5);
+    if (onScreen + 1 / fps < need) { bad++; console.log(`SHORT ${r.kind} t=${(r.from / fps).toFixed(2)}-${(r.end / fps).toFixed(2)} s: on screen ${onScreen.toFixed(2)} s, needs ${need.toFixed(2)} s: "${r.text}"`); }
   }
   console.log(bad ? `${bad} of ${runs.length} texts too short to read` : `reading time OK: ${runs.length} texts`);
   late(); await browser.close(); process.exit(bad ? 3 : errs.length ? 2 : 0);
 }
 
 if (args.quadros) {
-  const list = String(args.quadros).split(",").map(Number);
-  if (!list.length || !list.every(Number.isFinite)) { console.error("--quadros needs seconds separated by commas, e.g. --quadros 2,5.5,9"); await browser.close(); process.exit(1); }
+  const raw = String(args.quadros).split(","), list = raw.map(Number);
+  if (raw.some(x => x.trim() === "") || !list.every(Number.isFinite)) { console.error("--quadros needs seconds separated by commas, e.g. --quadros 2,5.5,9"); await browser.close(); process.exit(1); }
   const dir = path.resolve(path.dirname(html), args.pasta || "frames"); mkdirSync(dir, { recursive: true });
   for (const s of list.sort((x, y) => x - y)) {
     await draw(s);
-    const f = path.join(dir, `t${s.toFixed(2).padStart(6, "0")}.png`);
+    const shot = clock ? Math.round(s * fps) / fps : s; // name the frame the clock really drew
+    const f = path.join(dir, `t${shot.toFixed(2).padStart(6, "0")}.png`);
     await page.screenshot({ path: f, type: "png" }); console.log(f);
   }
   late(); await browser.close(); process.exit(errs.length ? 2 : 0);
