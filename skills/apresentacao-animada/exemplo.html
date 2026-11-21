@@ -11,17 +11,19 @@ html,body{margin:0;width:1080px;height:1920px;overflow:hidden;background:var(--b
 .sub span{background:var(--ink);color:var(--bg);padding:6px 14px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 .big{top:760px;text-align:center;font:800 260px/1 system-ui,sans-serif;color:var(--accent)}
 </style></head><body>
-<div class="el title" data-kind="title" data-from="0" data-to="4.4">Leia antes de cortar</div>
-<div class="el sub" data-kind="subtitle" data-from="0.3" data-to="4.4"><span>Cada texto fica o tempo de ser lido</span></div>
-<div class="el big" data-kind="text" data-from="4" data-to="6">Pronto</div>
+<div class="el title" data-kind="title" data-from="0" data-to="4.6">Leia antes de cortar</div>
+<div class="el sub" data-kind="subtitle" data-from="0.2" data-to="4.6"><span>Cada texto fica o tempo de ser lido</span></div>
+<div class="el big" data-kind="text" data-from="4.3" data-to="6.5">Pronto</div>
 <script>
-window.TOTAL = 6;
+window.TOTAL = 6.5;
+const F = 0.25; // fade length; TEXTS counts only the time a text is fully on screen
 const els = [...document.querySelectorAll("[data-kind]")];
-window.TEXTS = els.map(e => ({ text: e.textContent.trim(), kind: e.dataset.kind, from: +e.dataset.from, to: +e.dataset.to }));
+const shots = els.map(e => ({ from: +e.dataset.from, to: +e.dataset.to }));
+window.TEXTS = els.map((e, i) => ({ text: e.textContent.trim(), kind: e.dataset.kind, from: shots[i].from + F, to: shots[i].to >= TOTAL ? TOTAL : shots[i].to - F }));
 const ease = x => 1 - Math.pow(1 - Math.min(Math.max(x, 0), 1), 3); // out-cubic, 0..1
 window.renderAt = t => els.forEach((e, i) => {
-  const { from, to } = TEXTS[i], fadeIn = ease((t - from) / 0.4);
-  const k = to >= TOTAL ? fadeIn : Math.min(fadeIn, 1 - ease((t - to + 0.4) / 0.4)); // the last text holds the final frame
+  const { from, to } = shots[i], fadeIn = ease((t - from) / F);
+  const k = to >= TOTAL ? fadeIn : Math.min(fadeIn, 1 - ease((t - to + F) / F)); // the last text holds the final frame
   e.style.opacity = Math.max(0, k);
   e.style.transform = `translateY(${(1 - fadeIn) * 40}px)`;
 });

@@ -23,6 +23,7 @@ const args = Object.fromEntries(process.argv.slice(2).reduce((acc, a, i, xs) => 
 }, []));
 const fps = Number(args.fps || 30), W = Number(args.w || 1080), H = Number(args.h || 1920), clock = Boolean(args.relogio);
 if (!args.html) { console.error("Use --html <page with window.renderAt and window.TOTAL>"); process.exit(1); }
+if (args.duracao !== undefined && !(typeof args.duracao === "string" && Number(args.duracao) > 0)) { console.error("--duracao needs a number of seconds, e.g. --duracao 6"); process.exit(1); }
 const html = path.resolve(String(args.html)), base = path.basename(html, ".html");
 const out = path.resolve(args.saida || path.join(os.homedir(), "Downloads", base + "-video.mp4"));
 if (!args.quadros && !args.leitura && existsSync(out) && !args.sobrescrever) { console.error(`${out} already exists. Use --saida <other file> or --sobrescrever.`); process.exit(1); }
@@ -33,19 +34,20 @@ if (!exe) { console.error("No Chromium browser found (Brave, Chrome or Chromium)
 
 // Virtual clock for pages without renderAt (idea from https://awesomeclaude.ai/claude-video, MIT; written from scratch).
 // Time stands still until __clock.tick(t): it runs the queued rAF callbacks at t and pauses every CSS/Web Animation at
-// its own age (t minus the time it was first seen). setTimeout/setInterval are not virtualized. The page's real-time
+// its own age (t minus the time it was first seen). setTimeout/setInterval are not virtualized, and paused animations never
+// fire finished/animationend (chain scenes by time, not by those events). The page's real-time
 // animation rate is set to 0 before loading, so no CSS animation runs (or ends) before the first tick sees it.
 function installClock() {
-  let now = 0, queue = [], nextId = 1;
+  let now = 0, queue = [], nextId = 1, cancelled = new Set();
   const epoch = Date.UTC(2026, 0, 1), born = new WeakMap();
   performance.now = () => now;
   Date.now = () => epoch + now;
   window.requestAnimationFrame = cb => { queue.push([nextId, cb]); return nextId++; };
-  window.cancelAnimationFrame = id => { queue = queue.filter(([i]) => i !== id); };
+  window.cancelAnimationFrame = id => { cancelled.add(id); };
   window.__clock = { tick(t) {
     now = t * 1000;
     const run = queue; queue = [];
-    for (const [, cb] of run) cb(now);
+    for (const [id, cb] of run) if (!cancelled.delete(id)) cb(now);
     for (const a of document.getAnimations()) {
       if (!born.has(a)) born.set(a, now);
       a.pause(); a.currentTime = now - born.get(a);
@@ -64,9 +66,9 @@ if (clock) {
   await cdp.send("Animation.enable"); await cdp.send("Animation.setPlaybackRate", { playbackRate: 0 });
 }
 await page.goto(pathToFileURL(html).href + "?render", { waitUntil: "load" });
-// polling by interval: the default rAF polling would wait on the virtual clock forever
-if (!clock) await page.waitForFunction(() => window.pronto === true, null, { timeout: 30000, polling: 100 });
-if (args.duracao !== undefined && !(typeof args.duracao === "string" && Number(args.duracao) > 0)) { console.error("--duracao needs a number of seconds, e.g. --duracao 6"); await browser.close(); process.exit(1); }
+// polling by interval: the default rAF polling would wait on the virtual clock forever. With --relogio, a page with async
+// setup starts with window.pronto = false and sets it true when ready; a page without pronto starts at load.
+await page.waitForFunction(c => c ? window.pronto !== false : window.pronto === true, clock, { timeout: 30000, polling: 100 });
 const total = Number(args.duracao) || await page.evaluate(() => window.TOTAL);
 if (!(total > 0)) { console.error("No duration: set window.TOTAL (seconds) in the page or pass --duracao <s>."); await browser.close(); process.exit(1); }
 // a @font-face that failed to load renders in the fallback font without any error: fail loudly instead
@@ -74,15 +76,14 @@ const badFonts = await page.evaluate(async () => { await document.fonts.ready; r
 if (badFonts.length) errs.push("fonts not loaded (check the url() paths): " + badFonts.join(", "));
 if (errs.length) console.warn("Page warnings:\n  " + errs.join("\n  "));
 
-// renderAt jumps to any t; the virtual clock only moves forward, one frame at a time, so rAF loops see every step.
+// renderAt jumps to any t; the virtual clock only moves forward, one frame at a time, so rAF loops see every step
+// (times are sorted before drawing).
 let clockFrame = -1;
 async function draw(t) {
   if (!clock) return page.evaluate(t => window.renderAt(t), t);
-  const target = Math.round(t * fps);
-  if (Math.abs(t * fps - target) > 1e-6) throw new Error(`with --relogio, times must fall on the frame grid (multiples of 1/${fps} s): ${t}`);
-  if (target < clockFrame) throw new Error("the virtual clock cannot go back in time");
-  await page.evaluate(([a, b, f]) => { for (let i = a; i <= b; i++) window.__clock.tick(i / f); }, [clockFrame + 1, target, fps]);
-  clockFrame = target;
+  const target = Math.round(t * fps); // snaps to the nearest frame
+  for (let i = clockFrame + 1; i <= target; i++) await page.evaluate(s => window.__clock.tick(s), i / fps);
+  clockFrame = Math.max(clockFrame, target);
 }
 
 // Reading time (rule: every text stays at least chars/15 + 1.5 s; a title at least 4 s, a subtitle at least 1.8 s).
@@ -119,7 +120,7 @@ if (args.quadros) {
   const dir = path.resolve(path.dirname(html), args.pasta || "frames"); mkdirSync(dir, { recursive: true });
   for (const s of String(args.quadros).split(",").map(Number).sort((x, y) => x - y)) {
     await draw(s);
-    const f = path.join(dir, `t${s.toFixed(1).padStart(5, "0")}.png`);
+    const f = path.join(dir, `t${s.toFixed(2).padStart(6, "0")}.png`);
     await page.screenshot({ path: f, type: "png" }); console.log(f);
   }
   await browser.close(); process.exit(errs.length ? 2 : 0);
