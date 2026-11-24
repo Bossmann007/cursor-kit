@@ -21,14 +21,16 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 H = Path.home()
-ap = argparse.ArgumentParser(add_help=True)
-ap.add_argument("days_pos", nargs="?", type=int)
-ap.add_argument("--days", type=int)
-ap.add_argument("--brl", type=float)
-ap.add_argument("--json", action="store_true")
-ap.add_argument("--save", action="store_true")
-OPT = ap.parse_args()
+parser = argparse.ArgumentParser()
+parser.add_argument("days_pos", nargs="?", type=int)
+parser.add_argument("--days", type=int)
+parser.add_argument("--brl", type=float)
+parser.add_argument("--json", action="store_true")
+parser.add_argument("--save", action="store_true")
+OPT = parser.parse_args()
 DAYS = next((d for d in (OPT.days, OPT.days_pos) if d is not None), 7)
+if DAYS <= 0 or (OPT.brl is not None and OPT.brl <= 0):
+    parser.error("DAYS and --brl must be positive")
 
 # USD per million tokens, Claude API first-party list prices, checked 2026-11-24 at
 # https://platform.claude.com/docs/en/about-claude/pricing (global inference, standard speed).
@@ -52,14 +54,16 @@ PRICES = {
 PRICES_OVER_100K = {"claude-haiku-5-5": (0.50, 2.50, 0.05, 0.625, 1)}
 # Same page: fast mode on Opus 5.5 is $8/$40 and the cache multipliers apply on top (2x every column).
 FAST_FACTOR = {"claude-opus-5-5": 2}
-US_GEO_FACTOR = 1.1  # inference_geo "us" on 4.6+ models
+US_GEO_FACTOR = 1.1  # inference_geo "us"; same page: only 4.6+ models accept it
+PRE_4_6 = {"claude-haiku-4-5"}
 
 
 # --- cost per OpenBot agent, per routine, and rework (reads ~/.claude/projects only, writes nothing)
 REWORK_WINDOW_H, REWORK_RATIO = 72, 0.8
 SKIP_MODELS = {"<synthetic>"}
 # OpenBot envelope lines around the real request (seen in agent transcripts, 2026-11)
-BOILERPLATE = re.compile(r"-{3}.*-{3}|\[routine:.*|Message from OpenBot teammate .*|Continue this OpenBot conversation\.?|\[Request interrupted by user.*")
+BANNER = re.compile(r"-{3} [^-].*? -{3}")
+BOILERPLATE = re.compile(r"\[routine:.*|Message from OpenBot teammate .*|Continue this OpenBot conversation\.?|\[Request interrupted by user.*")
 
 
 def _enc(path):
@@ -83,23 +87,22 @@ def _text(content):
 
 def _request(text):
     """(routine name or None, first request line) from a prompt; wrapper blocks and the routine banner are skipped."""
-    m = re.search(r"\[routine:\s*([^\]\n]*)\]", text)
-    routine = m.group(1).strip()[:60] if m else None
-    if "This replies to message:" in text:
-        return routine, ""  # a teammate's answer, not a new request
     body = text.lstrip()
     while True:  # leading <tag>...</tag> wrapper blocks (saved memories, turn style, reminders)
         w = re.match(r"<([A-Za-z_][\w-]*)[^>]*>.*?</\1>\s*", body, re.S)
         if not w:
             break
         body = body[w.end():]
+    m = re.search(r"^\[routine:\s*([^\]\n]*)\]", body, re.M)
+    routine = m.group(1).strip()[:60] if m else None
+    if re.search(r"^This replies to message:", body, re.M):
+        return routine, ""  # a teammate's answer, not a new request
     lines = body.splitlines()
-    delims = [i for i, x in enumerate(lines) if re.fullmatch(r"-{3}.*-{3}", x.strip())]
-    for line in lines[delims[-1] + 1:] if delims else lines:  # OpenBot puts the request after its last --- banner ---
-        line = line.strip()
-        if line and not BOILERPLATE.fullmatch(line):
-            return routine, line
-    return routine, ""
+    delims = [i for i, x in enumerate(lines) if BANNER.fullmatch(x.strip())]
+    cand = [x.strip() for x in (lines[delims[-1] + 1:] if delims else lines)]  # OpenBot puts the request after its last banner
+    cand = [x for x in cand if x and not BOILERPLATE.fullmatch(x)]
+    # a short greeting ("bom dia") is not the request; take the first line with 3+ words when there is one
+    return routine, next((x for x in cand if len(_norm(x).split()) >= 3), cand[0] if cand else "")
 
 
 def _norm(line):
@@ -119,6 +122,8 @@ def _price(model, u):
             return None
         factor *= FAST_FACTOR[model]
     if u.get("inference_geo") == "us":
+        if model in PRE_4_6:
+            return None
         factor *= US_GEO_FACTOR
     split = u.get("cache_creation") or {}
     cw1h = split.get("ephemeral_1h_input_tokens") or 0
@@ -180,15 +185,18 @@ def cost_report(days, brl=None):
                     if not text.strip():
                         continue  # tool results continue the current request
                     routine, first = _request(text)
+                    if not routine and not first:
+                        continue  # interrupt, continuation or teammate reply: still the current request
                     key = ("routine", routine) if routine else ("chat", "chat")
                     if t is not None and t >= lookback:
                         ag["requests"].append((t, key, _norm(first)))
                     if t is not None and t >= since:
                         ag["groups"].setdefault(key, _bucket())["requests"] += 1
                 elif e.get("type") == "assistant" and msg.get("usage") and msg.get("model") not in SKIP_MODELS:
-                    if t is None or t < since or msg.get("id") in ag["seen"]:
+                    mid = msg.get("id")
+                    if t is None or t < since or (mid and mid in ag["seen"]):
                         continue  # streamed responses repeat one id with the same usage
-                    ag["seen"].add(msg.get("id"))
+                    ag["seen"].add(mid or object())
                     _add(ag["total"], msg.get("model"), msg["usage"])
                     _add(ag["groups"].setdefault(key, _bucket()), msg.get("model"), msg["usage"])
     out = []
@@ -246,7 +254,7 @@ if "--save" in sys.argv:
     if last.exists():
         prev = last.read_text()
         print("== previous harness section (" + time.strftime("%Y-%m-%d", time.localtime(last.stat().st_mtime)) + ")")
-        print(prev[prev.find("== harness usage"):].rstrip() if "== harness usage" in prev else "(none)")
+        print(prev[prev.find("== harness usage"):].split("\n== cost per OpenBot agent")[0].rstrip() if "== harness usage" in prev else "(none)")
         print()
     print(out, end="")
     last.parent.mkdir(parents=True, exist_ok=True)
@@ -264,8 +272,8 @@ print("\n== te-filter hook (ledger; entries before 2026-10-19 never reached the 
 led = H / ".claude/te-ledger.jsonl"
 if led.exists():
     rows = [json.loads(l) for l in led.read_text().splitlines() if l.strip()]
-    ap = [r for r in rows if r.get("applied")]
-    print(f"decisions: {len(rows)}  applied: {len(ap)}  tokens saved: {sum(r['before'] - r['after'] for r in ap)}")
+    applied = [r for r in rows if r.get("applied")]
+    print(f"decisions: {len(rows)}  applied: {len(applied)}  tokens saved: {sum(r['before'] - r['after'] for r in applied)}")
 else:
     print("no ledger yet (hook not fired)")
 

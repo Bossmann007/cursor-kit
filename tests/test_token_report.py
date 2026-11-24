@@ -73,6 +73,8 @@ def agent_fixture(h):
         {"type": "user", "timestamp": ts(1.8), "message": {"content": [{"type": "tool_result", "tool_use_id": "t", "content": "x"}]}},
         reply("m3", "claude-foo-9", 1.8, input_tokens=500, output_tokens=500),
         reply("m3s", "<synthetic>", 1.8, input_tokens=7, output_tokens=7),
+        prompt("[Request interrupted by user]", 1.7),  # stays on the routine
+        reply("m2b", "claude-sonnet-5-5", 1.6, output_tokens=M // 10),  # 1.00
     ])
     (da / "s1/subagents").mkdir(parents=True)
     w(da / "s1/subagents/agent-x.jsonl", [reply("m6", "claude-opus-5-5", 2.5, output_tokens=M)])  # 20.00
@@ -87,6 +89,10 @@ def agent_fixture(h):
         prompt(envelope.replace("Message ID: 1", "Message ID: 2") + "hello, THERE", 0.9),  # same request again -> rework
         prompt(envelope + "This replies to message: 1\nStatus: done", 0.8),
         prompt(envelope + "This replies to message: 2\nStatus: done", 0.7),  # replies are not requests
+        {"type": "assistant", "timestamp": ts(0.6), "message": {"model": "claude-opus-5-5", "usage": {"input_tokens": M}}},  # no id: 4.00
+        {"type": "assistant", "timestamp": ts(0.6), "message": {"model": "claude-opus-5-5", "usage": {"input_tokens": M}}},  # no id: 4.00
+        prompt("Bom dia\nPlease write the weekly report\n------\nnotes", 0.5),
+        prompt("Oi\nplease write the weekly report", 0.4),  # greeting skipped, same request -> rework
     ])
 
 
@@ -109,21 +115,23 @@ class Cost(unittest.TestCase):
             ag = {a["id"]: a for a in data["agents"]}
             a = ag[A]
             self.assertEqual(a["name"], "Alpha Bot")
-            self.assertEqual(a["tokens"], {"input": 3 * M + 500, "output": 3 * M + M // 10 + 500, "cache_read": M, "cache_write": 2 * M})
-            self.assertAlmostEqual(a["cost_usd"], 51.70, places=6)
-            self.assertAlmostEqual(a["cost_brl"], 258.50, places=6)
+            self.assertEqual(a["tokens"], {"input": 3 * M + 500, "output": 3 * M + 2 * (M // 10) + 500, "cache_read": M, "cache_write": 2 * M})
+            self.assertAlmostEqual(a["cost_usd"], 52.70, places=6)
+            self.assertAlmostEqual(a["cost_brl"], 263.50, places=6)
             self.assertEqual(a["unknown_models"], ["claude-foo-9"])
             g = {(x["kind"], x["name"]): x for x in a["groups"]}
             self.assertAlmostEqual(g[("chat", "chat")]["cost_usd"], 17.20, places=6)
             self.assertEqual(g[("chat", "chat")]["requests"], 2)
-            self.assertAlmostEqual(g[("routine", "Quadro do dia")]["cost_usd"], 14.50, places=6)
+            self.assertEqual(g[("routine", "Quadro do dia")]["requests"], 1)
+            self.assertAlmostEqual(g[("routine", "Quadro do dia")]["cost_usd"], 15.50, places=6)
             self.assertTrue(g[("routine", "Quadro do dia")]["cost_partial"])
             self.assertAlmostEqual(g[("subagents", "subagents")]["cost_usd"], 20.00, places=6)
             self.assertEqual(a["rework"], {"requests": 2, "rework": 1, "rate": 0.5})
             b = ag[B]
             self.assertEqual(b["name"], B)
-            self.assertAlmostEqual(b["cost_usd"], 4.00, places=6)
-            self.assertEqual(b["rework"], {"requests": 2, "rework": 1, "rate": 0.5})
+            self.assertAlmostEqual(b["cost_usd"], 12.00, places=6)
+            self.assertEqual(b["rework"], {"requests": 4, "rework": 2, "rate": 0.5})
+            self.assertEqual(b["groups"][0]["requests"], 4)
             out = json.dumps(data)
             self.assertNotIn("secret memory", out)
             self.assertNotIn("login", out.lower())
@@ -134,12 +142,16 @@ class Cost(unittest.TestCase):
             out = self.run_report(h, "7")
             self.assertIn("== cost per OpenBot agent, last 7 days", out)
             self.assertIn("Alpha Bot", out)
-            self.assertIn("US$ 51.70 (partial: claude-foo-9 n/a)", out)
+            self.assertIn("US$ 52.70 (partial: claude-foo-9 n/a)", out)
             self.assertIn("rework 1/2 (50%)", out)
             self.assertNotIn("R$", out)
-            self.assertIn("R$ 258.50", self.run_report(h, "--brl", "5"))
+            self.assertIn("R$ 263.50", self.run_report(h, "--brl", "5"))
+            self.run_report(h, "--save")
+            previous = self.run_report(h, "--save").split("== RTK")[0]
+            self.assertIn("previous harness section", previous)
+            self.assertNotIn("cost per OpenBot agent", previous)
             data = json.loads(self.run_report(h, "--json", "--days", "30"))
-            self.assertAlmostEqual({a["id"]: a for a in data["agents"]}[A]["cost_usd"], 55.70, places=6)
+            self.assertAlmostEqual({a["id"]: a for a in data["agents"]}[A]["cost_usd"], 56.70, places=6)
 
 
 if __name__ == "__main__":
