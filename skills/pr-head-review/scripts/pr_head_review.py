@@ -21,6 +21,7 @@ import json
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import tarfile
@@ -68,7 +69,12 @@ def load_run_dir(arg: str) -> tuple[Path, dict]:
     meta_path = run / META
     if not meta_path.is_file():
         raise UsageError(f"no {META} in {run} (run fetch first)")
-    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+    try:
+        meta = json.loads(meta_path.read_text(encoding="utf-8"))
+    except ValueError as exc:
+        raise UsageError(f"{META} is not valid JSON: {exc}") from exc
+    if not isinstance(meta, dict):
+        raise UsageError(f"{META} is not a JSON object")
     # Checks run untrusted code that can rewrite this file: trust only paths of the shape fetch creates.
     logs = Path(meta.get("logs", "")).resolve()
     if logs.parent != tmp_root() or not logs.name.startswith(PREFIX + "logs-"):
@@ -98,6 +104,23 @@ def check_env(run: Path) -> dict:
     return env
 
 
+def run_logged(argv: list[str], cwd: Path, env: dict, out, timeout: int) -> int:
+    """Run in a new process group and kill the whole group at the end, so a timeout or a background process
+    (`node server &`, test workers) does not outlive the step. Returns 124 on timeout."""
+    proc = subprocess.Popen(argv, cwd=cwd, env=env, stdout=out, stderr=subprocess.STDOUT, start_new_session=True)
+    try:
+        return proc.wait(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        out.write(f"\ntimeout after {timeout}s\n".encode())
+        return 124
+    finally:
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+        except (ProcessLookupError, PermissionError):
+            pass
+        proc.wait()
+
+
 def extract(tar_path: Path, dest: Path, sha: str) -> Path:
     with tarfile.open(tar_path, "r:gz") as tf:
         comment = tf.pax_headers.get("comment", "")
@@ -121,14 +144,15 @@ def git_snapshot(run: Path, src: Path, sha: str, log: Path) -> None:
            "GIT_COMMITTER_EMAIL": "pr-head-review@localhost"}
     safe = ["git", "-c", "core.hooksPath=/dev/null", "-c", "commit.gpgsign=false"]
     with open(log, "ab") as out:
-        for args in (["init", "-q"], ["add", "-A"], ["commit", "-q", "--no-verify", "-m", f"head {sha}"]):
-            code = subprocess.run([*safe, *args], cwd=src, env=env, stdout=out, stderr=subprocess.STDOUT,
-                                  timeout=300).returncode
+        # -f and --allow-empty: files the repo's own .gitignore matches are still part of the head.
+        for args in (["init", "-q"], ["add", "-A", "-f"],
+                     ["commit", "-q", "--no-verify", "--allow-empty", "-m", f"head {sha}"]):
+            code = run_logged([*safe, *args], src, env, out, 300)
             if code != 0:
                 raise RuntimeError(f"git {args[0]} failed (exit {code}), see {log}")
 
 
-def cmd_fetch(repo: str, sha: str, dry: bool) -> Path | None:
+def cmd_fetch(repo: str, sha: str, dry: bool) -> tuple[Path, Path] | None:
     validate_repo(repo)
     validate_sha(sha)
     api = ["gh", "api", "--method", "GET", f"repos/{repo}/tarball/{sha}"]
@@ -161,7 +185,7 @@ def cmd_fetch(repo: str, sha: str, dry: bool) -> Path | None:
     meta["src"] = str(src)
     mark_step(run, meta, "fetch")
     say(f"fetch exit=0 src={src}")
-    return run
+    return run, logs
 
 
 def cmd_install(run_arg: str | None, dry: bool) -> int:
@@ -178,15 +202,14 @@ def cmd_install(run_arg: str | None, dry: bool) -> int:
         return 0
     log = logs / "install.log"
     with open(log, "wb") as out:
-        code = subprocess.run(["npm", "ci", "--ignore-scripts", "--no-audit", "--no-fund"], cwd=src,
-                              env=check_env(run), stdout=out, stderr=subprocess.STDOUT, timeout=1800).returncode
+        code = run_logged(["npm", "ci", "--ignore-scripts", "--no-audit", "--no-fund"], src, check_env(run), out, 1800)
     say(f"install exit={code} log={log}")
     mark_step(run, meta, "install")
     return 0 if code == 0 else 1
 
 
 def has_dep(pkg: dict, name: str) -> bool:
-    return any(name in (pkg.get(k) or {}) for k in ("dependencies", "devDependencies"))
+    return any(isinstance(pkg.get(k), dict) and name in pkg[k] for k in ("dependencies", "devDependencies"))
 
 
 def plan_checks(src: Path) -> list[tuple[str, list[str]]]:
@@ -195,15 +218,22 @@ def plan_checks(src: Path) -> list[tuple[str, list[str]]]:
     2. package.json: for each of typecheck, lint, test, run `npm run --ignore-scripts <name>` when the repo defines
        that script; otherwise the plain tool when it is a dependency (tsc --noEmit with a tsconfig.json,
        eslint ., vitest run), always with `npx --no-install`.
-    3. Python (pyproject.toml, setup.py or a tests/ dir with .py files): python3 -I -m unittest discover.
+    3. Python (pyproject.toml, setup.py or a tests/ dir with .py files): python3 -I -m unittest discover, also when
+       a package.json planned no check. With tests/__init__.py the repo root is the top dir (so tests can import
+       the package); without it only tests/ is importable, because -I keeps the cwd off sys.path.
     """
     verify = src / "scripts" / "verify"
     if verify.is_file():
         return [("verify", ["bash", "scripts/verify"] if not os.access(verify, os.X_OK) else ["scripts/verify"])]
     pkg_path = src / "package.json"
     if pkg_path.is_file():
-        pkg = json.loads(pkg_path.read_text(encoding="utf-8"))
-        scripts = pkg.get("scripts") or {}
+        try:
+            pkg = json.loads(pkg_path.read_text(encoding="utf-8"))
+        except ValueError as exc:
+            raise RuntimeError(f"package.json is not valid JSON: {exc}") from exc
+        if not isinstance(pkg, dict):
+            raise RuntimeError("package.json is not a JSON object")
+        scripts = pkg.get("scripts") if isinstance(pkg.get("scripts"), dict) else {}
         fallback = {
             "typecheck": (has_dep(pkg, "typescript") and (src / "tsconfig.json").is_file(), ["tsc", "--noEmit"]),
             "lint": (has_dep(pkg, "eslint"), ["eslint", "."]),
@@ -215,10 +245,13 @@ def plan_checks(src: Path) -> list[tuple[str, list[str]]]:
                 checks.append((name, ["npm", "run", "--ignore-scripts", name]))
             elif ok:
                 checks.append((name, ["npx", "--no-install", *tool]))
-        return checks
+        if checks:
+            return checks
     tests = src / "tests"
     if (src / "pyproject.toml").is_file() or (src / "setup.py").is_file() or any(tests.glob("*.py")):
         args = ["-s", "tests"] if tests.is_dir() else []
+        if (tests / "__init__.py").is_file():
+            args += ["-t", "."]
         return [("unittest", ["python3", "-I", "-m", "unittest", "discover", *args])]
     return []
 
@@ -245,16 +278,16 @@ def cmd_check(run_arg: str | None, dry: bool, timeout: int) -> int:
             out.write(("$ " + " ".join(argv) + "\n").encode())
             out.flush()
             try:
-                code = subprocess.run(argv, cwd=src, env=env, stdout=out, stderr=subprocess.STDOUT,
-                                      timeout=timeout).returncode
-            except subprocess.TimeoutExpired:
-                code = 124
-                out.write(f"\ntimeout after {timeout}s\n".encode())
+                code = run_logged(argv, src, env, out, timeout)
             except FileNotFoundError as exc:
                 code = 127
                 out.write(f"\n{exc}\n".encode())
         say(f"check {name} exit={code} log={log}")
-        worst = worst or (1 if code else 0)
+        if name == "unittest" and code == 5:  # Python 3.12+: no tests ran (e.g. pytest-style tests)
+            say("check unittest ran no tests: report no checks, not a pass")
+            worst = worst or 3
+        elif code:
+            worst = 1
     mark_step(run, meta, "check")
     return worst
 
@@ -276,22 +309,35 @@ def cmd_run(repo: str, sha: str, dry: bool, timeout: int) -> int:
         cmd_check(None, True, timeout)
         cmd_clean(None, True)
         return 0
-    run = None
+    fetched = None
     try:
-        run = cmd_fetch(repo, sha, False)
-        code = cmd_install(str(run), False)
+        fetched = cmd_fetch(repo, sha, False)
+        code = cmd_install(str(fetched[0]), False)
         if code:
             return code
-        return cmd_check(str(run), False, timeout)
+        return cmd_check(str(fetched[0]), False, timeout)
     finally:
-        if run is not None and run.exists():
-            cmd_clean(str(run), False)
+        # Not cmd_clean: it re-reads meta.json, which the checks could have rewritten.
+        if fetched is not None and fetched[0].exists():
+            shutil.rmtree(fetched[0], ignore_errors=True)
+            say(f"clean: removed {fetched[0]}; logs kept in {fetched[1]}")
+
+
+def positive_int(value: str) -> int:
+    n = int(value)
+    if n < 1:
+        raise argparse.ArgumentTypeError("must be 1 or more")
+    return n
 
 
 def main(argv: list[str] | None = None) -> int:
+    if sys.version_info < (3, 12):
+        print("error: needs Python 3.12+ (tarfile extraction filter, unittest exit 5 when no tests ran)",
+              file=sys.stderr)
+        return 2
     p = argparse.ArgumentParser(prog="pr_head_review.py", description=__doc__.split("\n")[0])
     p.add_argument("--dry-run", action="store_true", help="print the steps, run nothing")
-    p.add_argument("--timeout", type=int, default=900, help="seconds per check (default 900)")
+    p.add_argument("--timeout", type=positive_int, default=900, help="seconds per check (default 900)")
     sub = p.add_subparsers(dest="cmd", required=True)
     for name in ("fetch", "run"):
         s = sub.add_parser(name)

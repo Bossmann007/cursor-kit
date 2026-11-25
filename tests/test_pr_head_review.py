@@ -6,6 +6,7 @@ from pathlib import Path
 SCRIPT = Path(__file__).resolve().parents[1] / "skills/pr-head-review/scripts/pr_head_review.py"
 SHA = "41567f521dfa0e5f2b1791095cd062bead1061db"  # a public cursor-kit merge commit
 OTHER_SHA = "6251c03" + "0" * 33
+STUB_AUTH = "stub-auth-for-test"  # stands in for GH_TOKEN; never a real value
 
 
 def make_tarball(path, files, sha=SHA):
@@ -36,7 +37,7 @@ class T(unittest.TestCase):
 
     def run_script(self, *args):
         env = {**os.environ, "PATH": f"{self.bin}:{os.environ['PATH']}", "TMPDIR": str(self.tmpdir),
-               "GH_TOKEN": "fake-token-for-test"}
+               "GH_TOKEN": STUB_AUTH}
         return subprocess.run([sys.executable, "-I", str(SCRIPT), *args], capture_output=True, text=True, env=env)
 
     def calls_list(self):
@@ -79,7 +80,7 @@ class T(unittest.TestCase):
             "npm run --ignore-scripts test",
         ])
         # gh keeps the caller's auth; the untrusted steps never see the token and use a cache inside $TMPDIR.
-        self.assertIn("token=fake-token-for-test", calls[0])
+        self.assertIn(f"token={STUB_AUTH}", calls[0])
         for c in calls[1:]:
             self.assertIn("token=none", c)
             cache = c.split("cache=")[1]
@@ -152,6 +153,68 @@ class T(unittest.TestCase):
         text = Path(log.group(1)).read_text()
         self.assertIn("python3 -I -m unittest discover -s tests", text)
         self.assertIn("Ran 1 test", text)
+
+    def test_python_package_tests_import_from_root(self):
+        test = "import unittest, mypkg\nclass A(unittest.TestCase):\n    def test_ok(self):\n        self.assertEqual(mypkg.X, 1)\n"
+        make_tarball(self.tarball, {"mypkg/__init__.py": "X = 1\n", "tests/__init__.py": "", "tests/test_a.py": test})
+        r = self.run_script("run", "o/r", SHA)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_pytest_style_tests_are_not_a_pass(self):
+        make_tarball(self.tarball, {"pyproject.toml": "", "tests/test_b.py": "def test_x():\n    pass\n"})
+        r = self.run_script("run", "o/r", SHA)
+        self.assertEqual(r.returncode, 3, r.stdout + r.stderr)
+        self.assertIn("ran no tests", r.stdout)
+
+    def test_tooling_only_package_json_falls_through_to_python(self):
+        test = "import unittest\nclass A(unittest.TestCase):\n    def test_ok(self):\n        pass\n"
+        make_tarball(self.tarball, {"package.json": '{"devDependencies": {"prettier": "3"}}', "tests/test_a.py": test})
+        r = self.run_script("run", "o/r", SHA)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("check unittest exit=0", r.stdout)
+
+    def test_bad_package_json_is_a_clean_error(self):
+        for text in ('{"scripts": {"test": "x"},}', "[]"):
+            make_tarball(self.tarball, {"package.json": text})
+            r = self.run_script("run", "o/r", SHA)
+            self.assertEqual(r.returncode, 1, r.stderr)
+            self.assertIn("package.json is not", r.stderr)
+            self.assertNotIn("Traceback", r.stderr)
+            self.assertEqual(self.leftover_run_dirs(), [])
+
+    def test_bad_timeout_is_usage_error(self):
+        for value in ("0", "-5", "x"):
+            self.assertEqual(self.run_script("--timeout", value, "run", "o/r", SHA).returncode, 2, value)
+        self.assertEqual(self.calls_list(), [])
+
+    def test_snapshot_keeps_ignored_files(self):
+        verify = "#!/bin/sh\ngit ls-files\n"
+        make_tarball(self.tarball, {".gitignore": "*\n", "scripts/verify": verify, "data.txt": "x"})
+        r = self.run_script("run", "o/r", SHA)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        log = re.search(r"log=(\S+check-verify.log)", r.stdout).group(1)
+        self.assertIn("data.txt", Path(log).read_text())
+
+    def test_run_cleans_even_when_check_corrupts_meta(self):
+        make_tarball(self.tarball, {"scripts/verify": "#!/bin/sh\necho junk > ../../meta.json\n"})
+        r = self.run_script("run", "o/r", SHA)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.leftover_run_dirs(), [])
+
+    def test_background_process_is_killed_after_check(self):
+        make_tarball(self.tarball, {"scripts/verify": "#!/bin/sh\nsleep 300 &\necho pid=$!\n"})
+        r = self.run_script("run", "o/r", SHA)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        log = re.search(r"log=(\S+check-verify.log)", r.stdout).group(1)
+        pid = int(re.search(r"pid=(\d+)", Path(log).read_text()).group(1))
+        with self.assertRaises(ProcessLookupError):
+            os.kill(pid, 0)
+
+    def test_timeout_kills_check(self):
+        make_tarball(self.tarball, {"scripts/verify": "#!/bin/sh\nsleep 300\n"})
+        r = self.run_script("--timeout", "1", "run", "o/r", SHA)
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("check verify exit=124", r.stdout)
 
     def test_no_checks_exit_3(self):
         make_tarball(self.tarball, {"README.md": "x"})
