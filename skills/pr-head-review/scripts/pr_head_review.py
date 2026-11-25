@@ -61,11 +61,17 @@ def validate_sha(sha: str) -> str:
     return sha
 
 
-def load_run_dir(arg: str) -> tuple[Path, dict]:
-    """Accept only a run dir this script created: a direct child of $TMPDIR with our prefix and meta file."""
+def run_dir_path(arg: str) -> Path:
+    """A run dir has the shape fetch creates: a direct child of $TMPDIR named pr-head-review-* (not a log dir)."""
     run = Path(arg).resolve()
     if run.parent != tmp_root() or not run.name.startswith(PREFIX) or run.name.startswith(PREFIX + "logs-"):
         raise UsageError(f"not a run dir under {tmp_root()}: {arg}")
+    return run
+
+
+def load_run_dir(arg: str) -> tuple[Path, dict]:
+    """Accept only a run dir this script created: the run dir shape plus a valid meta file."""
+    run = run_dir_path(arg)
     meta_path = run / META
     if not meta_path.is_file():
         raise UsageError(f"no {META} in {run} (run fetch first)")
@@ -296,9 +302,13 @@ def cmd_clean(run_arg: str | None, dry: bool) -> int:
     if dry:
         say("step clean: delete <run-dir>; the log dir stays")
         return 0
-    run, meta = load_run_dir(run_arg)
+    # Only the path shape is checked, not meta.json: the checks ran untrusted code that may have deleted or
+    # rewritten it, and the run dir must still go.
+    run = run_dir_path(run_arg)
+    if not run.is_dir():
+        raise UsageError(f"no run dir at {run}")
     shutil.rmtree(run)
-    say(f"clean: removed {run}; logs kept in {meta['logs']}")
+    say(f"clean: removed {run}; logs kept in the log dir fetch printed")
     return 0
 
 

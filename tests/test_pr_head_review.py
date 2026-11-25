@@ -36,12 +36,18 @@ class T(unittest.TestCase):
             (self.bin / f).chmod(0o755)
 
     def run_script(self, *args):
+        # npm_config_cache is set on purpose: the stubs log it, and a reviewer running this suite through the
+        # skill has one whose path contains "npm"; call matching must use the command name, not a substring.
         env = {**os.environ, "PATH": f"{self.bin}:{os.environ['PATH']}", "TMPDIR": str(self.tmpdir),
-               "GH_TOKEN": STUB_AUTH}
+               "GH_TOKEN": STUB_AUTH, "npm_config_cache": str(self.tmp / "outer-npm-cache")}
         return subprocess.run([sys.executable, "-I", str(SCRIPT), *args], capture_output=True, text=True, env=env)
 
     def calls_list(self):
         return self.calls.read_text().splitlines() if self.calls.exists() else []
+
+    def commands(self, name):
+        """Stub calls of one command, matched by the command name (first word), never by substring."""
+        return [c for c in self.calls_list() if c.split()[0] == name]
 
     def leftover_run_dirs(self):
         return [p for p in self.tmpdir.iterdir() if p.name.startswith("pr-head-review-") and "logs-" not in p.name]
@@ -125,13 +131,29 @@ class T(unittest.TestCase):
         meta_path.write_text(json.dumps(good))
         self.assertEqual(self.run_script("clean", str(run_dir)).returncode, 0)
 
+    def test_clean_works_after_check_deletes_meta(self):
+        make_tarball(self.tarball, {"scripts/verify": "#!/bin/sh\nrm -f ../../meta.json\n"})
+        r = self.run_script("fetch", "o/r", SHA)
+        run_dir = re.search(r"^run dir: (.+)$", r.stdout, re.M).group(1)
+        self.assertEqual(self.run_script("check", run_dir).returncode, 0)
+        # check rewrites meta.json when it ends; delete it as a still-running child of the PR code could.
+        (Path(run_dir) / "meta.json").unlink()
+        self.assertEqual(self.run_script("check", run_dir).returncode, 2)
+        r = self.run_script("clean", run_dir)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertFalse(Path(run_dir).exists())
+        # Still only inside the run root: a log dir or anything outside $TMPDIR is refused.
+        for bad in (str(self.tmp), str(self.tmpdir / "pr-head-review-logs-x")):
+            self.assertEqual(self.run_script("clean", bad).returncode, 2, bad)
+
     def test_sha_mismatch_fails_and_cleans(self):
         make_tarball(self.tarball, {"package.json": "{}"}, sha=OTHER_SHA)
         r = self.run_script("run", "o/r", SHA)
         self.assertEqual(r.returncode, 1)
         self.assertIn("does not match", r.stderr)
         self.assertEqual(self.leftover_run_dirs(), [])
-        self.assertFalse(any("npm" in c for c in self.calls_list()))
+        self.assertEqual(self.commands("gh"), [self.calls_list()[0]])
+        self.assertEqual(self.commands("npm"), [])
 
     def test_failed_install_stops_before_checks(self):
         make_tarball(self.tarball, {"package.json": '{"scripts": {"test": "x"}}', "package-lock.json": "{}"})
@@ -140,7 +162,7 @@ class T(unittest.TestCase):
         r = self.run_script("run", "o/r", SHA)
         self.assertEqual(r.returncode, 1)
         self.assertIn("install exit=7", r.stdout)
-        self.assertFalse(any("npm run" in c for c in self.calls_list()))
+        self.assertEqual([c.split()[1] for c in self.commands("npm")], ["ci"])
         self.assertEqual(self.leftover_run_dirs(), [])
 
     def test_python_repo_runs_isolated_unittest(self):

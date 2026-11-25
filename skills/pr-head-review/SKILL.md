@@ -77,7 +77,11 @@ Exit codes: 0 all checks passed, 1 a step or a check failed, 2 bad usage, 3 no c
 - A check that reads the reviewer's real home fails here on purpose. Example: cursor-kit's `agnix` step needs
   `~/AGENTS.md`. Report it as an environment limit, with the log line, not as a code failure.
 - `npm ci --ignore-scripts` skips install scripts, so a package that needs one (native builds) can fail its checks.
-- Only `gh` gets your GitHub auth, and only for one GET.
+- The scrub only keeps tokens out of the environment. The checks still run as you: they can read your files,
+  keychain and network like any process you start. The real protection is reading the diff of `scripts/verify`,
+  `package.json` scripts and test setup first, and running untrusted PRs in a sandbox or VM.
+- `clean` checks only that the path is a run dir under `$TMPDIR` (not `meta.json`, which the checks can delete), so
+  it still removes the run dir after a check tampered with it.
 
 ## Report
 
