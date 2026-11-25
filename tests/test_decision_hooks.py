@@ -82,6 +82,43 @@ class Recommend(unittest.TestCase):
         rec.verdict("Recomendo " + "a." * 20000)
         self.assertLess(time.monotonic() - start, 1.0)
 
+    def test_study_and_workflow_next_steps_pass(self):
+        for s in ("Próximo passo: revisar o capítulo 3.",
+                  "Faça os exercícios 1 a 5.",
+                  "Rode os testes de novo.",
+                  "Sugiro revisar o capítulo 3.",
+                  "Sugiro que você revise o capítulo 3 antes da prova.",
+                  "Recomendo a leitura do capítulo 3.",
+                  "Recomendo fazer os exercícios 1 a 5.",
+                  "Sugestão: exercícios 1 a 5 da lista.",
+                  "Recomendo estudar a matriz de transição e praticar com o simulado.",
+                  "I recommend reviewing chapter 3 and practicing the problems.",
+                  "O certo é rodar os testes de novo.",
+                  "Sugiro rodar scripts/verify e abrir o PR.",
+                  "Recomendo aguardar a review antes do merge.",
+                  "I'd suggest running the tests again."):
+            self.assertEqual(rec.verdict(s), {}, s)
+
+    def test_tech_product_price_and_fact_recommendations_still_fire(self):
+        for s in ("Recomendo usar Supabase.",
+                  "Sugiro o plano Pro: o plano custa R$ 49 por mês.",
+                  "Recomendo atualizar: a versão 2.1 corrigiu o vazamento.",
+                  "Recomendo fazer deploy na Vercel.",
+                  "Sugiro abrir conta na AWS.",
+                  "Sugiro revisar o capítulo 3. Recomendo usar Supabase.",
+                  "Sugiro estudar pelo curso X, que custa R$ 49.",
+                  "I recommend Postgres 16 over MySQL."):
+            self.assertNotEqual(rec.verdict(s), {}, s)
+
+    def test_tech_recommendations_with_a_source_pass(self):
+        self.assertEqual(rec.verdict("Recomendo usar Supabase (https://supabase.com/docs)."), {})
+        self.assertEqual(rec.verdict("Sugiro o plano Pro, que custa R$ 49 (https://example.test/pricing)."), {})
+        self.assertEqual(rec.verdict("Recomendo atualizar: CHANGELOG.md:12 diz que a 2.1 corrigiu o vazamento."), {})
+
+    def test_bare_claims_without_a_recommending_word_are_unchanged(self):
+        # The hook keys on recommending words; a bare claim never fired and still does not.
+        self.assertEqual(rec.verdict("O plano custa R$ 49."), {})
+
     def test_main_uses_last_assistant_message(self):
         out = run_main(rec, {"last_assistant_message": "Recomendo X.", "stop_hook_active": False})
         self.assertIn("additionalContext", out)
