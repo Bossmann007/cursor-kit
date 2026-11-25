@@ -9,7 +9,10 @@ OTHER_SHA = "6251c03" + "0" * 33
 STUB_AUTH = "stub-auth-for-test"  # stands in for GH_TOKEN; never a real value
 
 
-def make_tarball(path, files, sha=SHA):
+def make_tarball(path, files, sha=SHA, tree=None):
+    """The tarball plus the git tree JSON the gh stub serves next to it (default: the same file list)."""
+    blobs = sorted(files) if tree is None else tree
+    Path(f"{path}.tree.json").write_text(json.dumps({"truncated": False, "tree": [{"path": p, "type": "blob"} for p in blobs]}))
     with tarfile.open(path, "w:gz", format=tarfile.PAX_FORMAT, pax_headers={"comment": sha}) as tf:
         for name, text in files.items():
             data = text.encode()
@@ -30,7 +33,7 @@ class T(unittest.TestCase):
         self.tarball = self.tmp / "head.tar.gz"
         # Stubs log their argv (and whether a token leaked) to one file, so the test sees the real call order.
         stub = "#!/bin/sh\necho \"%s $* token=${GH_TOKEN:-none} cache=${npm_config_cache:-none}\" >> " + str(self.calls) + "\n"
-        (self.bin / "gh").write_text(stub % "gh" + f"cat {self.tarball}\n")
+        (self.bin / "gh").write_text(stub % "gh" + f'case "$*" in *git/trees*) cat {self.tarball}.tree.json ;; *) cat {self.tarball} ;; esac\n')
         (self.bin / "npm").write_text(stub % "npm" + "exit ${NPM_EXIT:-0}\n")
         for f in ("gh", "npm"):
             (self.bin / f).chmod(0o755)
@@ -81,13 +84,15 @@ class T(unittest.TestCase):
         calls = self.calls_list()
         self.assertEqual([c.split(" token=")[0] for c in calls], [
             f"gh api --method GET repos/o/r/tarball/{SHA}",
+            f"gh api --method GET repos/o/r/git/trees/{SHA}?recursive=1",
             "npm ci --ignore-scripts --no-audit --no-fund",
             "npm run --ignore-scripts lint",
             "npm run --ignore-scripts test",
         ])
         # gh keeps the caller's auth; the untrusted steps never see the token and use a cache inside $TMPDIR.
         self.assertIn(f"token={STUB_AUTH}", calls[0])
-        for c in calls[1:]:
+        self.assertIn("tree check: extracted files match", r.stdout)
+        for c in calls[2:]:
             self.assertIn("token=none", c)
             cache = c.split("cache=")[1]
             self.assertTrue(cache.startswith(str(self.tmpdir)), cache)
@@ -145,6 +150,33 @@ class T(unittest.TestCase):
         # Still only inside the run root: a log dir or anything outside $TMPDIR is refused.
         for bad in (str(self.tmp), str(self.tmpdir / "pr-head-review-logs-x")):
             self.assertEqual(self.run_script("clean", bad).returncode, 2, bad)
+
+    def test_install_refuses_npmrc_and_non_registry_deps(self):
+        pkg = '{"scripts": {"test": "x"}}'
+        reg = {"packages": {"": {}, "node_modules/a": {"resolved": "https://registry.npmjs.org/a/-/a-1.tgz"}}}
+        git = {"packages": {"node_modules/b": {"resolved": "git+ssh://git@github.com/x/b.git#abc"}}}
+        cases = [
+            ({"package.json": pkg, "package-lock.json": json.dumps(reg), ".npmrc": "git=./evil.sh\n"}, ".npmrc present"),
+            ({"package.json": pkg, "package-lock.json": json.dumps(git)}, "resolves to git+ssh"),
+            ({"package.json": pkg, "package-lock.json": json.dumps({"dependencies": {"c": {"version": "github:x/c"}}})},
+             "version github:x/c"),
+        ]
+        for files, reason in cases:
+            make_tarball(self.tarball, files)
+            r = self.run_script("run", "o/r", SHA)
+            self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+            self.assertIn("install refused", r.stdout)
+            self.assertIn(reason, r.stdout)
+            self.assertEqual(self.leftover_run_dirs(), [])
+        self.assertEqual(self.commands("npm"), [])
+        make_tarball(self.tarball, {"package.json": pkg, "package-lock.json": json.dumps(reg)})
+        self.assertEqual(self.run_script("run", "o/r", SHA).returncode, 0)
+
+    def test_tree_mismatch_warns(self):
+        make_tarball(self.tarball, {"package.json": "{}"}, tree=["package.json", "tests/hidden_by_export_ignore.py"])
+        r = self.run_script("run", "o/r", SHA)
+        self.assertIn("warning: tested files differ from the head", r.stdout)
+        self.assertIn("tests/hidden_by_export_ignore.py", r.stdout)
 
     def test_sha_mismatch_fails_and_cleans(self):
         make_tarball(self.tarball, {"package.json": "{}"}, sha=OTHER_SHA)

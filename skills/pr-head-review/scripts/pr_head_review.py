@@ -171,12 +171,47 @@ def git_snapshot(run: Path, src: Path, sha: str, log: Path) -> None:
                 raise RuntimeError(f"git {args[0]} failed (exit {code}), see {log}")
 
 
+def compare_tree(repo: str, sha: str, src: Path, run: Path, log: Path) -> None:
+    """GitHub builds the tarball with git archive, which honors .gitattributes export-ignore and export-subst, so
+    the extracted files can differ from the commit. Compare the file list with the git tree of the SHA and warn."""
+    tree_path = run / "tree.json"
+    with open(tree_path, "wb") as out, open(log, "ab") as err:
+        code = subprocess.run(["gh", "api", "--method", "GET", f"repos/{repo}/git/trees/{sha}?recursive=1"],
+                              stdout=out, stderr=err, timeout=300).returncode
+    if code != 0:
+        say(f"warning: could not read the git tree (exit {code}); the file list was not compared, log={log}")
+        return
+    try:
+        tree = json.loads(tree_path.read_text(encoding="utf-8"))
+        wanted = {e["path"] for e in tree["tree"] if e.get("type") == "blob"}
+    except (ValueError, KeyError, TypeError) as exc:
+        say(f"warning: unreadable git tree ({exc}); the file list was not compared")
+        return
+    if tree.get("truncated"):
+        say("warning: git tree truncated by GitHub; the file list was not compared")
+        return
+    got = set()
+    for root, dirs, files in os.walk(src):
+        dirs[:] = [d for d in dirs if not (root == str(src) and d == ".git")]
+        rel = Path(root).relative_to(src)
+        got.update(str(rel / f) if str(rel) != "." else f for f in files)
+        got.update(str(rel / d) for d in dirs if (Path(root) / d).is_symlink())
+    missing, extra = sorted(wanted - got), sorted(got - wanted)
+    if missing or extra:
+        say(f"warning: tested files differ from the head (.gitattributes export-ignore/export-subst?): "
+            f"{len(missing)} missing {missing[:5]}, {len(extra)} extra {extra[:5]}")
+    else:
+        say("tree check: extracted files match the git tree of the head")
+    if any("export-subst" in p.read_text(errors="replace") for p in src.rglob(".gitattributes") if p.is_file()):
+        say("warning: .gitattributes uses export-subst: some file contents differ from the head")
+
+
 def cmd_fetch(repo: str, sha: str, dry: bool) -> tuple[Path, Path] | None:
     validate_repo(repo)
     validate_sha(sha)
     api = ["gh", "api", "--method", "GET", f"repos/{repo}/tarball/{sha}"]
     if dry:
-        say("step fetch: " + " ".join(api) + " > <run-dir>/head.tar.gz ; extract into <run-dir>/extract ; "
+        say("step fetch: " + " ".join(api) + " > <run-dir>/head.tar.gz ; extract into <run-dir>/extract ; compare with the git tree ; "
             "local one-commit git repo of the files")
         return None
     run = Path(tempfile.mkdtemp(prefix=PREFIX, dir=tmp_root()))
@@ -196,6 +231,7 @@ def cmd_fetch(repo: str, sha: str, dry: bool) -> tuple[Path, Path] | None:
         extract_dir.mkdir()
         src = extract(tar_path, extract_dir, sha)
         tar_path.unlink()
+        compare_tree(repo, sha, src, run, logs / "fetch.log")
         git_snapshot(run, src, sha, logs / "fetch.log")
     except BaseException:
         shutil.rmtree(run, ignore_errors=True)
@@ -219,12 +255,39 @@ def cmd_install(run_arg: str | None, dry: bool) -> int:
         say("install skipped: no package-lock.json")
         mark_step(run, meta, "install")
         return 0
+    refused = install_risks(src)
+    if refused:
+        say("install refused: " + "; ".join(refused) + ". Read them before installing by hand.")
+        return 1
     log = logs / "install.log"
     with open(log, "wb") as out:
         code = run_logged(["npm", "ci", "--ignore-scripts", "--no-audit", "--no-fund"], src, check_env(run), out, 1800)
     say(f"install exit={code} log={log}")
     mark_step(run, meta, "install")
     return 0 if code == 0 else 1
+
+
+NPM_REGISTRY = "https://registry.npmjs.org/"
+
+
+def install_risks(src: Path) -> list[str]:
+    """--ignore-scripts is not a barrier: a repo .npmrc can set git=<script>, which npm runs to fetch a git
+    dependency. Refuse any .npmrc, and any lockfile entry that resolves outside the npm registry."""
+    risks = [f"{p.relative_to(src)} present" for p in src.rglob(".npmrc") if ".git" not in p.relative_to(src).parts]
+    try:
+        lock = json.loads((src / "package-lock.json").read_text(encoding="utf-8"))
+        entries = {**(lock.get("packages") or {}), **(lock.get("dependencies") or {})}
+        for name, entry in entries.items():
+            if not isinstance(entry, dict):
+                continue
+            resolved, version = entry.get("resolved"), entry.get("version")
+            if isinstance(resolved, str) and not resolved.startswith(NPM_REGISTRY):
+                risks.append(f"lockfile {name or '.'} resolves to {resolved[:80]}")
+            elif isinstance(version, str) and re.match(r"(git\+|git:|github:|file:|https?:)", version):
+                risks.append(f"lockfile {name or '.'} version {version[:80]}")
+    except (ValueError, AttributeError) as exc:
+        risks.append(f"package-lock.json unreadable ({exc})")
+    return risks
 
 
 def has_dep(pkg: dict, name: str) -> bool:
