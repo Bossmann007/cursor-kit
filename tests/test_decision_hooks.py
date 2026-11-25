@@ -96,7 +96,8 @@ class Recommend(unittest.TestCase):
                   "O certo é rodar os testes de novo.",
                   "Sugiro rodar scripts/verify e abrir o PR.",
                   "Recomendo aguardar a review antes do merge.",
-                  "I'd suggest running the tests again."):
+                  "I'd suggest running the tests again.",
+                  "Recomendo:\n- revisar o capítulo 3\n- fazer os exercícios"):
             self.assertEqual(rec.verdict(s), {}, s)
 
     def test_tech_product_price_and_fact_recommendations_still_fire(self):
@@ -107,7 +108,16 @@ class Recommend(unittest.TestCase):
                   "Sugiro abrir conta na AWS.",
                   "Sugiro revisar o capítulo 3. Recomendo usar Supabase.",
                   "Sugiro estudar pelo curso X, que custa R$ 49.",
-                  "I recommend Postgres 16 over MySQL."):
+                  "I recommend Postgres 16 over MySQL.",
+                  # a study or workflow verb does not cover a choice, a price or a second action in the sentence
+                  "O certo é estudar Rust em vez de Go.",
+                  "I recommend reading the docs: Postgres 16 is faster.",
+                  "Recomendo revisar o cap 3, depois usar Supabase, que é grátis.",
+                  "Recomendo revisar o contrato e assinar o plano Enterprise.",
+                  "Recomendo ler o livro X por 49 reais.",
+                  "Recomendo ler o livro, que custa USD 20.",
+                  "Sugiro rodar o build na Vercel com Node 22.",
+                  "Sugiro rodar os testes em Python 3.13, que é mais rápido."):
             self.assertNotEqual(rec.verdict(s), {}, s)
 
     def test_tech_recommendations_with_a_source_pass(self):
