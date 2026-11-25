@@ -97,7 +97,12 @@ class Recommend(unittest.TestCase):
                   "Sugiro rodar scripts/verify e abrir o PR.",
                   "Recomendo aguardar a review antes do merge.",
                   "I'd suggest running the tests again.",
-                  "Recomendo:\n- revisar o capítulo 3\n- fazer os exercícios"):
+                  "Recomendo:\n- revisar o capítulo 3\n- fazer os exercícios",
+                  "Sugiro:\n- **Revisar** o capítulo 3\n- fazer a `lista 2`",
+                  "Sugiro revisar os capítulos 3 e 4.",
+                  "Recomendo esperar as reviews do Code Bot.",
+                  "Recomendo corrigir os itens 1 a 4 antes de entregar.",
+                  "Recomendo corrigir tudo no PR #12 antes do merge."):
             self.assertEqual(rec.verdict(s), {}, s)
 
     def test_tech_product_price_and_fact_recommendations_still_fire(self):
@@ -118,6 +123,7 @@ class Recommend(unittest.TestCase):
                   "Recomendo ler o livro, que custa USD 20.",
                   "Sugiro rodar o build na Vercel com Node 22.",
                   "Sugiro rodar os testes em Python 3.13, que é mais rápido.",
+                  "Recomendo fazer a prova de conceito com postgres.",
                   "Recomendo:\n- revisar o capítulo 3\n- usar Supabase",
                   "Recomendo revisar o código antes de migrar para Postgres 16.",
                   "Recomendo ler do cache Redis para cortar latência.",

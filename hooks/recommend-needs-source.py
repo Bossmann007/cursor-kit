@@ -12,8 +12,8 @@ sentence (split at , ; : "e" "and" "depois" "then") is one of:
 - a study step on study material: a study verb (revisar, ler, fazer, resolver, review, read, do) plus a material noun
   (capítulo, lista, exercícios, slides, chapter, exercises...), or a pure study verb (estudar, praticar, study,
   practice) on any topic;
-- a step of the agent's own workflow: run the tests or scripts/verify, open the PR, wait for the review or CI, with
-  only a short tail ("de novo", "antes do merge").
+- a step of the agent's own workflow: run the tests or scripts/verify, open the PR, wait for the review or CI, fix
+  the review items, with only a short tail ("de novo", "no PR #16", "antes do merge", "do News Bot").
 A study part may not name anything with a capital letter after its verb (a product, a service, a version), so
 "ler do cache Redis" and "estudar Rust" still fire. A price (R$, US$, reais, por mês) or a comparison (em vez de,
 melhor que, faster) anywhere in the sentence voids the exemption, and so does a sentence with no end in sight. The
@@ -36,17 +36,19 @@ _LEAD = r"(?:(?:que|that)\s+(?:voc[eê]\s+|vc\s+|you\s+)?|voc[eê]\s+|you\s+|to\
 _DET = r"(?:(?:o|a|os|as|d[oa]s?|n[oa]s?|esse|essa|este|esta|the|this|these)\s+)?"
 _MATERIAL = (r"(?:cap(?:ítulo|itulo)?s?\.?|chapters?|se[cç](?:ão|ões)|sections?|listas?|exerc[íi]cios|exercises|"
              r"quest[õo]es|questions|problems|slides|aulas?|lectures?|notas|notes|resumos?|summary|apostila|matéria|"
-             r"conteúdo|enunciado|prova|simulado|material|flashcards|gabarito|teoria|theory)\b")
+             r"conteúdo|enunciado|simulado|material|flashcards|gabarito|teoria|theory)\b")
 _STUDY_VERB = (r"(?:revis(?:ar|e|em|ão)|rev(?:er|eja)|rel(?:er|eia)|l(?:er|eia)|leitura|(?:re)?(?:fazer|faça|faz)|"
                r"resolv(?:er|a)|review(?:ing)?|re-?read(?:ing)?|read(?:ing)?|(?:re)?do(?:ing)?|solv(?:e|ing))\s+")
 _PURE_STUDY = r"(?:estud(?:ar|e)|pratic(?:ar|ando)|pratique|treinar|treine|stud(?:y|ying)|practi[cs](?:e|ing))\b"
 _WORKFLOW = (r"(?:(?:rodar|rode|roda|executar|execute|re-?run(?:ning)?|run(?:ning)?)\s+(?:de\s+novo\s+|again\s+)?"
-             r"(?:os\s+|o\s+|a\s+|the\s+)?(?:testes?|tests?|scripts/verify|verify|lint|build|checks?|CI)|"
-             r"(?:abrir|abra|open(?:ing)?)\s+(?:o\s+|um\s+|the\s+|a\s+)?(?:PR|pull\s+request)|"
-             r"(?:esperar|espere|aguardar|aguarde|wait(?:ing)?\s+for)\s+(?:o\s+|a\s+|os\s+|the\s+)?"
-             r"(?:review|revisão|CI|checks?|aprovação|approval))")
-_TAIL = (r"(?:\s+(?:de\s+novo|again|localmente|locally|(?:antes|depois)\s+d[oa]\s+\S+|"
-         r"(?:before|after)\s+(?:the\s+)?\S+))?")
+             + _DET + r"(?:testes?|tests?|scripts/verify|verify|lint|build|checks?|CI)|"
+             r"(?:abrir|abra|open(?:ing)?)\s+(?:um\s+)?" + _DET + r"(?:PR|pull\s+request)|"
+             r"(?:esperar|espere|aguardar|aguarde|wait(?:ing)?\s+for)\s+" + _DET
+             + r"(?:reviews?|revis(?:ão|ões)|CI|checks?|aprovação|approval)|"
+             r"(?:corrigir|corrija|fix(?:ing)?)\s+" + _DET + r"(?:itens|items|achados|findings|tudo|everything)"
+             r"(?:\s+\d+(?:\s*(?:a|to|-)\s*\d+)?)?)")
+_TAIL = (r"(?:\s+(?:de\s+novo|again|agora|now|localmente|locally|n[oa]\s+PR(?:\s+#?\d+)?|in\s+the\s+PR|"
+         r"(?:antes|depois)\s+d[eoa]\s+\S+|(?:before|after)\s+(?:the\s+)?\S+|d[oa]s?\s+\S+(?:\s+\S+)?)){0,2}")
 STUDY_STEP = re.compile(
     _LEAD + r"(?:" + _STUDY_VERB + _DET + _MATERIAL + r"|" + _DET + _MATERIAL + r"|" + _PURE_STUDY + r")", re.I)
 WORKFLOW_STEP = re.compile(_LEAD + _WORKFLOW + _TAIL + r"$", re.I)
@@ -55,6 +57,8 @@ CLAIM = re.compile(r"R\$|US\$|\bUSD\b|\$\s?\d|€|\bEUR\b|\breais\b|d[óo]lares|
                    r"(?:better|worse|faster|cheaper|slower)\b|mais\s+(?:rápid|barat|lent|car)", re.I)
 SENTENCE_END = re.compile(r"[.!?](?=\s+[A-ZÀ-Ú]|\s*$)|\n")
 BULLET = re.compile(r"\n[ \t]*(?:[-*•]|\d+[.)])[ \t]+")
+MARKUP = re.compile(r"[*_`]")
+NUMBERS = re.compile(r"\d+(?:\s*(?:a|to|-)\s*\d+)?$")
 PARTS = re.compile(r"[,;:]|\s(?:e|and|depois|then)\s", re.I)
 REASON = ("This reply recommends something without a source. Before stopping: cite the primary source you read in "
           "this session (URL or file:line) for each fact the recommendation rests on, name the one fact that would "
@@ -94,7 +98,7 @@ def _is_step(part: str) -> bool:
 def is_next_step(text: str, start: int) -> bool:
     """True when the sentence after a recommending word is only study or own-workflow steps (see the header)."""
     window = text[start:start + 600]
-    clause = BULLET.sub("; ", window).lstrip(" \t\n:*_-•;")
+    clause = BULLET.sub("; ", MARKUP.sub("", window)).lstrip(" \t\n:-•;")
     end = SENTENCE_END.search(clause)
     if end:
         clause = clause[:end.start()]
@@ -102,8 +106,8 @@ def is_next_step(text: str, start: int) -> bool:
         return False  # no sentence end within the window: judge it as a claim
     if CLAIM.search(clause):
         return False
-    parts = [p.strip(" *_`") for p in PARTS.split(clause)]
-    parts = [p for p in parts if p]
+    parts = [p.strip() for p in PARTS.split(clause)]
+    parts = [p for p in parts if p and not NUMBERS.match(p)]  # "capítulos 3 e 4", "itens 1, 3 e 4"
     return bool(parts) and all(_is_step(p) for p in parts)
 
 
