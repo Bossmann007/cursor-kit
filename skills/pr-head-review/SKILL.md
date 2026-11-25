@@ -55,7 +55,7 @@ python3 -I scripts/pr_head_review.py clean <run-dir>
      that script; otherwise the plain tool when it is a dependency (`tsc --noEmit` with a `tsconfig.json`,
      `eslint .`, `vitest run`) through `npx --no-install`.
    - Python (`pyproject.toml`, `setup.py` or `tests/*.py`), also when `package.json` planned no check:
-     `python3 -I -m unittest discover -s tests`, plus `-t .` when `tests/__init__.py` exists so tests can import the
+     `<python> -I -m unittest discover -s tests` with the same Python that runs the script, plus `-t .` when `tests/__init__.py` exists so tests can import the
      package from the repo root (`-I` keeps the cwd off `sys.path`). "Ran 0 tests" (exit 5, e.g. pytest-style tests)
      is reported as no checks (exit 3). When the repo documents another command (pytest, tox), run it yourself in the
      run dir between `check` and `clean`, with its output in a file.
@@ -76,6 +76,9 @@ Exit codes: 0 all checks passed, 1 a step or a check failed, 2 bad usage, 3 no c
   files before `check`.
 - A check that reads the reviewer's real home fails here on purpose. Example: cursor-kit's `agnix` step needs
   `~/AGENTS.md`. Report it as an environment limit, with the log line, not as a code failure.
+- A flat-layout Python repo (package at the root, no `tests/__init__.py`) whose tests import the package fails
+  with `ImportError`, because `-I` keeps the root off `sys.path`. Report it as an environment limit and run the
+  repo's documented test command in the run dir instead.
 - `npm ci --ignore-scripts` skips install scripts, so a package that needs one (native builds) can fail its checks.
 - The scrub only keeps tokens out of the environment. The checks still run as you: they can read your files,
   keychain and network like any process you start. The real protection is reading the diff of `scripts/verify`,

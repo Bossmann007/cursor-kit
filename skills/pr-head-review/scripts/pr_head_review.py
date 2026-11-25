@@ -26,6 +26,7 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import time
 from pathlib import Path
 
 PREFIX = "pr-head-review-"
@@ -82,7 +83,10 @@ def load_run_dir(arg: str) -> tuple[Path, dict]:
     if not isinstance(meta, dict):
         raise UsageError(f"{META} is not a JSON object")
     # Checks run untrusted code that can rewrite this file: trust only paths of the shape fetch creates.
-    logs = Path(meta.get("logs", "")).resolve()
+    if not isinstance(meta.get("logs"), str) or not isinstance(meta.get("src", ""), str) \
+            or not isinstance(meta.get("steps", []), list):
+        raise UsageError(f"{META} has a field of the wrong type")
+    logs = Path(meta["logs"]).resolve()
     if logs.parent != tmp_root() or not logs.name.startswith(PREFIX + "logs-"):
         raise UsageError(f"{META} has an unexpected log dir: {logs}")
     if "src" in meta and Path(meta["src"]).resolve().parent != run / "extract":
@@ -114,17 +118,26 @@ def run_logged(argv: list[str], cwd: Path, env: dict, out, timeout: int) -> int:
     """Run in a new process group and kill the whole group at the end, so a timeout or a background process
     (`node server &`, test workers) does not outlive the step. Returns 124 on timeout."""
     proc = subprocess.Popen(argv, cwd=cwd, env=env, stdout=out, stderr=subprocess.STDOUT, start_new_session=True)
+    timed_out = False
     try:
-        return proc.wait(timeout=timeout)
-    except subprocess.TimeoutExpired:
-        out.write(f"\ntimeout after {timeout}s\n".encode())
-        return 124
+        # Wait without reaping (WNOWAIT): the exited leader stays a zombie, so its pid and process group id cannot
+        # be reused by an unrelated process before killpg below.
+        deadline = time.monotonic() + timeout
+        while os.waitid(os.P_PID, proc.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT) is None:
+            if time.monotonic() >= deadline:
+                timed_out = True
+                break
+            time.sleep(0.05)
     finally:
         try:
             os.killpg(proc.pid, signal.SIGKILL)
         except (ProcessLookupError, PermissionError):
             pass
-        proc.wait()
+        code = proc.wait()
+    if timed_out:
+        out.write(f"\ntimeout after {timeout}s\n".encode())
+        return 124
+    return code
 
 
 def extract(tar_path: Path, dest: Path, sha: str) -> Path:
@@ -258,7 +271,8 @@ def plan_checks(src: Path) -> list[tuple[str, list[str]]]:
         args = ["-s", "tests"] if tests.is_dir() else []
         if (tests / "__init__.py").is_file():
             args += ["-t", "."]
-        return [("unittest", ["python3", "-I", "-m", "unittest", "discover", *args])]
+        # The same interpreter as this script, so the 3.12+ "exit 5 when no tests ran" holds.
+        return [("unittest", [sys.executable, "-I", "-m", "unittest", "discover", *args])]
     return []
 
 

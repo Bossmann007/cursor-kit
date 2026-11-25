@@ -1,6 +1,6 @@
 """pr-head-review script: argument validation and step order, offline (stub gh and npm on PATH)."""
 
-import io, json, os, re, subprocess, sys, tarfile, tempfile, unittest
+import io, json, os, re, subprocess, sys, tarfile, tempfile, time, unittest
 from pathlib import Path
 
 SCRIPT = Path(__file__).resolve().parents[1] / "skills/pr-head-review/scripts/pr_head_review.py"
@@ -173,7 +173,7 @@ class T(unittest.TestCase):
         log = re.search(r"^check unittest exit=0 log=(\S+)$", r.stdout, re.M)
         self.assertTrue(log, r.stdout)
         text = Path(log.group(1)).read_text()
-        self.assertIn("python3 -I -m unittest discover -s tests", text)
+        self.assertIn(f"{sys.executable} -I -m unittest discover -s tests", text)
         self.assertIn("Ran 1 test", text)
 
     def test_python_package_tests_import_from_root(self):
@@ -218,10 +218,24 @@ class T(unittest.TestCase):
         self.assertIn("data.txt", Path(log).read_text())
 
     def test_run_cleans_even_when_check_corrupts_meta(self):
-        make_tarball(self.tarball, {"scripts/verify": "#!/bin/sh\necho junk > ../../meta.json\n"})
+        # A dir where meta.json was: check cannot rewrite it afterwards, and a meta-reading clean would refuse it.
+        make_tarball(self.tarball, {"scripts/verify": "#!/bin/sh\nrm ../../meta.json\nmkdir ../../meta.json\n"})
         r = self.run_script("run", "o/r", SHA)
-        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("clean: removed", r.stdout)
         self.assertEqual(self.leftover_run_dirs(), [])
+
+    def test_meta_with_wrong_types_is_usage_error(self):
+        make_tarball(self.tarball, {"package.json": "{}"})
+        r = self.run_script("fetch", "o/r", SHA)
+        run_dir = Path(re.search(r"^run dir: (.+)$", r.stdout, re.M).group(1))
+        good = json.loads((run_dir / "meta.json").read_text())
+        for bad in ({"logs": 5}, {"src": 5}, {"steps": "x"}):
+            (run_dir / "meta.json").write_text(json.dumps({**good, **bad}))
+            r = self.run_script("check", str(run_dir))
+            self.assertEqual(r.returncode, 2, (bad, r.stderr))
+            self.assertNotIn("Traceback", r.stderr)
+        self.assertEqual(self.run_script("clean", str(run_dir)).returncode, 0)
 
     def test_background_process_is_killed_after_check(self):
         make_tarball(self.tarball, {"scripts/verify": "#!/bin/sh\nsleep 300 &\necho pid=$!\n"})
@@ -229,8 +243,14 @@ class T(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         log = re.search(r"log=(\S+check-verify.log)", r.stdout).group(1)
         pid = int(re.search(r"pid=(\d+)", Path(log).read_text()).group(1))
-        with self.assertRaises(ProcessLookupError):
-            os.kill(pid, 0)
+        # The killed sleep may stay a zombie for a moment before launchd/init reaps it: poll briefly.
+        deadline = time.monotonic() + 5
+        while True:
+            state = subprocess.run(["ps", "-o", "stat=", "-p", str(pid)], capture_output=True, text=True).stdout.strip()
+            if not state or state.startswith("Z") or time.monotonic() > deadline:
+                break
+            time.sleep(0.1)
+        self.assertTrue(not state or state.startswith("Z"), state)
 
     def test_timeout_kills_check(self):
         make_tarball(self.tarball, {"scripts/verify": "#!/bin/sh\nsleep 300\n"})
