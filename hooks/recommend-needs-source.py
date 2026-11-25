@@ -9,10 +9,10 @@ non-error feedback asking for the source (`additionalContext`, the docs' recomme
 Next-step rule: each recommending word is judged on the sentence that follows it (a bullet list right after it
 counts as one sentence). The word is a next step, not a claim, and needs no source, only when every part of that
 sentence (split at , ; : / "e" "ou" "depois" "and" "or" "then") is one of:
-- a study step on study material: a study verb (revisar, ler, fazer, resolver, review, read, do) plus a material noun
-  (capítulo, lista, exercícios, slides, chapter, exercises...), its numbers and a short tail ("da lista", "antes do
-  merge"), and nothing else; or a pure study verb (estudar, praticar, study, practice) on a topic with no capital
-  letter or digit after the verb, so "estudar Rust" and "estudar o Postgres 16" still fire;
+- a study step on study material: a study verb (revisar, ler, fazer, resolver, estudar, praticar, review, read,
+  study, practice) plus a material noun (capítulo, lista, exercícios, slides, simulado, chapter, exercises...), its
+  numbers, where it comes from ("da lista", "do livro") and a short tail ("antes da prova"), and nothing else. A
+  free topic is not material, so "estudar react porque é o mais usado" and "praticar com supabase" still fire;
 - a step of the agent's own workflow: run the tests or scripts/verify, open the PR, wait for the review or CI, fix
   the review items, with only a short tail ("de novo", "no PR #16", "antes do merge", "do News Bot").
 A price (R$, US$, reais, por mês) or a comparison (em vez de, melhor que, faster) anywhere in the sentence voids the
@@ -34,9 +34,10 @@ SOURCE = re.compile(
     r"not verified|não testei", re.I)
 _LEAD = r"(?:(?:que|that)\s+(?:voc[eê]\s+|vc\s+|you\s+)?|voc[eê]\s+|you\s+|to\s+|a\s+|o\s+)?"
 _DET = r"(?:(?:o|a|os|as|d[oa]s?|n[oa]s?|esse|essa|este|esta|the|this|these)\s+)?"
-_MATERIAL = (r"(?:cap(?:ítulo|itulo)?s?\.?|chapters?|se[cç](?:ão|ões)|sections?|listas?|exerc[íi]cios|exercises|"
-             r"quest[õo]es|questions|problems|slides|aulas?|lectures?|notas|notes|resumos?|summary|apostila|matéria|"
-             r"conteúdo|enunciado|simulado|material|flashcards|gabarito|teoria|theory)\b")
+_MATERIAL_WORDS = (r"cap(?:ítulo|itulo)?s?\.?|chapters?|se[cç](?:ão|ões)|sections?|listas?|exerc[íi]cios|exercises|"
+                   r"quest[õo]es|questions|problems|slides|aulas?|lectures?|notas|notes|resumos?|summary|apostila|"
+                   r"matéria|conteúdo|enunciado|simulado|material|flashcards|gabarito|teoria|theory")
+_MATERIAL = r"(?:" + _MATERIAL_WORDS + r")\b"
 _STUDY_VERB = (r"(?:revis(?:ar|e|em|ão)|rev(?:er|eja)|rel(?:er|eia)|l(?:er|eia)|leitura|(?:re)?(?:fazer|faça|faz)|"
                r"resolv(?:er|a)|review(?:ing)?|re-?read(?:ing)?|read(?:ing)?|(?:re)?do(?:ing)?|solv(?:e|ing))\s+")
 _PURE_STUDY = r"(?:estud(?:ar|e)|pratic(?:ar|ando)|pratique|treinar|treine|stud(?:y|ying)|practi[cs](?:e|ing))\b"
@@ -50,10 +51,12 @@ _WORKFLOW = (r"(?:(?:rodar|rode|roda|executar|execute|re-?run(?:ning)?|run(?:nin
 _TAIL = (r"(?:\s+(?:de\s+novo|again|agora|now|localmente|locally|n[oa]\s+PR(?:\s+#?\d+)?|in\s+the\s+PR|"
          r"(?:antes|depois)\s+d[eoa]\s+\S+|(?:before|after)\s+(?:the\s+)?\S+|d[oa]s?\s+[^\s\d]+(?:\s+[^\s\d]+)?)){0,2}")
 _NUMS = r"(?:\s+\d+[a-z]?(?:\.\d+)*(?:\s*(?:a|to|-)\s*\d+)?)"
-_STUDY_TAIL = _NUMS + r"?(?:\s+(?:d[oa]s?|of|from)\s+" + _DET + r"\S+" + _NUMS + r"?)?" + _TAIL + r"$"
-STUDY_STEP = re.compile(_LEAD + r"(?:" + _STUDY_VERB + _DET + _MATERIAL + _STUDY_TAIL + r"|"
-                        + _DET + _MATERIAL + _NUMS + _STUDY_TAIL + r")", re.I)
-TOPIC_STEP = re.compile(_LEAD + _PURE_STUDY, re.I)
+_SOURCE_NOUN = r"(?:" + _MATERIAL_WORDS + r"|livro|book|unidade|unit|m[óo]dulo|module|semana|week|disciplina)\b"
+_STUDY_TAIL = (_NUMS + r"?(?:\s+(?:d[oa]s?|of|from)\s+" + _DET + _SOURCE_NOUN + _NUMS + r"?)?"
+               r"(?:\s+(?:de\s+novo|again|agora|now|(?:antes|depois)\s+d[eoa]\s+\S+|(?:before|after)\s+(?:the\s+)?\S+))?$")
+_ANY_STUDY_VERB = r"(?:" + _STUDY_VERB + r"|" + _PURE_STUDY + r"\s+(?:(?:com|with|on|em|n[oa]s?)\s+)?)"
+STUDY_STEP = re.compile(_LEAD + r"(?:" + _ANY_STUDY_VERB
+                        + _DET + _MATERIAL + _STUDY_TAIL + r"|" + _DET + _MATERIAL + _NUMS + _STUDY_TAIL + r")", re.I)
 WORKFLOW_STEP = re.compile(_LEAD + _WORKFLOW + _TAIL + r"$", re.I)
 CLAIM = re.compile(r"R\$|US\$|\bUSD\b|\$\s?\d|€|\bEUR\b|\breais\b|d[óo]lares|por\s+m[êe]s|/m[êe]s|per\s+month|"
                    r"em\s+vez\s+d|ao\s+inv[ée]s\s+d|no\s+lugar\s+d|instead\s+of|(?:melhor|pior)\s+(?:do\s+)?que|"
@@ -92,10 +95,7 @@ def _is_tool_result(entry: dict) -> bool:
 
 
 def _is_step(part: str) -> bool:
-    if STUDY_STEP.match(part) or WORKFLOW_STEP.match(part):
-        return True
-    topic = TOPIC_STEP.match(part)  # "estudar a matriz de transição": any topic, but no named product or version
-    return bool(topic) and not any(c.isupper() or c.isdigit() for c in part[topic.end():])
+    return bool(STUDY_STEP.match(part) or WORKFLOW_STEP.match(part))
 
 
 def is_next_step(text: str, start: int) -> bool:
