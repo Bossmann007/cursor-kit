@@ -102,7 +102,12 @@ class Recommend(unittest.TestCase):
                   "Sugiro revisar os capítulos 3 e 4.",
                   "Recomendo esperar as reviews do Code Bot.",
                   "Recomendo corrigir os itens 1 a 4 antes de entregar.",
-                  "Recomendo corrigir tudo no PR #12 antes do merge."):
+                  "Recomendo corrigir tudo no PR #12 antes do merge.",
+                  "Sugiro revisar o capítulo 3 depois da aula.",
+                  "Recomendo rodar os testes depois do merge.",
+                  "Minha recomendação é revisar o capítulo 3.",
+                  "My recommendation is to run the tests again.",
+                  "Recomendo corrigir os itens 1 a 4. São bugs reais."):
             self.assertEqual(rec.verdict(s), {}, s)
 
     def test_tech_product_price_and_fact_recommendations_still_fire(self):
@@ -139,6 +144,12 @@ class Recommend(unittest.TestCase):
                   "Recomendo estudar kubernetes.",
                   "Recomendo ler os slides da Vercel.",
                   "Recomendo ler o material do Supabase.",
+                  "Recomendo revisar o capítulo 3. Depois disso, use Supabase, que custa R$ 49.",
+                  "Recomendo: rodar os testes.\n\nO Supabase é melhor que o Firebase.",
+                  "O certo é rodar os testes da AWS Lambda.",
+                  "Recomendo corrigir tudo do Supabase.",
+                  "Recomendo abrir o PR do Supabase agora.",
+                  "Recomendo rodar os testes antes de migrar.",
                   "Recomendo:\n- revisar o capítulo 3\n- usar Supabase",
                   "Recomendo revisar o código antes de migrar para Postgres 16.",
                   "Recomendo ler do cache Redis para cortar latência.",

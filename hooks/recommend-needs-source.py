@@ -15,7 +15,7 @@ sentence (split at , ; : / "e" "ou" "depois" "and" "or" "then") is one of:
   free topic is not material, so "estudar react porque é o mais usado" and "praticar com supabase" still fire;
 - a step of the agent's own workflow: run the tests or scripts/verify, open the PR, wait for the review or CI, fix
   the review items, with only a short tail ("de novo", "no PR #16", "antes do merge", "do News Bot").
-A price (R$, US$, reais, por mês) or a comparison (em vez de, melhor que, faster) anywhere in the sentence voids the
+A price (R$, US$, reais, por mês) or a comparison (em vez de, melhor que, faster) anywhere in the reply voids the
 exemption, and so does a sentence with no end in sight. The reply still fires if any other recommending word in it is
 not a next step.
 """
@@ -32,7 +32,7 @@ RECOMMENDS = re.compile(
 SOURCE = re.compile(
     r"https?://|\b[\w./~-]+\.[A-Za-z][A-Za-z0-9]{0,5}:\d+|não verifiquei|nao verifiquei|"
     r"not verified|não testei", re.I)
-_LEAD = r"(?:(?:que|that)\s+(?:voc[eê]\s+|vc\s+|you\s+)?|voc[eê]\s+|you\s+|to\s+|a\s+|o\s+)?"
+_LEAD = r"(?:(?:é|is)\s+(?:to\s+)?)?(?:(?:que|that)\s+(?:voc[eê]\s+|vc\s+|you\s+)?|voc[eê]\s+|you\s+|to\s+|a\s+|o\s+)?"
 _DET = r"(?:(?:o|a|os|as|d[oa]s?|n[oa]s?|esse|essa|este|esta|the|this|these)\s+)?"
 _MATERIAL_WORDS = (r"cap(?:ítulo|itulo)?s?\.?|chapters?|se[cç](?:ão|ões)|sections?|listas?|exerc[íi]cios|exercises|"
                    r"quest[õo]es|questions|problems|slides|aulas?|lectures?|notas|notes|resumos?|summary|apostila|"
@@ -48,24 +48,26 @@ _WORKFLOW = (r"(?:(?:rodar|rode|roda|executar|execute|re-?run(?:ning)?|run(?:nin
              + r"(?:reviews?|revis(?:ão|ões)|CI|checks?|aprovação|approval)|"
              r"(?:corrigir|corrija|fix(?:ing)?)\s+" + _DET + r"(?:itens|items|achados|findings|tudo|everything)"
              r"(?:\s+\d+(?:\s*(?:a|to|-)\s*\d+)?)?)")
+_WHEN = (r"(?:(?:antes|depois)\s+d[eoa]|(?:before|after)(?:\s+the)?)\s+\"?(?:merge|push|commit|PR|review|entrega|"
+         r"entregar|prova|aula|sobe|ship|deploy)\"?")
 _TAIL = (r"(?:\s+(?:de\s+novo|again|agora|now|localmente|locally|n[oa]\s+PR(?:\s+#?\d+)?|in\s+the\s+PR|"
-         r"(?:antes|depois)\s+d[eoa]\s+\S+|(?:before|after)\s+(?:the\s+)?\S+|d[oa]s?\s+[^\s\d]+(?:\s+[^\s\d]+)?)){0,2}")
+         + _WHEN + r"|d[oa]s?\s+(?:\S+\s+bot|bot\s+\S+))){0,2}")
 _NUMS = r"(?:\s+\d+[a-z]?(?:\.\d+)*(?:\s*(?:a|to|-)\s*\d+)?)"
 _SOURCE_NOUN = r"(?:" + _MATERIAL_WORDS + r"|livro|book|unidade|unit|m[óo]dulo|module|semana|week|disciplina)\b"
 _STUDY_TAIL = (_NUMS + r"?(?:\s+(?:d[oa]s?|of|from)\s+" + _DET + _SOURCE_NOUN + _NUMS + r"?)?"
-               r"(?:\s+(?:de\s+novo|again|agora|now|(?:antes|depois)\s+d[eoa]\s+\S+|(?:before|after)\s+(?:the\s+)?\S+))?$")
+               r"(?:\s+(?:de\s+novo|again|agora|now|" + _WHEN + r"))?$")
 _ANY_STUDY_VERB = r"(?:" + _STUDY_VERB + r"|" + _PURE_STUDY + r"\s+(?:(?:com|with|on|em|n[oa]s?)\s+)?)"
 STUDY_STEP = re.compile(_LEAD + r"(?:" + _ANY_STUDY_VERB
                         + _DET + _MATERIAL + _STUDY_TAIL + r"|" + _DET + _MATERIAL + _NUMS + _STUDY_TAIL + r")", re.I)
 WORKFLOW_STEP = re.compile(_LEAD + _WORKFLOW + _TAIL + r"$", re.I)
-CLAIM = re.compile(r"R\$|US\$|\bUSD\b|\$\s?\d|€|\bEUR\b|\breais\b|d[óo]lares|por\s+m[êe]s|/m[êe]s|per\s+month|"
+CLAIM = re.compile(r"R\$|US\$|\bUSD\b|\$\s?\d|€|\bEUR\b|\d\s*(?:reais|d[óo]lares)\b|por\s+m[êe]s|/m[êe]s|per\s+month|"
                    r"em\s+vez\s+d|ao\s+inv[ée]s\s+d|no\s+lugar\s+d|instead\s+of|(?:melhor|pior)\s+(?:do\s+)?que|"
                    r"(?:better|worse|faster|cheaper|slower)\b|mais\s+(?:rápid|barat|lent|car)", re.I)
 SENTENCE_END = re.compile(r"[.!?](?=\s+[A-ZÀ-Ú]|\s*$)|\n")
 BULLET = re.compile(r"\n[ \t\n]*(?:[-*•]|\d+[.)])[ \t]+")
 MARKUP = re.compile(r"[*_`]")
 NUMBERS = re.compile(r"\d+(?:\s*(?:a|to|-)\s*\d+)?$")
-PARTS = re.compile(r"[,;:]|\s(?:e|and|ou|or|depois|then|/)\s", re.I)
+PARTS = re.compile(r"[,;:]|\s(?:e|and|ou|or|depois(?!\s+d[eoa]\s)|then|/)\s", re.I)
 REASON = ("This reply recommends something without a source. Before stopping: cite the primary source you read in "
           "this session (URL or file:line) for each fact the recommendation rests on, name the one fact that would "
           "make it wrong and how you checked it, and say whether it is reversible. If you did not check, say "
@@ -116,7 +118,9 @@ def is_next_step(text: str, start: int) -> bool:
 
 def verdict(text: str) -> dict:
     text = text[-8000:]  # bound regex cost on huge replies (minified code, long path lists)
-    if not SOURCE.search(text) and any(not is_next_step(text, m.end()) for m in RECOMMENDS.finditer(text)):
+    words = list(RECOMMENDS.finditer(text))
+    # a price or comparison elsewhere in the reply is a claim even when every recommending word is a next step
+    if words and not SOURCE.search(text) and (CLAIM.search(text) or any(not is_next_step(text, m.end()) for m in words)):
         return {"hookSpecificOutput": {"hookEventName": "Stop", "additionalContext": REASON}}
     return {}
 
