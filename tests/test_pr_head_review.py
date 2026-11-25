@@ -226,6 +226,16 @@ class T(unittest.TestCase):
             "link with .. in the middle": (
                 {}, {"packages": {"node_modules/l": {"link": True, "resolved": "packages/../../outside"}}}, "links to packages/../../outside"),
             "file spec as a dot path": ({"dependencies": {"b": ".."}}, {"packages": {}}, "package.json dependencies.b"),
+            "file spec as a tarball name": ({"dependencies": {"b": "vendor.TGZ"}}, {"packages": {}}, "package.json dependencies.b"),
+            "nested inBundle git": (
+                {}, {"packages": {"node_modules/a": {"version": "1.0.0", "resolved": reg},
+                                  "node_modules/a/node_modules/b": {"inBundle": True, "version": "1.0.0",
+                                                                    "resolved": "git+ssh://attacker/b.git"}}}, "resolves to git+ssh"),
+            "legacy dependencies next to clean packages (npm 6)": (
+                {}, {"packages": {"node_modules/b": {"version": "1.0.0", "resolved": reg}},
+                     "dependencies": {"evil": {"version": "1.0.0", "resolved": "git+https://attacker/x.git"}}}, "dependencies.evil resolves"),
+            "legacy file: without a link": (
+                {}, {"packages": {}, "dependencies": {"w": {"version": "file:packages/w"}}}, "dependencies.w version file:"),
         }
         for label, (pkg, lock, reason) in cases.items():
             make_tarball(self.tarball, {"package.json": json.dumps(pkg), "package-lock.json": json.dumps(lock)})

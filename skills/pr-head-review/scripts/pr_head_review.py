@@ -285,7 +285,7 @@ def cmd_install(run_arg: str | None, dry: bool) -> int:
 
 NPM_REGISTRY = "https://registry.npmjs.org/"
 VERSION_RE = re.compile(r"\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.+-]+)?")  # an exact registry version
-RANGE_RE = re.compile(r"(?!\s*\.)[0-9A-Za-z.*^~<>=|+ -]*")  # semver range or dist-tag; no ':', '/' or leading '.'
+RANGE_RE = re.compile(r"(?!\s*\.)(?!.*\.(?:tgz|tar|tar\.gz)\s*$)[0-9A-Za-z.*^~<>=|+ -]*", re.I)  # semver range or dist-tag; no ':', '/' or leading '.'
 ALIAS_RE = re.compile(r"npm:(?:@[\w.-]+/)?[\w.-]+(?:@[0-9A-Za-z.*^~<>=|+ -]*)?")
 
 
@@ -301,20 +301,26 @@ def install_risks(src: Path) -> list[str]:
                 if not isinstance(spec, str) or not (RANGE_RE.fullmatch(spec) or ALIAS_RE.fullmatch(spec)):
                     risks.append(f"package.json {field}.{name} = {str(spec)[:80]}")
         lock = json.loads((src / "package-lock.json").read_text(encoding="utf-8"))
-        packages = lock.get("packages")
-        if packages is not None:  # v2/v3: npm ci reads only this section; v2's legacy "dependencies" is ignored
-            for key, entry in packages.items():
-                fetched = key.startswith("node_modules/") or "/node_modules/" in key
-                # inBundle is trusted only inside another package (shipped in that package's registry tarball).
-                nested = key.count("node_modules/") > 1
-                risks += lock_entry_risks(src, f"packages[{key!r}]", entry, fetched, nested)
-        else:  # lockfile v1, nested
-            stack = [(k, v, False) for k, v in (lock.get("dependencies") or {}).items()]
-            while stack:
-                name, entry, nested = stack.pop()
-                risks += lock_entry_risks(src, f"dependencies.{name}", entry, True, nested)
-                if isinstance(entry, dict):
-                    stack += [(f"{name}>{k}", v, True) for k, v in (entry.get("dependencies") or {}).items()]
+        packages = lock.get("packages") or {}
+        linked = set()
+        for key, entry in packages.items():
+            fetched = key.startswith("node_modules/") or "/node_modules/" in key
+            nested = key.count("node_modules/") > 1
+            risks += lock_entry_risks(src, f"packages[{key!r}]", entry, fetched, nested)
+            if isinstance(entry, dict) and entry.get("link") and key.startswith("node_modules/") and not nested:
+                linked.add(key[len("node_modules/"):])
+        # The legacy section too: npm 7+ ignores it when packages exists, npm 6 reads only it. A v2 workspace writes
+        # its links there as "file:<path>", allowed only for a name packages links inside the tree.
+        stack = [(k, k, v, False) for k, v in (lock.get("dependencies") or {}).items()]
+        while stack:
+            label, name, entry, nested = stack.pop()
+            version = entry.get("version") if isinstance(entry, dict) else None
+            if not nested and name in linked and isinstance(version, str) and version.startswith("file:") \
+                    and inside(src, version[len("file:"):]):
+                continue
+            risks += lock_entry_risks(src, f"dependencies.{label}", entry, True, nested)
+            if isinstance(entry, dict):
+                stack += [(f"{label}>{k}", k, v, True) for k, v in (entry.get("dependencies") or {}).items()]
     except (ValueError, AttributeError, TypeError, RecursionError) as exc:
         risks.append(f"package.json or package-lock.json unreadable ({exc})")
     return risks
@@ -330,8 +336,9 @@ def lock_entry_risks(src: Path, label: str, entry, fetched: bool, nested: bool) 
     """A fetched package must resolve to the registry; a workspace link must point inside the tree."""
     if not isinstance(entry, dict):
         return [f"lockfile {label} is not an object"]
+    # A package bundled inside another one has no resolved URL of its own; anything it does declare is still checked.
     if nested and (entry.get("inBundle") or entry.get("bundled")):
-        return []
+        fetched = False
     resolved, version = entry.get("resolved"), entry.get("version")
     if entry.get("link"):
         return [] if inside(src, resolved) else [f"lockfile {label} links to {str(resolved)[:80]}"]
