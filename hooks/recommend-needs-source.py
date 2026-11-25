@@ -8,16 +8,16 @@ non-error feedback asking for the source (`additionalContext`, the docs' recomme
 
 Next-step rule: each recommending word is judged on the sentence that follows it (a bullet list right after it
 counts as one sentence). The word is a next step, not a claim, and needs no source, only when every part of that
-sentence (split at , ; : "e" "and" "depois" "then") is one of:
+sentence (split at , ; : / "e" "ou" "depois" "and" "or" "then") is one of:
 - a study step on study material: a study verb (revisar, ler, fazer, resolver, review, read, do) plus a material noun
-  (capítulo, lista, exercícios, slides, chapter, exercises...), or a pure study verb (estudar, praticar, study,
-  practice) on any topic;
+  (capítulo, lista, exercícios, slides, chapter, exercises...), its numbers and a short tail ("da lista", "antes do
+  merge"), and nothing else; or a pure study verb (estudar, praticar, study, practice) on a topic with no capital
+  letter or digit after the verb, so "estudar Rust" and "estudar o Postgres 16" still fire;
 - a step of the agent's own workflow: run the tests or scripts/verify, open the PR, wait for the review or CI, fix
   the review items, with only a short tail ("de novo", "no PR #16", "antes do merge", "do News Bot").
-A study part may not name anything with a capital letter after its verb (a product, a service, a version), so
-"ler do cache Redis" and "estudar Rust" still fire. A price (R$, US$, reais, por mês) or a comparison (em vez de,
-melhor que, faster) anywhere in the sentence voids the exemption, and so does a sentence with no end in sight. The
-reply still fires if any other recommending word in it is not a next step.
+A price (R$, US$, reais, por mês) or a comparison (em vez de, melhor que, faster) anywhere in the sentence voids the
+exemption, and so does a sentence with no end in sight. The reply still fires if any other recommending word in it is
+not a next step.
 """
 from __future__ import annotations
 
@@ -48,18 +48,21 @@ _WORKFLOW = (r"(?:(?:rodar|rode|roda|executar|execute|re-?run(?:ning)?|run(?:nin
              r"(?:corrigir|corrija|fix(?:ing)?)\s+" + _DET + r"(?:itens|items|achados|findings|tudo|everything)"
              r"(?:\s+\d+(?:\s*(?:a|to|-)\s*\d+)?)?)")
 _TAIL = (r"(?:\s+(?:de\s+novo|again|agora|now|localmente|locally|n[oa]\s+PR(?:\s+#?\d+)?|in\s+the\s+PR|"
-         r"(?:antes|depois)\s+d[eoa]\s+\S+|(?:before|after)\s+(?:the\s+)?\S+|d[oa]s?\s+\S+(?:\s+\S+)?)){0,2}")
-STUDY_STEP = re.compile(
-    _LEAD + r"(?:" + _STUDY_VERB + _DET + _MATERIAL + r"|" + _DET + _MATERIAL + r"|" + _PURE_STUDY + r")", re.I)
+         r"(?:antes|depois)\s+d[eoa]\s+\S+|(?:before|after)\s+(?:the\s+)?\S+|d[oa]s?\s+[^\s\d]+(?:\s+[^\s\d]+)?)){0,2}")
+_NUMS = r"(?:\s+\d+[a-z]?(?:\.\d+)*(?:\s*(?:a|to|-)\s*\d+)?)"
+_STUDY_TAIL = _NUMS + r"?(?:\s+(?:d[oa]s?|of|from)\s+" + _DET + r"\S+" + _NUMS + r"?)?" + _TAIL + r"$"
+STUDY_STEP = re.compile(_LEAD + r"(?:" + _STUDY_VERB + _DET + _MATERIAL + _STUDY_TAIL + r"|"
+                        + _DET + _MATERIAL + _NUMS + _STUDY_TAIL + r")", re.I)
+TOPIC_STEP = re.compile(_LEAD + _PURE_STUDY, re.I)
 WORKFLOW_STEP = re.compile(_LEAD + _WORKFLOW + _TAIL + r"$", re.I)
 CLAIM = re.compile(r"R\$|US\$|\bUSD\b|\$\s?\d|€|\bEUR\b|\breais\b|d[óo]lares|por\s+m[êe]s|/m[êe]s|per\s+month|"
-                   r"em\s+vez\s+d|ao\s+inv[ée]s\s+d|instead\s+of|(?:melhor|pior)\s+(?:do\s+)?que|"
+                   r"em\s+vez\s+d|ao\s+inv[ée]s\s+d|no\s+lugar\s+d|instead\s+of|(?:melhor|pior)\s+(?:do\s+)?que|"
                    r"(?:better|worse|faster|cheaper|slower)\b|mais\s+(?:rápid|barat|lent|car)", re.I)
 SENTENCE_END = re.compile(r"[.!?](?=\s+[A-ZÀ-Ú]|\s*$)|\n")
-BULLET = re.compile(r"\n[ \t]*(?:[-*•]|\d+[.)])[ \t]+")
+BULLET = re.compile(r"\n[ \t\n]*(?:[-*•]|\d+[.)])[ \t]+")
 MARKUP = re.compile(r"[*_`]")
 NUMBERS = re.compile(r"\d+(?:\s*(?:a|to|-)\s*\d+)?$")
-PARTS = re.compile(r"[,;:]|\s(?:e|and|depois|then)\s", re.I)
+PARTS = re.compile(r"[,;:]|\s(?:e|and|ou|or|depois|then|/)\s", re.I)
 REASON = ("This reply recommends something without a source. Before stopping: cite the primary source you read in "
           "this session (URL or file:line) for each fact the recommendation rests on, name the one fact that would "
           "make it wrong and how you checked it, and say whether it is reversible. If you did not check, say "
@@ -89,16 +92,16 @@ def _is_tool_result(entry: dict) -> bool:
 
 
 def _is_step(part: str) -> bool:
-    study = STUDY_STEP.match(part)
-    if study:
-        return not any(c.isupper() for c in part[study.end():])
-    return bool(WORKFLOW_STEP.match(part))
+    if STUDY_STEP.match(part) or WORKFLOW_STEP.match(part):
+        return True
+    topic = TOPIC_STEP.match(part)  # "estudar a matriz de transição": any topic, but no named product or version
+    return bool(topic) and not any(c.isupper() or c.isdigit() for c in part[topic.end():])
 
 
 def is_next_step(text: str, start: int) -> bool:
     """True when the sentence after a recommending word is only study or own-workflow steps (see the header)."""
     window = text[start:start + 600]
-    clause = BULLET.sub("; ", MARKUP.sub("", window)).lstrip(" \t\n:-•;")
+    clause = MARKUP.sub("", BULLET.sub("; ", window)).lstrip(" \t\n:-•;")
     end = SENTENCE_END.search(clause)
     if end:
         clause = clause[:end.start()]
