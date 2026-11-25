@@ -44,6 +44,7 @@ cd ~/Projects/cursor-kit && ./sync-all.sh   # TOOLS="claude cursor codex gemini"
 | Fluxo de trabalho padrão | `/emode` |
 | Auditoria "estamos fazendo certo?" (processo, versões, docs, leis) | `/senior-check` |
 | App mais rápido e leve, com números | `/performance` |
+| Review: rodar os checks do repo no SHA exato do head de um PR | `/pr-head-review` |
 | Princípios padrão (engenharia, trabalho e vida), com quando fugir e como checar | `/principles` |
 | O que está provado e o que não | [docs/EVIDENCE.md](docs/EVIDENCE.md) |
 | Reutilizar antes de construir | `/prior-art-check` |
