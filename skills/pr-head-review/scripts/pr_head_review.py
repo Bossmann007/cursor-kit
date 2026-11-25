@@ -171,20 +171,37 @@ def git_snapshot(run: Path, src: Path, sha: str, log: Path) -> None:
                 raise RuntimeError(f"git {args[0]} failed (exit {code}), see {log}")
 
 
+def gitattributes_subst(src: Path) -> list[str]:
+    """Non-comment .gitattributes lines that set export-subst (not unset with - or !)."""
+    hits = []
+    for p in src.rglob(".gitattributes"):
+        if not p.is_file() or ".git" in p.relative_to(src).parts:
+            continue
+        for line in p.read_text(errors="replace").splitlines():
+            parts = line.strip().split()
+            if parts and not parts[0].startswith("#") and ("export-subst" in parts[1:] or "export-subst=true" in parts[1:]):
+                hits.append(f"{p.relative_to(src)}: {line.strip()[:80]}")
+    return hits
+
+
 def compare_tree(repo: str, sha: str, src: Path, run: Path, log: Path) -> None:
     """GitHub builds the tarball with git archive, which honors .gitattributes export-ignore and export-subst, so
-    the extracted files can differ from the commit. Compare the file list with the git tree of the SHA and warn."""
+    the extracted files can differ from the commit. Compare the file list with the git tree of the SHA: a
+    difference fails fetch (checks would not run on the exact head); a tree that cannot be read only warns."""
     tree_path = run / "tree.json"
-    with open(tree_path, "wb") as out, open(log, "ab") as err:
-        code = subprocess.run(["gh", "api", "--method", "GET", f"repos/{repo}/git/trees/{sha}?recursive=1"],
-                              stdout=out, stderr=err, timeout=300).returncode
+    try:
+        with open(tree_path, "wb") as out, open(log, "ab") as err:
+            code = subprocess.run(["gh", "api", "--method", "GET", f"repos/{repo}/git/trees/{sha}?recursive=1"],
+                                  stdout=out, stderr=err, timeout=300).returncode
+    except subprocess.TimeoutExpired:
+        code = 124
     if code != 0:
         say(f"warning: could not read the git tree (exit {code}); the file list was not compared, log={log}")
         return
     try:
         tree = json.loads(tree_path.read_text(encoding="utf-8"))
         wanted = {e["path"] for e in tree["tree"] if e.get("type") == "blob"}
-    except (ValueError, KeyError, TypeError) as exc:
+    except (ValueError, KeyError, TypeError, AttributeError) as exc:
         say(f"warning: unreadable git tree ({exc}); the file list was not compared")
         return
     if tree.get("truncated"):
@@ -198,12 +215,12 @@ def compare_tree(repo: str, sha: str, src: Path, run: Path, log: Path) -> None:
         got.update(str(rel / d) for d in dirs if (Path(root) / d).is_symlink())
     missing, extra = sorted(wanted - got), sorted(got - wanted)
     if missing or extra:
-        say(f"warning: tested files differ from the head (.gitattributes export-ignore/export-subst?): "
-            f"{len(missing)} missing {missing[:5]}, {len(extra)} extra {extra[:5]}")
-    else:
-        say("tree check: extracted files match the git tree of the head")
-    if any("export-subst" in p.read_text(errors="replace") for p in src.rglob(".gitattributes") if p.is_file()):
-        say("warning: .gitattributes uses export-subst: some file contents differ from the head")
+        raise RuntimeError(f"tested files differ from the head (.gitattributes export-ignore?): {len(missing)} missing "
+                           f"{missing[:5]}, {len(extra)} extra {extra[:5]}")
+    subst = gitattributes_subst(src)
+    if subst:
+        raise RuntimeError(f"export-subst changes file contents in the tarball: {subst[:3]}")
+    say("tree check: extracted files match the git tree of the head")
 
 
 def cmd_fetch(repo: str, sha: str, dry: bool) -> tuple[Path, Path] | None:
@@ -245,7 +262,8 @@ def cmd_fetch(repo: str, sha: str, dry: bool) -> tuple[Path, Path] | None:
 
 def cmd_install(run_arg: str | None, dry: bool) -> int:
     if dry:
-        say("step install: npm ci --ignore-scripts (npm_config_cache=<run-dir>/npm-cache), only with package-lock.json")
+        say("step install: npm ci --ignore-scripts (npm_config_cache=<run-dir>/npm-cache), only with package-lock.json; "
+            "refused when a .npmrc exists or a dependency is not from registry.npmjs.org")
         return 0
     run, meta = load_run_dir(run_arg)
     if "fetch" not in meta.get("steps", []):
@@ -268,26 +286,53 @@ def cmd_install(run_arg: str | None, dry: bool) -> int:
 
 
 NPM_REGISTRY = "https://registry.npmjs.org/"
+VERSION_RE = re.compile(r"\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.+-]+)?")  # an exact registry version
+RANGE_RE = re.compile(r"[0-9A-Za-z.*^~<>=|+ -]*")  # a semver range or dist-tag; no ':' and no '/'
+ALIAS_RE = re.compile(r"npm:(?:@[\w.-]+/)?[\w.-]+(?:@[0-9A-Za-z.*^~<>=|+ -]*)?")
 
 
 def install_risks(src: Path) -> list[str]:
     """--ignore-scripts is not a barrier: a repo .npmrc can set git=<script>, which npm runs to fetch a git
-    dependency. Refuse any .npmrc, and any lockfile entry that resolves outside the npm registry."""
+    dependency. Allowlist, not a list of bad prefixes: refuse any .npmrc, any package.json dependency spec that is
+    not a registry range or npm: alias, and any lockfile package that does not resolve to the npm registry."""
     risks = [f"{p.relative_to(src)} present" for p in src.rglob(".npmrc") if ".git" not in p.relative_to(src).parts]
     try:
+        pkg = json.loads((src / "package.json").read_text(encoding="utf-8")) if (src / "package.json").is_file() else {}
+        for field in ("dependencies", "devDependencies", "optionalDependencies", "peerDependencies"):
+            for name, spec in (pkg.get(field) or {}).items():
+                if not isinstance(spec, str) or not (RANGE_RE.fullmatch(spec) or ALIAS_RE.fullmatch(spec)):
+                    risks.append(f"package.json {field}.{name} = {str(spec)[:80]}")
         lock = json.loads((src / "package-lock.json").read_text(encoding="utf-8"))
-        entries = {**(lock.get("packages") or {}), **(lock.get("dependencies") or {})}
-        for name, entry in entries.items():
-            if not isinstance(entry, dict):
-                continue
-            resolved, version = entry.get("resolved"), entry.get("version")
-            if isinstance(resolved, str) and not resolved.startswith(NPM_REGISTRY):
-                risks.append(f"lockfile {name or '.'} resolves to {resolved[:80]}")
-            elif isinstance(version, str) and re.match(r"(git\+|git:|github:|file:|https?:)", version):
-                risks.append(f"lockfile {name or '.'} version {version[:80]}")
-    except (ValueError, AttributeError) as exc:
-        risks.append(f"package-lock.json unreadable ({exc})")
+        for key, entry in (lock.get("packages") or {}).items():
+            risks += lock_entry_risks(f"packages[{key!r}]", entry, key.startswith("node_modules/") or "/node_modules/" in key)
+        stack = list((lock.get("dependencies") or {}).items())  # lockfile v1, nested
+        while stack:
+            name, entry = stack.pop()
+            risks += lock_entry_risks(f"dependencies.{name}", entry, True)
+            if isinstance(entry, dict):
+                stack += [(f"{name}>{k}", v) for k, v in (entry.get("dependencies") or {}).items()]
+    except (ValueError, AttributeError, TypeError) as exc:
+        risks.append(f"package.json or package-lock.json unreadable ({exc})")
     return risks
+
+
+def lock_entry_risks(label: str, entry, fetched: bool) -> list[str]:
+    """A fetched package must resolve to the registry; a workspace link must point inside the tree."""
+    if not isinstance(entry, dict):
+        return [f"lockfile {label} is not an object"]
+    if entry.get("inBundle") or entry.get("bundled"):
+        return []
+    resolved, version = entry.get("resolved"), entry.get("version")
+    if entry.get("link"):
+        ok = isinstance(resolved, str) and ":" not in resolved and not resolved.startswith(("/", "..", "~"))
+        return [] if ok else [f"lockfile {label} links to {str(resolved)[:80]}"]
+    if version is not None and not (isinstance(version, str) and (VERSION_RE.fullmatch(version) or ALIAS_RE.fullmatch(version))):
+        return [f"lockfile {label} version {str(version)[:80]}"]
+    if resolved is not None and not (isinstance(resolved, str) and resolved.startswith(NPM_REGISTRY)):
+        return [f"lockfile {label} resolves to {str(resolved)[:80]}"]
+    if fetched and resolved is None:
+        return [f"lockfile {label} has no resolved registry URL"]
+    return []
 
 
 def has_dep(pkg: dict, name: str) -> bool:

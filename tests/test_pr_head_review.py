@@ -172,11 +172,54 @@ class T(unittest.TestCase):
         make_tarball(self.tarball, {"package.json": pkg, "package-lock.json": json.dumps(reg)})
         self.assertEqual(self.run_script("run", "o/r", SHA).returncode, 0)
 
-    def test_tree_mismatch_warns(self):
+    def test_tree_mismatch_fails_closed(self):
         make_tarball(self.tarball, {"package.json": "{}"}, tree=["package.json", "tests/hidden_by_export_ignore.py"])
         r = self.run_script("run", "o/r", SHA)
-        self.assertIn("warning: tested files differ from the head", r.stdout)
-        self.assertIn("tests/hidden_by_export_ignore.py", r.stdout)
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("tested files differ from the head", r.stderr)
+        self.assertIn("tests/hidden_by_export_ignore.py", r.stderr)
+        self.assertEqual(self.leftover_run_dirs(), [])
+
+    def test_export_subst_fails_but_comment_does_not(self):
+        make_tarball(self.tarball, {"package.json": "{}", ".gitattributes": "VERSION export-subst\n", "VERSION": "$Format:%H$"})
+        r = self.run_script("run", "o/r", SHA)
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("export-subst", r.stderr)
+        make_tarball(self.tarball, {"scripts/verify": "#!/bin/sh\n", ".gitattributes": "# no export-subst here\n*.sh -export-subst\n"})
+        r = self.run_script("run", "o/r", SHA)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_install_guard_allowlist_cases(self):
+        reg = "https://registry.npmjs.org/b/-/b-1.0.0.tgz"
+        cases = {
+            "github spec, lockfile without resolved": (
+                {"dependencies": {"b": "github:x/b"}}, {"packages": {"node_modules/b": {"version": "1.0.0"}}}, "package.json dependencies.b"),
+            "registry entry, no resolved": (
+                {}, {"packages": {"node_modules/b": {"version": "1.0.0"}}}, "has no resolved"),
+            "v1 nested git": (
+                {}, {"dependencies": {"a": {"version": "1.0.0", "resolved": reg,
+                                             "dependencies": {"b": {"version": "git+ssh://git@github.com/x/b.git#abc"}}}}}, "a>b version git+ssh"),
+            "gitlab shorthand": ({}, {"dependencies": {"c": {"version": "gitlab:x/c"}}}, "version gitlab:x/c"),
+            "same key in packages and dependencies": (
+                {}, {"packages": {"node_modules/b": {"resolved": "git+ssh://git@github.com/x/b.git"}},
+                     "dependencies": {"node_modules/b": {"version": "1.0.0", "resolved": reg}}}, "resolves to git+ssh"),
+            "link outside the tree": ({}, {"packages": {"node_modules/l": {"link": True, "resolved": "../outside"}}}, "links to ../outside"),
+            "malformed lockfile": ({}, {"packages": [1]}, "unreadable"),
+        }
+        for label, (pkg, lock, reason) in cases.items():
+            make_tarball(self.tarball, {"package.json": json.dumps(pkg), "package-lock.json": json.dumps(lock)})
+            r = self.run_script("run", "o/r", SHA)
+            self.assertEqual(r.returncode, 1, (label, r.stdout, r.stderr))
+            self.assertIn("install refused", r.stdout, label)
+            self.assertIn(reason, r.stdout, label)
+            self.assertNotIn("Traceback", r.stderr, label)
+        self.assertEqual(self.commands("npm"), [])
+        ok_pkg = {"dependencies": {"b": "^1.0.0", "c": "npm:@s/c@2", "d": "latest"}}
+        ok_lock = {"packages": {"": {}, "packages/w": {"version": "0.1.0"}, "node_modules/w": {"link": True, "resolved": "packages/w"},
+                                "node_modules/b": {"version": "1.0.0", "resolved": reg}}}
+        make_tarball(self.tarball, {"package.json": json.dumps(ok_pkg), "package-lock.json": json.dumps(ok_lock)})
+        r = self.run_script("run", "o/r", SHA)
+        self.assertNotIn("install refused", r.stdout, r.stdout)
 
     def test_sha_mismatch_fails_and_cleans(self):
         make_tarball(self.tarball, {"package.json": "{}"}, sha=OTHER_SHA)
