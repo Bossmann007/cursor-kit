@@ -6,14 +6,18 @@ reply text outside the assistant entries). If the reply recommends (recomendo, r
 "o certo é") but has no URL, no file:line and no "não verifiquei"/"not verified", it continues the turn once with
 non-error feedback asking for the source (`additionalContext`, the docs' recommended form for guidance). `stop_hook_active` true means it already asked this turn, so it lets the reply through.
 
-Next-step rule: each recommending word is judged on the sentence that follows it. The word is a next step, not a
-claim, and needs no source, only when every part of that sentence (split at , ; : "e" "and" "depois" "then") is
-either a study step (review, read, study, practice, do the exercises) or a step of the agent's own workflow (run the
-tests or scripts/verify, open the PR, wait for the review or CI). Workflow steps need their object ("rodar os
-testes", not bare "rodar") and allow only a short tail ("de novo", "antes do merge"), so "fazer deploy na Vercel" and
-"rodar o build na Vercel" still fire. A price (R$, US$, reais, por mês) or a comparison (em vez de, melhor que,
-faster) anywhere in that sentence voids the exemption. The reply still fires if any other recommending word in it is
-not a next step.
+Next-step rule: each recommending word is judged on the sentence that follows it (a bullet list right after it
+counts as one sentence). The word is a next step, not a claim, and needs no source, only when every part of that
+sentence (split at , ; : "e" "and" "depois" "then") is one of:
+- a study step on study material: a study verb (revisar, ler, fazer, resolver, review, read, do) plus a material noun
+  (capítulo, lista, exercícios, slides, chapter, exercises...), or a pure study verb (estudar, praticar, study,
+  practice) on any topic;
+- a step of the agent's own workflow: run the tests or scripts/verify, open the PR, wait for the review or CI, with
+  only a short tail ("de novo", "antes do merge").
+A study part may not name anything with a capital letter after its verb (a product, a service, a version), so
+"ler do cache Redis" and "estudar Rust" still fire. A price (R$, US$, reais, por mês) or a comparison (em vez de,
+melhor que, faster) anywhere in the sentence voids the exemption, and so does a sentence with no end in sight. The
+reply still fires if any other recommending word in it is not a next step.
 """
 from __future__ import annotations
 
@@ -29,11 +33,13 @@ SOURCE = re.compile(
     r"https?://|\b[\w./~-]+\.[A-Za-z][A-Za-z0-9]{0,5}:\d+|não verifiquei|nao verifiquei|"
     r"not verified|não testei", re.I)
 _LEAD = r"(?:(?:que|that)\s+(?:voc[eê]\s+|vc\s+|you\s+)?|voc[eê]\s+|you\s+|to\s+|a\s+|o\s+)?"
-_STUDY = (r"revis(?:ar|e|em|ão)|rev(?:er|eja)|rel(?:er|eia)|l(?:er|eia)|leitura|estud(?:ar|e|o)|pratic(?:ar|ando)|"
-          r"pratique|(?:resolv(?:er|a)|(?:re)?(?:fazer|faça|faz))\s+(?:os\s+|as\s+|a\s+|o\s+)?"
-          r"(?:exerc[íi]cios|quest[õo]es|lista|simulado)|exerc[íi]cios|review(?:ing)?|stud(?:y|ying)|"
-          r"re-?read(?:ing)?|read(?:ing)?|practi[cs](?:e|ing)|(?:solv(?:e|ing)|(?:re)?do(?:ing)?)\s+the\s+"
-          r"(?:exercises|problems)")
+_DET = r"(?:(?:o|a|os|as|d[oa]s?|n[oa]s?|esse|essa|este|esta|the|this|these)\s+)?"
+_MATERIAL = (r"(?:cap(?:ítulo|itulo)?s?\.?|chapters?|se[cç](?:ão|ões)|sections?|listas?|exerc[íi]cios|exercises|"
+             r"quest[õo]es|questions|problems|slides|aulas?|lectures?|notas|notes|resumos?|summary|apostila|matéria|"
+             r"conteúdo|enunciado|prova|simulado|material|flashcards|gabarito|teoria|theory)\b")
+_STUDY_VERB = (r"(?:revis(?:ar|e|em|ão)|rev(?:er|eja)|rel(?:er|eia)|l(?:er|eia)|leitura|(?:re)?(?:fazer|faça|faz)|"
+               r"resolv(?:er|a)|review(?:ing)?|re-?read(?:ing)?|read(?:ing)?|(?:re)?do(?:ing)?|solv(?:e|ing))\s+")
+_PURE_STUDY = r"(?:estud(?:ar|e)|pratic(?:ar|ando)|pratique|treinar|treine|stud(?:y|ying)|practi[cs](?:e|ing))\b"
 _WORKFLOW = (r"(?:(?:rodar|rode|roda|executar|execute|re-?run(?:ning)?|run(?:ning)?)\s+(?:de\s+novo\s+|again\s+)?"
              r"(?:os\s+|o\s+|a\s+|the\s+)?(?:testes?|tests?|scripts/verify|verify|lint|build|checks?|CI)|"
              r"(?:abrir|abra|open(?:ing)?)\s+(?:o\s+|um\s+|the\s+|a\s+)?(?:PR|pull\s+request)|"
@@ -41,12 +47,14 @@ _WORKFLOW = (r"(?:(?:rodar|rode|roda|executar|execute|re-?run(?:ning)?|run(?:nin
              r"(?:review|revisão|CI|checks?|aprovação|approval))")
 _TAIL = (r"(?:\s+(?:de\s+novo|again|localmente|locally|(?:antes|depois)\s+d[oa]\s+\S+|"
          r"(?:before|after)\s+(?:the\s+)?\S+))?")
-STUDY_STEP = re.compile(_LEAD + r"(?:" + _STUDY + r")\b", re.I)
+STUDY_STEP = re.compile(
+    _LEAD + r"(?:" + _STUDY_VERB + _DET + _MATERIAL + r"|" + _DET + _MATERIAL + r"|" + _PURE_STUDY + r")", re.I)
 WORKFLOW_STEP = re.compile(_LEAD + _WORKFLOW + _TAIL + r"$", re.I)
 CLAIM = re.compile(r"R\$|US\$|\bUSD\b|\$\s?\d|€|\bEUR\b|\breais\b|d[óo]lares|por\s+m[êe]s|/m[êe]s|per\s+month|"
                    r"em\s+vez\s+d|ao\s+inv[ée]s\s+d|instead\s+of|(?:melhor|pior)\s+(?:do\s+)?que|"
                    r"(?:better|worse|faster|cheaper|slower)\b|mais\s+(?:rápid|barat|lent|car)", re.I)
-SENTENCE_END = re.compile(r"[.!?](?:\s|$)|\n")
+SENTENCE_END = re.compile(r"[.!?](?=\s+[A-ZÀ-Ú]|\s*$)|\n")
+BULLET = re.compile(r"\n[ \t]*(?:[-*•]|\d+[.)])[ \t]+")
 PARTS = re.compile(r"[,;:]|\s(?:e|and|depois|then)\s", re.I)
 REASON = ("This reply recommends something without a source. Before stopping: cite the primary source you read in "
           "this session (URL or file:line) for each fact the recommendation rests on, name the one fact that would "
@@ -76,16 +84,27 @@ def _is_tool_result(entry: dict) -> bool:
     return isinstance(content, list) and any(isinstance(b, dict) and b.get("type") == "tool_result" for b in content)
 
 
+def _is_step(part: str) -> bool:
+    study = STUDY_STEP.match(part)
+    if study:
+        return not any(c.isupper() for c in part[study.end():])
+    return bool(WORKFLOW_STEP.match(part))
+
+
 def is_next_step(text: str, start: int) -> bool:
     """True when the sentence after a recommending word is only study or own-workflow steps (see the header)."""
-    clause = text[start:start + 300].lstrip(" \t\n:*_-•")
+    window = text[start:start + 600]
+    clause = BULLET.sub("; ", window).lstrip(" \t\n:*_-•;")
     end = SENTENCE_END.search(clause)
-    clause = clause[:end.start()] if end else clause
+    if end:
+        clause = clause[:end.start()]
+    elif len(window) == 600:
+        return False  # no sentence end within the window: judge it as a claim
     if CLAIM.search(clause):
         return False
     parts = [p.strip(" *_`") for p in PARTS.split(clause)]
     parts = [p for p in parts if p]
-    return bool(parts) and all(STUDY_STEP.match(p) or WORKFLOW_STEP.match(p) for p in parts)
+    return bool(parts) and all(_is_step(p) for p in parts)
 
 
 def verdict(text: str) -> dict:

@@ -83,9 +83,9 @@ class Recommend(unittest.TestCase):
         self.assertLess(time.monotonic() - start, 1.0)
 
     def test_study_and_workflow_next_steps_pass(self):
-        for s in ("Próximo passo: revisar o capítulo 3.",
-                  "Faça os exercícios 1 a 5.",
-                  "Rode os testes de novo.",
+        for s in ("Sugestão: revisar o capítulo 3.",
+                  "Sugestão: faça os exercícios 1 a 5.",
+                  "Recomendo: rode os testes de novo.",
                   "Sugiro revisar o capítulo 3.",
                   "Sugiro que você revise o capítulo 3 antes da prova.",
                   "Recomendo a leitura do capítulo 3.",
@@ -117,7 +117,14 @@ class Recommend(unittest.TestCase):
                   "Recomendo ler o livro X por 49 reais.",
                   "Recomendo ler o livro, que custa USD 20.",
                   "Sugiro rodar o build na Vercel com Node 22.",
-                  "Sugiro rodar os testes em Python 3.13, que é mais rápido."):
+                  "Sugiro rodar os testes em Python 3.13, que é mais rápido.",
+                  "Recomendo:\n- revisar o capítulo 3\n- usar Supabase",
+                  "Recomendo revisar o código antes de migrar para Postgres 16.",
+                  "Recomendo ler do cache Redis para cortar latência.",
+                  "I suggest reading from the read replica.",
+                  "Recomendo o estudo de caso da AWS sobre Aurora.",
+                  "Sugiro revisar o cap. 3, depois migrar para o Next 15.",
+                  "Recomendo revisar o capítulo 3 " + "x" * 700 + " e usar Supabase."):
             self.assertNotEqual(rec.verdict(s), {}, s)
 
     def test_tech_recommendations_with_a_source_pass(self):
@@ -127,7 +134,9 @@ class Recommend(unittest.TestCase):
 
     def test_bare_claims_without_a_recommending_word_are_unchanged(self):
         # The hook keys on recommending words; a bare claim never fired and still does not.
-        self.assertEqual(rec.verdict("O plano custa R$ 49."), {})
+        for s in ("O plano custa R$ 49.", "Próximo passo: revisar o capítulo 3.", "Faça os exercícios 1 a 5.",
+                  "Rode os testes de novo."):
+            self.assertEqual(rec.verdict(s), {}, s)
 
     def test_main_uses_last_assistant_message(self):
         out = run_main(rec, {"last_assistant_message": "Recomendo X.", "stop_hook_active": False})
