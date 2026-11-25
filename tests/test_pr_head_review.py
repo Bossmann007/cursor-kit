@@ -172,6 +172,10 @@ class T(unittest.TestCase):
         self.assertEqual(self.run_script("clean", str(other)).returncode, 2)
         self.assertEqual(self.run_script("clean", run_dir).returncode, 0)
         self.assertTrue(other.is_dir())
+        # clean drops the record: a new dir at the same path is not taken for the old run's.
+        Path(run_dir).mkdir()
+        self.assertEqual(self.run_script("clean", run_dir).returncode, 2)
+        self.assertTrue(Path(run_dir).is_dir())
 
     def test_install_refuses_npmrc_and_non_registry_deps(self):
         pkg = '{"scripts": {"test": "x"}}'
@@ -212,6 +216,18 @@ class T(unittest.TestCase):
         self.assertNotIn("package.json", r.stderr)
         self.assertEqual(self.leftover_run_dirs(), [])
         self.assertEqual(self.commands("npm"), [])
+
+    def test_tree_symlink_entry_needs_a_symlink(self):
+        make_tarball(self.tarball, {"package.json": "{}", "link": "package.json"})
+        tree = json.loads(Path(f"{self.tarball}.tree.json").read_text())
+        for e in tree["tree"]:
+            if e["path"] == "link":
+                e["mode"] = "120000"  # the commit has a symlink, the archive a regular file with the same bytes
+        Path(f"{self.tarball}.tree.json").write_text(json.dumps(tree))
+        r = self.run_script("run", "o/r", SHA)
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("tested file contents differ from the head", r.stderr)
+        self.assertIn("link", r.stderr)
 
     def test_tree_entry_without_sha_fails_closed(self):
         make_tarball(self.tarball, {"package.json": "{}"})

@@ -187,10 +187,10 @@ def gitattributes_subst(src: Path) -> list[str]:
 
 
 def compare_tree(repo: str, sha: str, src: Path, run: Path, log: Path) -> None:
-    """GitHub builds the tarball with git archive, which honors .gitattributes export-ignore and export-subst, so
-    the extracted files can differ from the commit. Compare the file list with the git tree of the SHA: a
-    difference, or a tree that cannot be read or is truncated, fails fetch: the checks would not run on a head we
-    can prove."""
+    """GitHub builds the tarball with git archive, which honors .gitattributes export-ignore, export-subst, ident
+    and eol (and can expand LFS files), so the extracted files can differ from the commit. Compare the file list,
+    each file's kind (symlink or not) and each git blob sha with the git tree of the SHA: a difference, or a tree
+    that cannot be read or is truncated, fails fetch: the checks would not run on a head we can prove."""
     subst = gitattributes_subst(src)
     if subst:
         raise RuntimeError(f"export-subst changes file contents in the tarball: {subst[:3]}")
@@ -205,7 +205,7 @@ def compare_tree(repo: str, sha: str, src: Path, run: Path, log: Path) -> None:
         raise RuntimeError(f"could not read the git tree of the head (exit {code}), see {log}")
     try:
         tree = json.loads(tree_path.read_text(encoding="utf-8"))
-        blobs = {e["path"]: e["sha"] for e in tree["tree"] if e.get("type") == "blob"}
+        blobs = {e["path"]: (e["sha"], e.get("mode") == "120000") for e in tree["tree"] if e.get("type") == "blob"}
         wanted = set(blobs)
     except (ValueError, KeyError, TypeError, AttributeError, RecursionError) as exc:
         raise RuntimeError(f"unreadable git tree of the head ({exc})") from exc
@@ -222,11 +222,11 @@ def compare_tree(repo: str, sha: str, src: Path, run: Path, log: Path) -> None:
         raise RuntimeError(f"tested files differ from the head (.gitattributes export-ignore?): {len(missing)} missing "
                            f"{missing[:5]}, {len(extra)} extra {extra[:5]}")
     # Same names can still hide other bytes: .gitattributes ident, eol=crlf and export-subst rewrite files in the
-    # archive. Hash each regular file as a git blob and compare with the tree's sha.
+    # archive. Hash each file as a git blob (a symlink's blob is its target) and compare with the tree's sha.
     changed = []
     for path in sorted(wanted):
-        f = src / path
-        if not f.is_symlink() and f.is_file() and blob_sha(f) != blobs[path]:
+        f, (want, link) = src / path, blobs[path]
+        if link != f.is_symlink() or blob_sha(os.readlink(f).encode() if link else f) != want:
             changed.append(path)
     if changed:
         raise RuntimeError(f"tested file contents differ from the head (.gitattributes ident, eol or export-subst?): "
@@ -234,10 +234,12 @@ def compare_tree(repo: str, sha: str, src: Path, run: Path, log: Path) -> None:
     say("tree check: extracted files match the git tree of the head")
 
 
-def blob_sha(path: Path) -> str:
-    """The git blob id of a file: sha1 of "blob <len>\\0" + bytes."""
-    h = hashlib.sha1(f"blob {path.stat().st_size}\0".encode())
-    with open(path, "rb") as f:
+def blob_sha(data: Path | bytes) -> str:
+    """The git blob id of a file (or of raw bytes): sha1 of "blob <len>\\0" + bytes."""
+    if isinstance(data, bytes):
+        return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
+    h = hashlib.sha1(f"blob {data.stat().st_size}\0".encode())
+    with open(data, "rb") as f:
         for chunk in iter(lambda: f.read(1 << 20), b""):
             h.update(chunk)
     return h.hexdigest()
@@ -254,12 +256,12 @@ def cmd_fetch(repo: str, sha: str, dry: bool) -> tuple[Path, Path] | None:
     run = Path(tempfile.mkdtemp(prefix=PREFIX, dir=tmp_root()))
     logs = Path(tempfile.mkdtemp(prefix=f"{PREFIX}logs-{sha[:7]}-", dir=tmp_root()))
     meta = {"repo": repo, "sha": sha, "logs": str(logs), "steps": []}
-    save_meta(run, meta)
-    (logs / RUN_RECORD).write_text(str(run), encoding="utf-8")
-    say(f"run dir: {run}")
-    say(f"log dir: {logs}")
     tar_path = run / "head.tar.gz"
     try:
+        (logs / RUN_RECORD).write_text(str(run), encoding="utf-8")
+        save_meta(run, meta)
+        say(f"run dir: {run}")
+        say(f"log dir: {logs}")
         with open(tar_path, "wb") as out, open(logs / "fetch.log", "wb") as err:
             code = subprocess.run(api, stdout=out, stderr=err, timeout=600).returncode
         if code != 0:
@@ -272,7 +274,7 @@ def cmd_fetch(repo: str, sha: str, dry: bool) -> tuple[Path, Path] | None:
         compare_tree(repo, sha, src, run, logs / "fetch.log")
         git_snapshot(run, src, sha, logs / "fetch.log")
     except BaseException:
-        shutil.rmtree(run, ignore_errors=True)
+        remove_run(run, logs)
         say(f"fetch failed: removed {run}")
         raise
     meta["src"] = str(src)
@@ -470,22 +472,32 @@ def cmd_clean(run_arg: str | None, dry: bool) -> int:
     run = run_dir_path(run_arg)
     if not run.is_dir():
         raise UsageError(f"no run dir at {run}")
-    if not recorded(run):
-        raise UsageError(f"{run} is not recorded in any {PREFIX}logs-* dir: not created by fetch, not deleted")
+    logs = recorded_by(run)
+    if logs is None:
+        raise UsageError(f"{run} is not recorded in any {PREFIX}logs-* dir: not created by fetch (or its log dir was "
+                         "deleted first), not deleted; check it and remove it by hand")
     shutil.rmtree(run)
+    remove_run(run, logs)
     say(f"clean: removed {run}; logs kept in the log dir fetch printed")
     return 0
 
 
-def recorded(run: Path) -> bool:
+def recorded_by(run: Path) -> Path | None:
+    """The log dir whose record names this run dir, if any."""
     for logs in tmp_root().glob(PREFIX + "logs-*"):
         rec = logs / RUN_RECORD
         try:
             if rec.is_file() and not rec.is_symlink() and rec.read_text(encoding="utf-8") == str(run):
-                return True
+                return logs
         except (OSError, UnicodeDecodeError):
             continue
-    return False
+    return None
+
+
+def remove_run(run: Path, logs: Path) -> None:
+    """Delete the run dir and its record, so a later dir at the same path is not taken for this run's."""
+    shutil.rmtree(run, ignore_errors=True)
+    (logs / RUN_RECORD).unlink(missing_ok=True)
 
 
 def cmd_run(repo: str, sha: str, dry: bool, timeout: int) -> int:
@@ -505,7 +517,7 @@ def cmd_run(repo: str, sha: str, dry: bool, timeout: int) -> int:
     finally:
         # Not cmd_clean: it re-reads meta.json, which the checks could have rewritten.
         if fetched is not None and fetched[0].exists():
-            shutil.rmtree(fetched[0], ignore_errors=True)
+            remove_run(*fetched)
             say(f"clean: removed {fetched[0]}; logs kept in {fetched[1]}")
 
 

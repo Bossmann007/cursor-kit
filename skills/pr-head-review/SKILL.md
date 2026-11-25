@@ -50,7 +50,8 @@ python3 -I scripts/pr_head_review.py clean <run-dir>
    dir). It writes the run dir's path to `<log-dir>/run-dir`, which `clean` needs. It fails closed unless the tarball's commit id (the pax `comment` header GitHub writes) equals `<sha>`.
    GitHub builds the tarball with `git archive`, which honors `.gitattributes` `export-ignore`, `export-subst`,
    `ident` and `eol`, so fetch compares the extracted files with `gh api --method GET repos/<owner>/<repo>/git/trees/<sha>?recursive=1`:
-   names, and the git blob sha (sha1 of `blob <len>\0` + bytes) of each regular file against the tree's `sha`. It
+   names, each file's kind (symlink or not) and its git blob sha (sha1 of `blob <len>\0` + bytes; a symlink's blob is
+   its target) against the tree's `mode` and `sha`. It
    fails (exit 1) when a `.gitattributes` line sets `export-subst`, when the file lists or any file's contents differ
    (an LFS file the archive expands differs too), or when the tree cannot be read or comes back truncated: the checks could not run on a head it can prove, so report that instead
    of a result. Then it makes a local one-commit git repo of the files (no hooks, no signing, no user git config), because a tarball has
@@ -82,7 +83,7 @@ python3 -I scripts/pr_head_review.py clean <run-dir>
    only `check <name> exit=<n> log=<path>`, because RTK filters console output and hides lines such as `console.log`.
    Read the log file, not the console.
 5. **clean**: deletes the run dir, only when a `$TMPDIR/pr-head-review-logs-*/run-dir` file records it (a dir fetch
-   did not create is refused, exit 2). The log dir stays, so the printed log paths still work; delete it when the
+   did not create is refused, exit 2) and removes that record. The log dir stays, so the printed log paths still work; delete it when the
    review is written, after `clean`.
 
 Exit codes: 0 all checks passed, 1 a step or a check failed, 2 bad usage, 3 no checks found.
