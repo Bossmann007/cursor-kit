@@ -47,11 +47,12 @@ python3 -I scripts/pr_head_review.py clean <run-dir>
 1. **fetch**: checks `<owner>/<repo>` and the SHA format, makes a new empty run dir `$TMPDIR/pr-head-review-*` and a
    log dir `$TMPDIR/pr-head-review-logs-<sha7>-*`, runs `gh api --method GET repos/<owner>/<repo>/tarball/<sha>` with
    the output written to a file, and extracts it with Python's `data` filter (no absolute paths, no links out of the
-   dir). It fails closed unless the tarball's commit id (the pax `comment` header GitHub writes) equals `<sha>`.
-   GitHub builds the tarball with `git archive`, which honors `.gitattributes` `export-ignore` and `export-subst`,
-   so fetch compares the extracted file list with `gh api --method GET repos/<owner>/<repo>/git/trees/<sha>?recursive=1`
-   and fails (exit 1) when a `.gitattributes` line sets `export-subst`, when the file lists differ, or when the tree
-   cannot be read or comes back truncated: the checks could not run on a head it can prove, so report that instead
+   dir). It writes the run dir's path to `<log-dir>/run-dir`, which `clean` needs. It fails closed unless the tarball's commit id (the pax `comment` header GitHub writes) equals `<sha>`.
+   GitHub builds the tarball with `git archive`, which honors `.gitattributes` `export-ignore`, `export-subst`,
+   `ident` and `eol`, so fetch compares the extracted files with `gh api --method GET repos/<owner>/<repo>/git/trees/<sha>?recursive=1`:
+   names, and the git blob sha (sha1 of `blob <len>\0` + bytes) of each regular file against the tree's `sha`. It
+   fails (exit 1) when a `.gitattributes` line sets `export-subst`, when the file lists or any file's contents differ
+   (an LFS file the archive expands differs too), or when the tree cannot be read or comes back truncated: the checks could not run on a head it can prove, so report that instead
    of a result. Then it makes a local one-commit git repo of the files (no hooks, no signing, no user git config), because a tarball has
    no `.git` and checks that call git would fail.
 2. **install**: only when `package-lock.json` exists: `npm ci --ignore-scripts --no-audit --no-fund` with
@@ -80,8 +81,9 @@ python3 -I scripts/pr_head_review.py clean <run-dir>
 4. **logs**: each check's full output goes to `<log-dir>/check-<name>.log` (install and fetch too). The console shows
    only `check <name> exit=<n> log=<path>`, because RTK filters console output and hides lines such as `console.log`.
    Read the log file, not the console.
-5. **clean**: deletes the run dir. The log dir stays, so the printed log paths still work; delete it when the review
-   is written.
+5. **clean**: deletes the run dir, only when a `$TMPDIR/pr-head-review-logs-*/run-dir` file records it (a dir fetch
+   did not create is refused, exit 2). The log dir stays, so the printed log paths still work; delete it when the
+   review is written, after `clean`.
 
 Exit codes: 0 all checks passed, 1 a step or a check failed, 2 bad usage, 3 no checks found.
 
@@ -101,8 +103,9 @@ Exit codes: 0 all checks passed, 1 a step or a check failed, 2 bad usage, 3 no c
   with `ImportError`, because `-I` keeps the root off `sys.path`. Report it as an environment limit and run the
   repo's documented test command in the run dir instead.
 - `npm ci --ignore-scripts` skips install scripts, so a package that needs one (native builds) can fail its checks.
-- `clean` checks only that the path is a run dir under `$TMPDIR` (not `meta.json`, which the checks can delete), so
-  it still removes the run dir after a check tampered with it.
+- `clean` checks the run dir's path shape and the record in its log dir, not `meta.json` (which the checks can
+  delete), so it still removes the run dir after a check tampered with it. The checks run as you, so the record
+  guards against mistakes, not against the checked code.
 
 ## Report
 

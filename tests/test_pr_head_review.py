@@ -1,6 +1,6 @@
 """pr-head-review script: argument validation and step order, offline (stub gh and npm on PATH)."""
 
-import io, json, os, re, subprocess, sys, tarfile, tempfile, time, unittest
+import hashlib, io, json, os, re, subprocess, sys, tarfile, tempfile, time, unittest
 from pathlib import Path
 
 SCRIPT = Path(__file__).resolve().parents[1] / "skills/pr-head-review/scripts/pr_head_review.py"
@@ -9,10 +9,17 @@ OTHER_SHA = "6251c03" + "0" * 33
 STUB_AUTH = "stub-auth-for-test"  # stands in for GH_TOKEN; never a real value
 
 
-def make_tarball(path, files, sha=SHA, tree=None):
-    """The tarball plus the git tree JSON the gh stub serves next to it (default: the same file list)."""
+def blob_sha(data):
+    return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
+
+
+def make_tarball(path, files, sha=SHA, tree=None, committed=None):
+    """The tarball plus the git tree JSON the gh stub serves next to it (default: the same file list). `committed`
+    maps a path to the blob text in the commit when the archive holds other bytes (ident, eol, export-subst)."""
     blobs = sorted(files) if tree is None else tree
-    Path(f"{path}.tree.json").write_text(json.dumps({"truncated": False, "tree": [{"path": p, "type": "blob"} for p in blobs]}))
+    texts = {**files, **(committed or {})}
+    entries = [{"path": p, "type": "blob", "sha": blob_sha(texts.get(p, "").encode())} for p in blobs]
+    Path(f"{path}.tree.json").write_text(json.dumps({"truncated": False, "tree": entries}))
     with tarfile.open(path, "w:gz", format=tarfile.PAX_FORMAT, pax_headers={"comment": sha}) as tf:
         for name, text in files.items():
             data = text.encode()
@@ -151,6 +158,21 @@ class T(unittest.TestCase):
         for bad in (str(self.tmp), str(self.tmpdir / "pr-head-review-logs-x")):
             self.assertEqual(self.run_script("clean", bad).returncode, 2, bad)
 
+    def test_clean_refuses_a_run_dir_fetch_did_not_record(self):
+        other = self.tmpdir / "pr-head-review-not-ours"
+        other.mkdir()
+        (other / "keep").write_text("x")
+        r = self.run_script("clean", str(other))
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertIn("not recorded", r.stderr)
+        self.assertTrue((other / "keep").is_file())
+        # A log dir of a real fetch records only its own run dir.
+        make_tarball(self.tarball, {"package.json": "{}"})
+        run_dir = re.search(r"^run dir: (.+)$", self.run_script("fetch", "o/r", SHA).stdout, re.M).group(1)
+        self.assertEqual(self.run_script("clean", str(other)).returncode, 2)
+        self.assertEqual(self.run_script("clean", run_dir).returncode, 0)
+        self.assertTrue(other.is_dir())
+
     def test_install_refuses_npmrc_and_non_registry_deps(self):
         pkg = '{"scripts": {"test": "x"}}'
         reg = {"packages": {"": {}, "node_modules/a": {"resolved": "https://registry.npmjs.org/a/-/a-1.tgz"}}}
@@ -179,6 +201,24 @@ class T(unittest.TestCase):
         self.assertIn("tested files differ from the head", r.stderr)
         self.assertIn("tests/hidden_by_export_ignore.py", r.stderr)
         self.assertEqual(self.leftover_run_dirs(), [])
+
+    def test_tree_content_mismatch_fails_closed(self):
+        # git archive applied eol=crlf (or ident): same names, other bytes than the committed blob.
+        make_tarball(self.tarball, {"package.json": "{}", "tests/t.py": "x = 1\r\n"}, committed={"tests/t.py": "x = 1\n"})
+        r = self.run_script("run", "o/r", SHA)
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("tested file contents differ from the head", r.stderr)
+        self.assertIn("tests/t.py", r.stderr)
+        self.assertNotIn("package.json", r.stderr)
+        self.assertEqual(self.leftover_run_dirs(), [])
+        self.assertEqual(self.commands("npm"), [])
+
+    def test_tree_entry_without_sha_fails_closed(self):
+        make_tarball(self.tarball, {"package.json": "{}"})
+        Path(f"{self.tarball}.tree.json").write_text('{"truncated": false, "tree": [{"path": "package.json", "type": "blob"}]}')
+        r = self.run_script("run", "o/r", SHA)
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("unreadable git tree", r.stderr)
 
     def test_export_subst_fails_but_comment_does_not(self):
         make_tarball(self.tarball, {"package.json": "{}", ".gitattributes": "VERSION export-subst\n", "VERSION": "$Format:%H$"})
@@ -364,7 +404,10 @@ class T(unittest.TestCase):
         # The killed sleep may stay a zombie for a moment before launchd/init reaps it: poll briefly.
         deadline = time.monotonic() + 5
         while True:
-            state = subprocess.run(["ps", "-o", "stat=", "-p", str(pid)], capture_output=True, text=True).stdout.strip()
+            try:
+                state = subprocess.run(["ps", "-o", "stat=", "-p", str(pid)], capture_output=True, text=True).stdout.strip()
+            except OSError as exc:  # PermissionError in reviewer sandboxes that block ps
+                self.skipTest(f"cannot run ps to see the background process: {exc}")
             if not state or state.startswith("Z") or time.monotonic() > deadline:
                 break
             time.sleep(0.1)
