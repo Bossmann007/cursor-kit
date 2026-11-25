@@ -187,7 +187,11 @@ def gitattributes_subst(src: Path) -> list[str]:
 def compare_tree(repo: str, sha: str, src: Path, run: Path, log: Path) -> None:
     """GitHub builds the tarball with git archive, which honors .gitattributes export-ignore and export-subst, so
     the extracted files can differ from the commit. Compare the file list with the git tree of the SHA: a
-    difference fails fetch (checks would not run on the exact head); a tree that cannot be read only warns."""
+    difference, or a tree that cannot be read or is truncated, fails fetch: the checks would not run on a head we
+    can prove."""
+    subst = gitattributes_subst(src)
+    if subst:
+        raise RuntimeError(f"export-subst changes file contents in the tarball: {subst[:3]}")
     tree_path = run / "tree.json"
     try:
         with open(tree_path, "wb") as out, open(log, "ab") as err:
@@ -196,17 +200,14 @@ def compare_tree(repo: str, sha: str, src: Path, run: Path, log: Path) -> None:
     except subprocess.TimeoutExpired:
         code = 124
     if code != 0:
-        say(f"warning: could not read the git tree (exit {code}); the file list was not compared, log={log}")
-        return
+        raise RuntimeError(f"could not read the git tree of the head (exit {code}), see {log}")
     try:
         tree = json.loads(tree_path.read_text(encoding="utf-8"))
         wanted = {e["path"] for e in tree["tree"] if e.get("type") == "blob"}
-    except (ValueError, KeyError, TypeError, AttributeError) as exc:
-        say(f"warning: unreadable git tree ({exc}); the file list was not compared")
-        return
+    except (ValueError, KeyError, TypeError, AttributeError, RecursionError) as exc:
+        raise RuntimeError(f"unreadable git tree of the head ({exc})") from exc
     if tree.get("truncated"):
-        say("warning: git tree truncated by GitHub; the file list was not compared")
-        return
+        raise RuntimeError("git tree truncated by GitHub: cannot prove the tarball matches the head")
     got = set()
     for root, dirs, files in os.walk(src):
         dirs[:] = [d for d in dirs if not (root == str(src) and d == ".git")]
@@ -217,9 +218,6 @@ def compare_tree(repo: str, sha: str, src: Path, run: Path, log: Path) -> None:
     if missing or extra:
         raise RuntimeError(f"tested files differ from the head (.gitattributes export-ignore?): {len(missing)} missing "
                            f"{missing[:5]}, {len(extra)} extra {extra[:5]}")
-    subst = gitattributes_subst(src)
-    if subst:
-        raise RuntimeError(f"export-subst changes file contents in the tarball: {subst[:3]}")
     say("tree check: extracted files match the git tree of the head")
 
 
@@ -287,7 +285,7 @@ def cmd_install(run_arg: str | None, dry: bool) -> int:
 
 NPM_REGISTRY = "https://registry.npmjs.org/"
 VERSION_RE = re.compile(r"\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.+-]+)?")  # an exact registry version
-RANGE_RE = re.compile(r"[0-9A-Za-z.*^~<>=|+ -]*")  # a semver range or dist-tag; no ':' and no '/'
+RANGE_RE = re.compile(r"(?!\s*\.)[0-9A-Za-z.*^~<>=|+ -]*")  # semver range or dist-tag; no ':', '/' or leading '.'
 ALIAS_RE = re.compile(r"npm:(?:@[\w.-]+/)?[\w.-]+(?:@[0-9A-Za-z.*^~<>=|+ -]*)?")
 
 
@@ -303,29 +301,40 @@ def install_risks(src: Path) -> list[str]:
                 if not isinstance(spec, str) or not (RANGE_RE.fullmatch(spec) or ALIAS_RE.fullmatch(spec)):
                     risks.append(f"package.json {field}.{name} = {str(spec)[:80]}")
         lock = json.loads((src / "package-lock.json").read_text(encoding="utf-8"))
-        for key, entry in (lock.get("packages") or {}).items():
-            risks += lock_entry_risks(f"packages[{key!r}]", entry, key.startswith("node_modules/") or "/node_modules/" in key)
-        stack = list((lock.get("dependencies") or {}).items())  # lockfile v1, nested
-        while stack:
-            name, entry = stack.pop()
-            risks += lock_entry_risks(f"dependencies.{name}", entry, True)
-            if isinstance(entry, dict):
-                stack += [(f"{name}>{k}", v) for k, v in (entry.get("dependencies") or {}).items()]
-    except (ValueError, AttributeError, TypeError) as exc:
+        packages = lock.get("packages")
+        if packages is not None:  # v2/v3: npm ci reads only this section; v2's legacy "dependencies" is ignored
+            for key, entry in packages.items():
+                fetched = key.startswith("node_modules/") or "/node_modules/" in key
+                # inBundle is trusted only inside another package (shipped in that package's registry tarball).
+                nested = key.count("node_modules/") > 1
+                risks += lock_entry_risks(src, f"packages[{key!r}]", entry, fetched, nested)
+        else:  # lockfile v1, nested
+            stack = [(k, v, False) for k, v in (lock.get("dependencies") or {}).items()]
+            while stack:
+                name, entry, nested = stack.pop()
+                risks += lock_entry_risks(src, f"dependencies.{name}", entry, True, nested)
+                if isinstance(entry, dict):
+                    stack += [(f"{name}>{k}", v, True) for k, v in (entry.get("dependencies") or {}).items()]
+    except (ValueError, AttributeError, TypeError, RecursionError) as exc:
         risks.append(f"package.json or package-lock.json unreadable ({exc})")
     return risks
 
 
-def lock_entry_risks(label: str, entry, fetched: bool) -> list[str]:
+def inside(src: Path, rel) -> bool:
+    if not isinstance(rel, str) or ":" in rel or "\\" in rel or rel.startswith(("/", "~")):
+        return False
+    return (src / rel).resolve().is_relative_to(src.resolve())
+
+
+def lock_entry_risks(src: Path, label: str, entry, fetched: bool, nested: bool) -> list[str]:
     """A fetched package must resolve to the registry; a workspace link must point inside the tree."""
     if not isinstance(entry, dict):
         return [f"lockfile {label} is not an object"]
-    if entry.get("inBundle") or entry.get("bundled"):
+    if nested and (entry.get("inBundle") or entry.get("bundled")):
         return []
     resolved, version = entry.get("resolved"), entry.get("version")
     if entry.get("link"):
-        ok = isinstance(resolved, str) and ":" not in resolved and not resolved.startswith(("/", "..", "~"))
-        return [] if ok else [f"lockfile {label} links to {str(resolved)[:80]}"]
+        return [] if inside(src, resolved) else [f"lockfile {label} links to {str(resolved)[:80]}"]
     if version is not None and not (isinstance(version, str) and (VERSION_RE.fullmatch(version) or ALIAS_RE.fullmatch(version))):
         return [f"lockfile {label} version {str(version)[:80]}"]
     if resolved is not None and not (isinstance(resolved, str) and resolved.startswith(NPM_REGISTRY)):

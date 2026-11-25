@@ -50,16 +50,17 @@ python3 -I scripts/pr_head_review.py clean <run-dir>
    dir). It fails closed unless the tarball's commit id (the pax `comment` header GitHub writes) equals `<sha>`.
    GitHub builds the tarball with `git archive`, which honors `.gitattributes` `export-ignore` and `export-subst`,
    so fetch compares the extracted file list with `gh api --method GET repos/<owner>/<repo>/git/trees/<sha>?recursive=1`
-   and fails (exit 1) when they differ or a `.gitattributes` line sets `export-subst`: the checks could not run on
-   the exact head, so report that instead of a result. A tree it cannot read (gh error, timeout, truncated) only
-   prints a `warning:` line; quote it in the review. Then it makes a local one-commit git repo of the files (no hooks, no signing, no user git config), because a tarball has
+   and fails (exit 1) when a `.gitattributes` line sets `export-subst`, when the file lists differ, or when the tree
+   cannot be read or comes back truncated: the checks could not run on a head it can prove, so report that instead
+   of a result. Then it makes a local one-commit git repo of the files (no hooks, no signing, no user git config), because a tarball has
    no `.git` and checks that call git would fail.
 2. **install**: only when `package-lock.json` exists: `npm ci --ignore-scripts --no-audit --no-fund` with
    `npm_config_cache` inside the run dir (never `~/.npm`). Other lockfiles (pnpm, yarn) are skipped; say so in the
    review. `--ignore-scripts` is not a barrier on its own: a repo `.npmrc` can set `git=<script>`, which npm runs to
    fetch a git dependency. So install is refused (exit 1, `install refused: <reason>`) unless everything is on an
-   allowlist: no `.npmrc` anywhere; every `package.json` dependency spec is a semver range, dist-tag or `npm:` alias;
-   every fetched lockfile package (v2/v3 `packages` and v1 nested `dependencies`, each checked on its own) has an
+   allowlist: no `.npmrc` anywhere; every root `package.json` dependency spec is a semver range, dist-tag or `npm:` alias
+   (workspace `package.json` files and `overrides` are covered only through the lockfile);
+   every fetched lockfile package (v2/v3 `packages`, or v1 nested `dependencies`; `inBundle` is trusted only below another package) has an
    exact version and a `resolved` URL on `https://registry.npmjs.org/`; workspace links point inside the tree.
    Read the refused files before deciding anything by hand.
 3. **check**: the first rule that matches:

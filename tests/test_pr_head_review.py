@@ -189,6 +189,21 @@ class T(unittest.TestCase):
         r = self.run_script("run", "o/r", SHA)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
 
+    def test_tree_unreadable_or_truncated_fails_closed(self):
+        for tree_text in ('{"truncated": true, "tree": []}', "not json"):
+            make_tarball(self.tarball, {"package.json": "{}"})
+            Path(f"{self.tarball}.tree.json").write_text(tree_text)
+            r = self.run_script("run", "o/r", SHA)
+            self.assertEqual(r.returncode, 1, (tree_text, r.stdout, r.stderr))
+            self.assertEqual(self.leftover_run_dirs(), [])
+
+    def test_deeply_nested_lockfile_is_refused_cleanly(self):
+        make_tarball(self.tarball, {"package.json": "{}", "package-lock.json": "[" * 100000})
+        r = self.run_script("run", "o/r", SHA)
+        self.assertEqual(r.returncode, 1, r.stderr[-300:])
+        self.assertIn("install refused", r.stdout)
+        self.assertNotIn("Traceback", r.stderr)
+
     def test_install_guard_allowlist_cases(self):
         reg = "https://registry.npmjs.org/b/-/b-1.0.0.tgz"
         cases = {
@@ -205,6 +220,12 @@ class T(unittest.TestCase):
                      "dependencies": {"node_modules/b": {"version": "1.0.0", "resolved": reg}}}, "resolves to git+ssh"),
             "link outside the tree": ({}, {"packages": {"node_modules/l": {"link": True, "resolved": "../outside"}}}, "links to ../outside"),
             "malformed lockfile": ({}, {"packages": [1]}, "unreadable"),
+            "top-level inBundle git": (
+                {}, {"packages": {"node_modules/b": {"inBundle": True, "version": "1.0.0",
+                                                     "resolved": "git+ssh://git@github.com/x/b.git"}}}, "resolves to git+ssh"),
+            "link with .. in the middle": (
+                {}, {"packages": {"node_modules/l": {"link": True, "resolved": "packages/../../outside"}}}, "links to packages/../../outside"),
+            "file spec as a dot path": ({"dependencies": {"b": ".."}}, {"packages": {}}, "package.json dependencies.b"),
         }
         for label, (pkg, lock, reason) in cases.items():
             make_tarball(self.tarball, {"package.json": json.dumps(pkg), "package-lock.json": json.dumps(lock)})
@@ -215,8 +236,12 @@ class T(unittest.TestCase):
             self.assertNotIn("Traceback", r.stderr, label)
         self.assertEqual(self.commands("npm"), [])
         ok_pkg = {"dependencies": {"b": "^1.0.0", "c": "npm:@s/c@2", "d": "latest"}}
-        ok_lock = {"packages": {"": {}, "packages/w": {"version": "0.1.0"}, "node_modules/w": {"link": True, "resolved": "packages/w"},
-                                "node_modules/b": {"version": "1.0.0", "resolved": reg}}}
+        # lockfileVersion 2 workspace: the legacy dependencies section has file: versions that npm ci ignores.
+        ok_lock = {"lockfileVersion": 2,
+                   "packages": {"": {}, "packages/w": {"version": "0.1.0"}, "node_modules/w": {"link": True, "resolved": "packages/w"},
+                                "node_modules/b": {"version": "1.0.0", "resolved": reg},
+                                "node_modules/b/node_modules/inner": {"version": "1.0.0", "inBundle": True}},
+                   "dependencies": {"w": {"version": "file:packages/w"}}}
         make_tarball(self.tarball, {"package.json": json.dumps(ok_pkg), "package-lock.json": json.dumps(ok_lock)})
         r = self.run_script("run", "o/r", SHA)
         self.assertNotIn("install refused", r.stdout, r.stdout)
