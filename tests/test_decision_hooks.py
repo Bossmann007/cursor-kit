@@ -82,6 +82,94 @@ class Recommend(unittest.TestCase):
         rec.verdict("Recomendo " + "a." * 20000)
         self.assertLess(time.monotonic() - start, 1.0)
 
+    def test_study_and_workflow_next_steps_pass(self):
+        for s in ("Sugestão: revisar o capítulo 3.",
+                  "Sugestão: faça os exercícios 1 a 5.",
+                  "Recomendo: rode os testes de novo.",
+                  "Sugiro revisar o capítulo 3.",
+                  "Sugiro que você revise o capítulo 3 antes da prova.",
+                  "Recomendo a leitura do capítulo 3.",
+                  "Recomendo fazer os exercícios 1 a 5.",
+                  "Sugestão: exercícios 1 a 5 da lista.",
+                  "Recomendo estudar o capítulo 4 e praticar com o simulado.",
+                  "I recommend reviewing chapter 3 and practicing the problems.",
+                  "O certo é rodar os testes de novo.",
+                  "Sugiro rodar scripts/verify e abrir o PR.",
+                  "Recomendo aguardar a review antes do merge.",
+                  "I'd suggest running the tests again.",
+                  "Recomendo:\n- revisar o capítulo 3\n- fazer os exercícios",
+                  "Sugiro:\n- **Revisar** o capítulo 3\n- fazer a `lista 2`",
+                  "Sugiro revisar os capítulos 3 e 4.",
+                  "Recomendo esperar as reviews do Code Bot.",
+                  "Recomendo corrigir os itens 1 a 4 antes de entregar.",
+                  "Recomendo corrigir tudo no PR #12 antes do merge.",
+                  "Sugiro revisar o capítulo 3 depois da aula.",
+                  "Recomendo rodar os testes depois do merge.",
+                  "Minha recomendação é revisar o capítulo 3.",
+                  "My recommendation is to run the tests again.",
+                  "Recomendo corrigir os itens 1 a 4. São bugs reais."):
+            self.assertEqual(rec.verdict(s), {}, s)
+
+    def test_tech_product_price_and_fact_recommendations_still_fire(self):
+        for s in ("Recomendo usar Supabase.",
+                  "Sugiro o plano Pro: o plano custa R$ 49 por mês.",
+                  "Recomendo atualizar: a versão 2.1 corrigiu o vazamento.",
+                  "Recomendo fazer deploy na Vercel.",
+                  "Sugiro abrir conta na AWS.",
+                  "Sugiro revisar o capítulo 3. Recomendo usar Supabase.",
+                  "Sugiro estudar pelo curso X, que custa R$ 49.",
+                  "I recommend Postgres 16 over MySQL.",
+                  # a study or workflow verb does not cover a choice, a price or a second action in the sentence
+                  "O certo é estudar Rust em vez de Go.",
+                  "I recommend reading the docs: Postgres 16 is faster.",
+                  "Recomendo revisar o cap 3, depois usar Supabase, que é grátis.",
+                  "Recomendo revisar o contrato e assinar o plano Enterprise.",
+                  "Recomendo ler o livro X por 49 reais.",
+                  "Recomendo ler o livro, que custa USD 20.",
+                  "Sugiro rodar o build na Vercel com Node 22.",
+                  "Sugiro rodar os testes em Python 3.13, que é mais rápido.",
+                  "Recomendo fazer a prova de conceito com postgres.",
+                  "Recomendo:\n* revisar o capítulo 3\n* usar Supabase",
+                  "Recomendo:\n\n- revisar o capítulo 3\n\n- usar Supabase",
+                  "Recomendo resolver a lista 2 usando numpy.",
+                  "Recomendo ler as notas de versão do postgres 17.",
+                  "Recomendo revisar o capítulo 3 ou usar supabase.",
+                  "Recomendo rodar o build do Next 15.",
+                  "Recomendo a teoria de que o bug é no cache.",
+                  "Recomendo estudar kubernetes no lugar de docker swarm.",
+                  "Recomendo estudar react porque é o mais usado no mercado.",
+                  "Recomendo estudar react pois é o mais usado.",
+                  "Sugiro estudar o plano pro da vercel.",
+                  "Recomendo praticar com supabase.",
+                  "Recomendo estudar kubernetes.",
+                  "Recomendo ler os slides da Vercel.",
+                  "Recomendo ler o material do Supabase.",
+                  "Recomendo revisar o capítulo 3. Depois disso, use Supabase, que custa R$ 49.",
+                  "Recomendo: rodar os testes.\n\nO Supabase é melhor que o Firebase.",
+                  "O certo é rodar os testes da AWS Lambda.",
+                  "Recomendo corrigir tudo do Supabase.",
+                  "Recomendo abrir o PR do Supabase agora.",
+                  "Recomendo rodar os testes antes de migrar.",
+                  "Recomendo:\n- revisar o capítulo 3\n- usar Supabase",
+                  "Recomendo revisar o código antes de migrar para Postgres 16.",
+                  "Recomendo ler do cache Redis para cortar latência.",
+                  "I suggest reading from the read replica.",
+                  "Recomendo o estudo de caso da AWS sobre Aurora.",
+                  "Sugiro revisar o cap. 3, depois migrar para o Next 15.",
+                  "Recomendo revisar o capítulo 3 " + "x" * 700 + " e usar Supabase."):
+            self.assertNotEqual(rec.verdict(s), {}, s)
+
+    def test_tech_recommendations_with_a_source_pass(self):
+        self.assertEqual(rec.verdict("Recomendo usar Supabase (https://supabase.com/docs)."), {})
+        self.assertEqual(rec.verdict("Sugiro o plano Pro, que custa R$ 49 (https://example.test/pricing)."), {})
+        self.assertEqual(rec.verdict("Recomendo atualizar: CHANGELOG.md:12 diz que a 2.1 corrigiu o vazamento."), {})
+
+    def test_bare_claims_without_a_recommending_word_are_unchanged(self):
+        # The hook keys on recommending words; a bare claim never fired and still does not.
+        for s in ("O plano custa R$ 49.", "Próximo passo: revisar o capítulo 3.", "Faça os exercícios 1 a 5.",
+                  "Rode os testes de novo."):
+            self.assertEqual(rec.verdict(s), {}, s)
+
     def test_main_uses_last_assistant_message(self):
         out = run_main(rec, {"last_assistant_message": "Recomendo X.", "stop_hook_active": False})
         self.assertIn("additionalContext", out)
