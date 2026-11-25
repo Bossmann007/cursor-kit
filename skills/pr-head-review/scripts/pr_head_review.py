@@ -285,7 +285,7 @@ def cmd_install(run_arg: str | None, dry: bool) -> int:
 
 NPM_REGISTRY = "https://registry.npmjs.org/"
 VERSION_RE = re.compile(r"\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.+-]+)?")  # an exact registry version
-RANGE_RE = re.compile(r"(?!\s*\.)(?!.*\.(?:tgz|tar|tar\.gz)\s*$)[0-9A-Za-z.*^~<>=|+ -]*", re.I)  # semver range or dist-tag; no ':', '/' or leading '.'
+RANGE_RE = re.compile(r"(?!\s*\.)(?!.*\.(?:tgz|tar.gz|tar)\s*$)[0-9A-Za-z.*^~<>=|+ -]*", re.I)  # semver range or dist-tag; no ':', '/' or leading '.'
 ALIAS_RE = re.compile(r"npm:(?:@[\w.-]+/)?[\w.-]+(?:@[0-9A-Za-z.*^~<>=|+ -]*)?")
 
 
@@ -294,6 +294,8 @@ def install_risks(src: Path) -> list[str]:
     dependency. Allowlist, not a list of bad prefixes: refuse any .npmrc, any package.json dependency spec that is
     not a registry range or npm: alias, and any lockfile package that does not resolve to the npm registry."""
     risks = [f"{p.relative_to(src)} present" for p in src.rglob(".npmrc") if ".git" not in p.relative_to(src).parts]
+    if (src / "npm-shrinkwrap.json").exists():  # npm ci installs from it instead of package-lock.json
+        risks.append("npm-shrinkwrap.json present")
     try:
         pkg = json.loads((src / "package.json").read_text(encoding="utf-8")) if (src / "package.json").is_file() else {}
         for field in ("dependencies", "devDependencies", "optionalDependencies", "peerDependencies"):
@@ -315,11 +317,11 @@ def install_risks(src: Path) -> list[str]:
         while stack:
             label, name, entry, nested = stack.pop()
             version = entry.get("version") if isinstance(entry, dict) else None
-            if not nested and name in linked and isinstance(version, str) and version.startswith("file:") \
-                    and inside(src, version[len("file:"):]):
-                continue
-            risks += lock_entry_risks(src, f"dependencies.{label}", entry, True, nested)
-            if isinstance(entry, dict):
+            workspace = not nested and name in linked and isinstance(version, str) and version.startswith("file:") \
+                and inside(src, version[len("file:"):])
+            if not workspace:
+                risks += lock_entry_risks(src, f"dependencies.{label}", entry, True, nested)
+            if isinstance(entry, dict):  # children are checked even below an allowed workspace entry
                 stack += [(f"{label}>{k}", k, v, True) for k, v in (entry.get("dependencies") or {}).items()]
     except (ValueError, AttributeError, TypeError, RecursionError) as exc:
         risks.append(f"package.json or package-lock.json unreadable ({exc})")

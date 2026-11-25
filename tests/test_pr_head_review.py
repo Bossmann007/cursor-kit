@@ -234,6 +234,11 @@ class T(unittest.TestCase):
             "legacy dependencies next to clean packages (npm 6)": (
                 {}, {"packages": {"node_modules/b": {"version": "1.0.0", "resolved": reg}},
                      "dependencies": {"evil": {"version": "1.0.0", "resolved": "git+https://attacker/x.git"}}}, "dependencies.evil resolves"),
+            "git dep nested below a workspace entry": (
+                {}, {"packages": {"node_modules/w": {"link": True, "resolved": "packages/w"}},
+                     "dependencies": {"w": {"version": "file:packages/w", "dependencies": {
+                         "evil": {"version": "1.0.0", "resolved": "git+ssh://attacker/x.git"}}}}}, "w>evil resolves"),
+            "tar-gz lookalike spec": ({"dependencies": {"b": "vendor.tar-gz"}}, {"packages": {}}, "package.json dependencies.b"),
             "legacy file: without a link": (
                 {}, {"packages": {}, "dependencies": {"w": {"version": "file:packages/w"}}}, "dependencies.w version file:"),
         }
@@ -244,6 +249,9 @@ class T(unittest.TestCase):
             self.assertIn("install refused", r.stdout, label)
             self.assertIn(reason, r.stdout, label)
             self.assertNotIn("Traceback", r.stderr, label)
+        make_tarball(self.tarball, {"package.json": "{}", "package-lock.json": '{"packages": {}}', "npm-shrinkwrap.json": "{}"})
+        r = self.run_script("run", "o/r", SHA)
+        self.assertIn("npm-shrinkwrap.json present", r.stdout)
         self.assertEqual(self.commands("npm"), [])
         ok_pkg = {"dependencies": {"b": "^1.0.0", "c": "npm:@s/c@2", "d": "latest"}}
         # lockfileVersion 2 workspace: the legacy dependencies section has file: versions that npm ci ignores.

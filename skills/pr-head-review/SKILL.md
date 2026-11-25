@@ -57,12 +57,14 @@ python3 -I scripts/pr_head_review.py clean <run-dir>
 2. **install**: only when `package-lock.json` exists: `npm ci --ignore-scripts --no-audit --no-fund` with
    `npm_config_cache` inside the run dir (never `~/.npm`). Other lockfiles (pnpm, yarn) are skipped; say so in the
    review. `--ignore-scripts` is not a barrier on its own: a repo `.npmrc` can set `git=<script>`, which npm runs to
-   fetch a git dependency. So install is refused (exit 1, `install refused: <reason>`) unless everything is on an
-   allowlist: no `.npmrc` anywhere; every root `package.json` dependency spec is a semver range, dist-tag or `npm:` alias (no path or `.tgz`)
-   (workspace `package.json` files and `overrides` are covered only through the lockfile);
-   every fetched lockfile package (v2/v3 `packages` and the legacy nested `dependencies`, which npm 6 reads; only a package bundled
-   below another one may lack `resolved`) has an
-   exact version and a `resolved` URL on `https://registry.npmjs.org/`; workspace links point inside the tree.
+   fetch a git dependency. So install is refused (exit 1, `install refused: <reason>`) unless all of these hold:
+   - no `.npmrc` anywhere and no `npm-shrinkwrap.json` (npm ci would install from it);
+   - every root `package.json` dependency spec is a semver range, dist-tag or `npm:` alias, never a path or tarball
+     (`.tgz`, `.tar`, `.tar.gz`); workspace `package.json` files and `overrides` are covered only through the lockfile;
+   - every fetched lockfile package, in `packages` and in the legacy nested `dependencies` (npm 6 reads it), has an
+     exact version and a `resolved` URL on `https://registry.npmjs.org/`; only a package bundled below another one
+     may lack `resolved`;
+   - workspace links point inside the tree.
    Read the refused files before deciding anything by hand.
 3. **check**: the first rule that matches:
    - `scripts/verify` exists: run it, nothing else.
