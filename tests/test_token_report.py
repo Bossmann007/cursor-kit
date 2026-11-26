@@ -183,6 +183,9 @@ class SkillCost(unittest.TestCase):
             tool_result("t2", 2.69), skill_body(2.69),
             reply("r4", "claude-sonnet-5-5", 2.6, input_tokens=M),  # tdd 2.00
             reply("r4u", "claude-foo-9", 2.6, input_tokens=10),  # unknown price: tdd partial
+            prompt("[Request interrupted by user]", 2.58),  # not a new request: stays on tdd
+            {**reply("r4s", "claude-opus-5-5", 2.57, input_tokens=M), "isSidechain": True},  # inline subagent row: not counted
+            reply("r4b", "claude-sonnet-5-5", 2.56, output_tokens=M // 10),  # tdd 1.00
             prompt("next request", 2.5),  # ends the span
             reply("r5", "claude-opus-5-5", 2.4, input_tokens=M),  # no skill
         ]
@@ -191,6 +194,9 @@ class SkillCost(unittest.TestCase):
         w(d / "s2.jsonl", [
             prompt("another", 2), skill_call("r6", "t3", "emode", "claude-opus-5-5", 1.9, input_tokens=1),
             tool_result("t3", 1.89), reply("r7", "claude-haiku-4-5", 1.8, input_tokens=M),  # emode 1.00
+            skill_call("r7e", "t5", "nonexistent", "claude-opus-5-5", 1.7, input_tokens=2),  # emode 0.000008
+            {**tool_result("t5", 1.69), "message": {"content": [{"type": "tool_result", "tool_use_id": "t5", "is_error": True, "content": "Unknown skill"}]}},
+            reply("r7f", "claude-opus-5-5", 1.6, input_tokens=M),  # failed call: charged to no skill
             skill_call("r8", "t4", "emode", "claude-opus-5-5", 240, input_tokens=M),  # outside the window
             reply("r9", "claude-opus-5-5", 240, input_tokens=M),
         ])
@@ -208,15 +214,16 @@ class SkillCost(unittest.TestCase):
             self.assertEqual([s["skill"] for s in data["skills"]], ["emode", "tdd"])
             e, t = sk["emode"], sk["tdd"]
             self.assertEqual(e["invocations"], 2)
-            self.assertAlmostEqual(e["cost_usd"], 7.00, places=6)
-            self.assertAlmostEqual(e["cost_per_invocation_usd"], 3.50, places=6)
-            self.assertEqual(e["median_tokens"], 1_050_000)  # (M + M/10) and M
+            self.assertAlmostEqual(e["cost_usd"], 7.000008, places=6)
+            self.assertAlmostEqual(e["cost_per_invocation_usd"], 3.500004, places=6)
+            self.assertEqual(e["median_tokens"], 1_050_001)  # (M + M/10) and M + 2, an int
             self.assertFalse(e["cost_partial"])
             self.assertEqual(t["invocations"], 1)
-            self.assertAlmostEqual(t["cost_usd"], 2.00, places=6)
-            self.assertEqual(t["median_tokens"], M + 10)
+            self.assertAlmostEqual(t["cost_usd"], 3.00, places=6)
+            self.assertEqual(t["median_tokens"], M + 10 + M // 10)
             self.assertTrue(t["cost_partial"])
-            self.assertAlmostEqual(data["window_cost_usd"], 4 + 4 + 2 + 2 + 4 + 0.000004 + 1, places=6)
+            self.assertNotIn("nonexistent", sk)
+            self.assertAlmostEqual(data["window_cost_usd"], 4 + 4 + 2 + 2 + 1 + 4 + 0.000004 + 1 + 0.000008 + 4, places=6)
             self.assertNotIn("secret", json.dumps(data))
 
     def test_text_section(self):
@@ -224,7 +231,9 @@ class SkillCost(unittest.TestCase):
             self.fixture(h)
             out = self.run_report(h)
             self.assertIn("== skill cost per invocation, last 7 days (estimate", out)
-            self.assertRegex(out, r"emode\s+2\s+US\$ 7\.00\s+US\$ 3\.50\s+1050000")
+            self.assertRegex(out, r"emode\s+2\s+US\$ 7\.00\s+US\$ 3\.50\s+1050001")
+            r = subprocess.run([sys.executable, str(ROOT / "scripts/token-report.py"), "--skills", "--save"], capture_output=True, text=True, env={**os.environ, "HOME": h})
+            self.assertNotEqual(r.returncode, 0)
             self.assertNotIn("== RTK", out)
             self.assertNotIn("secret", out)
 

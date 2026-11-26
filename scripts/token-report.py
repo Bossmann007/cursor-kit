@@ -34,6 +34,8 @@ OPT = parser.parse_args()
 DAYS = next((d for d in (OPT.days, OPT.days_pos) if d is not None), 7)
 if DAYS <= 0 or (OPT.brl is not None and OPT.brl <= 0):
     parser.error("DAYS and --brl must be positive")
+if OPT.skills and OPT.save:
+    parser.error("--skills does not support --save")
 
 # USD per million tokens, Claude API first-party list prices, checked 2026-11-24 at
 # https://platform.claude.com/docs/en/about-claude/pricing (global inference, standard speed).
@@ -250,18 +252,22 @@ def print_cost(rep):
 
 # --- estimated cost per skill invocation (reads ~/.claude/projects only, writes nothing; prints skill names and numbers only)
 SKILL_HOW = ("each model-invoked Skill call gets the API responses after it until the next user prompt or Skill call; "
-             "the response that made the call stays with what came before. Main-session transcripts only: "
-             "subagent transcripts and skills typed as /slash commands are not counted. Tokens include cache reads.")
+             "the response that made the call stays with what came before; with two calls in one response the earlier gets nothing. "
+             "Failed calls are dropped. Main-session transcripts only: subagent transcripts and skills typed as /slash commands "
+             "are not counted. Tokens include cache reads.")
 
 
 def _is_prompt(e):
-    """A new user request (same rule as cost_report): tool results and injected skill bodies are not."""
-    return e.get("type") == "user" and not e.get("isMeta") and e.get("promptSource") != "system" and _text((e.get("message") or {}).get("content")).strip()
+    """A new user request (same rule as cost_report): tool results, skill bodies, interrupts and summaries are not."""
+    if e.get("type") != "user" or e.get("isMeta") or e.get("isCompactSummary") or e.get("promptSource") == "system":
+        return False
+    text = _text((e.get("message") or {}).get("content"))
+    return bool(text.strip()) and any(_request(text))
 
 
 def skill_cost_report(days, brl=None):
     since = time.time() - days * 86400
-    seen_resp, seen_call, calls, window = set(), set(), [], _bucket()
+    seen_resp, calls, window, failed = set(), {}, _bucket(), set()
     for f in sorted(glob.glob(str(H / ".claude/projects/*/*.jsonl"))):
         if os.path.getmtime(f) < since:
             continue
@@ -272,9 +278,13 @@ def skill_cost_report(days, brl=None):
             except ValueError:
                 continue
             msg, t = e.get("message") or {}, _ts(e.get("timestamp"))
+            if e.get("isSidechain"):
+                continue  # subagent rows written inline in older transcripts
             if _is_prompt(e):
                 cur = None
                 continue
+            if e.get("type") == "user" and isinstance(msg.get("content"), list):
+                failed.update(b.get("tool_use_id") for b in msg["content"] if isinstance(b, dict) and b.get("type") == "tool_result" and b.get("is_error"))
             if e.get("type") != "assistant":
                 continue
             mid = msg.get("id")
@@ -287,22 +297,25 @@ def skill_cost_report(days, brl=None):
                 if not (isinstance(b, dict) and b.get("type") == "tool_use" and b.get("name") == "Skill"):
                     continue
                 cid = b.get("id")
-                if (cid and cid in seen_call) or t is None or t < since:
-                    cur = None  # repeated history of a resumed session, or outside the window
+                if cid and cid in calls:
+                    cur = calls[cid]  # repeated history of a resumed session: keep charging the same call
                     continue
-                seen_call.add(cid or object())
+                if t is None or t < since:
+                    cur = None
+                    continue
                 name = (b.get("input") or {}).get("skill") if isinstance(b.get("input"), dict) else None
-                cur = {**_bucket(), "skill": re.sub(r"[^\w:.-]", "?", str(name or "?"))[:40]}
-                calls.append(cur)
+                cur = calls[cid or object()] = {**_bucket(), "skill": re.sub(r"[^\w:.-]", "?", str(name or "?"))[:40]}
     per = {}
-    for c in calls:
+    for cid, c in calls.items():
+        if cid in failed:
+            continue  # the Skill tool returned an error: the skill never ran
         per.setdefault(c["skill"], []).append(c)
     out = []
     for name, cs in per.items():
         usd = sum(c["cost_usd"] for c in cs)
         unknown = sorted(set().union(*(c["unknown"] for c in cs)))
         v = {"skill": name, "invocations": len(cs), "cost_usd": round(usd, 6), "cost_per_invocation_usd": round(usd / len(cs), 6),
-             "median_tokens": statistics.median(sum(c["tokens"].values()) for c in cs),
+             "median_tokens": int(round(statistics.median(sum(c["tokens"].values()) for c in cs))),
              "zero_response_invocations": sum(not any(c["tokens"].values()) for c in cs), "cost_partial": bool(unknown), "unknown_models": unknown}
         if brl:
             v["cost_brl"] = round(usd * brl, 6)
@@ -322,7 +335,8 @@ def print_skill_cost(rep):
     for s in rep["skills"]:
         brl = f"  R$ {s['cost_brl']:.2f}" if "cost_brl" in s else ""
         part = f"  (partial: {', '.join(s['unknown_models'])} n/a)" if s["cost_partial"] else ""
-        print(f"  {s['skill']:40s} {s['invocations']:5d}  {f"US$ {s['cost_usd']:.2f}":>12s}  {f"US$ {s['cost_per_invocation_usd']:.2f}":>12s}  {s['median_tokens']:10.0f}{brl}{part}")
+        tot, each = f"US$ {s['cost_usd']:.2f}", f"US$ {s['cost_per_invocation_usd']:.2f}"
+        print(f"  {s['skill']:40s} {s['invocations']:5d}  {tot:>12s}  {each:>12s}  {s['median_tokens']:10d}{brl}{part}")
     n, z = sum(s["invocations"] for s in rep["skills"]), sum(s["zero_response_invocations"] for s in rep["skills"])
     print(f"  attributed US$ {sum(s['cost_usd'] for s in rep['skills']):.2f} of US$ {rep['window_cost_usd']:.2f} in the window; {z}/{n} calls got no response")
 
