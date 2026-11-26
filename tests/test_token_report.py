@@ -154,5 +154,80 @@ class Cost(unittest.TestCase):
             self.assertAlmostEqual({a["id"]: a for a in data["agents"]}[A]["cost_usd"], 56.70, places=6)
 
 
+def skill_call(mid, tid, name, model, h, **u):
+    return {"type": "assistant", "timestamp": ts(h), "message": {"id": mid, "model": model, "content": [{"type": "tool_use", "id": tid, "name": "Skill", "input": {"skill": name}}], "usage": u}}
+
+
+def tool_result(tid, h):
+    return {"type": "user", "timestamp": ts(h), "message": {"content": [{"type": "tool_result", "tool_use_id": tid, "content": "Launching skill"}]}}
+
+
+def skill_body(h):
+    return {"type": "user", "isMeta": True, "timestamp": ts(h), "message": {"content": [{"type": "text", "text": "Base directory for this skill: /x\nsecret skill body"}]}}
+
+
+class SkillCost(unittest.TestCase):
+    """Synthetic transcripts; expected costs worked out by hand from the price table."""
+
+    def fixture(self, h):
+        d = Path(h, ".claude/projects/p"); d.mkdir(parents=True)
+        w = lambda f, rows: f.write_text("\n".join(json.dumps(r) for r in rows) + "\n")
+        s1 = [
+            prompt("please do the secret thing", 3),
+            reply("r1", "claude-opus-5-5", 2.9, input_tokens=M),  # text row of the invoking response: before the skill
+            skill_call("r1", "t1", "emode", "claude-opus-5-5", 2.9, input_tokens=M),  # same response split in rows
+            tool_result("t1", 2.89), skill_body(2.89),  # neither ends the span
+            reply("r2", "claude-opus-5-5", 2.8, input_tokens=M),  # emode 4.00
+            reply("r2", "claude-opus-5-5", 2.8, input_tokens=M),  # streamed repeat
+            skill_call("r3", "t2", "tdd", "claude-opus-5-5", 2.7, output_tokens=M // 10),  # invoking response stays on emode: 2.00
+            tool_result("t2", 2.69), skill_body(2.69),
+            reply("r4", "claude-sonnet-5-5", 2.6, input_tokens=M),  # tdd 2.00
+            reply("r4u", "claude-foo-9", 2.6, input_tokens=10),  # unknown price: tdd partial
+            prompt("next request", 2.5),  # ends the span
+            reply("r5", "claude-opus-5-5", 2.4, input_tokens=M),  # no skill
+        ]
+        w(d / "s1.jsonl", s1)
+        w(d / "s1-resumed.jsonl", s1)  # resumed session repeats history: no double count
+        w(d / "s2.jsonl", [
+            prompt("another", 2), skill_call("r6", "t3", "emode", "claude-opus-5-5", 1.9, input_tokens=1),
+            tool_result("t3", 1.89), reply("r7", "claude-haiku-4-5", 1.8, input_tokens=M),  # emode 1.00
+            skill_call("r8", "t4", "emode", "claude-opus-5-5", 240, input_tokens=M),  # outside the window
+            reply("r9", "claude-opus-5-5", 240, input_tokens=M),
+        ])
+
+    def run_report(self, h, *args):
+        r = subprocess.run([sys.executable, str(ROOT / "scripts/token-report.py"), "--skills", *args], capture_output=True, text=True, env={**os.environ, "HOME": h})
+        self.assertEqual(r.returncode, 0, r.stderr)
+        return r.stdout
+
+    def test_attribution_json(self):
+        with tempfile.TemporaryDirectory() as h:
+            self.fixture(h)
+            data = json.loads(self.run_report(h, "--json", "--days", "7"))
+            sk = {s["skill"]: s for s in data["skills"]}
+            self.assertEqual([s["skill"] for s in data["skills"]], ["emode", "tdd"])
+            e, t = sk["emode"], sk["tdd"]
+            self.assertEqual(e["invocations"], 2)
+            self.assertAlmostEqual(e["cost_usd"], 7.00, places=6)
+            self.assertAlmostEqual(e["cost_per_invocation_usd"], 3.50, places=6)
+            self.assertEqual(e["median_tokens"], 1_050_000)  # (M + M/10) and M
+            self.assertFalse(e["cost_partial"])
+            self.assertEqual(t["invocations"], 1)
+            self.assertAlmostEqual(t["cost_usd"], 2.00, places=6)
+            self.assertEqual(t["median_tokens"], M + 10)
+            self.assertTrue(t["cost_partial"])
+            self.assertAlmostEqual(data["window_cost_usd"], 4 + 4 + 2 + 2 + 4 + 0.000004 + 1, places=6)
+            self.assertNotIn("secret", json.dumps(data))
+
+    def test_text_section(self):
+        with tempfile.TemporaryDirectory() as h:
+            self.fixture(h)
+            out = self.run_report(h)
+            self.assertIn("== skill cost per invocation, last 7 days (estimate", out)
+            self.assertRegex(out, r"emode\s+2\s+US\$ 7\.00\s+US\$ 3\.50\s+1050000")
+            self.assertNotIn("== RTK", out)
+            self.assertNotIn("secret", out)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Where do tokens go? RTK savings + te-filter ledger + tool-result sizes + harness usage from Claude Code transcripts.
 
-usage: token-report.py [DAYS=7] [--days N] [--brl RATE] [--json] [--save]
+usage: token-report.py [DAYS=7] [--days N] [--brl RATE] [--json] [--save] [--skills]
 --days N   window for the harness and cost sections (default 7; same as the DAYS positional)
 --brl RATE USD->BRL rate to also print costs in R$ (no network lookup)
 --json     print only the cost section as JSON (per agent, per routine, rework)
+--skills   print only the estimated cost per skill invocation (with --json: as JSON)
 --save keeps the output in ~/.claude/state/harness-report-last.txt (mode 600) and prints the previous harness section first.
 """
 import argparse
@@ -14,6 +15,7 @@ import glob
 import json
 import os
 import re
+import statistics
 import subprocess
 import sys
 import time
@@ -27,6 +29,7 @@ parser.add_argument("--days", type=int)
 parser.add_argument("--brl", type=float)
 parser.add_argument("--json", action="store_true")
 parser.add_argument("--save", action="store_true")
+parser.add_argument("--skills", action="store_true", help="print only the estimated cost per skill invocation (with --json: as JSON)")
 OPT = parser.parse_args()
 DAYS = next((d for d in (OPT.days, OPT.days_pos) if d is not None), 7)
 if DAYS <= 0 or (OPT.brl is not None and OPT.brl <= 0):
@@ -245,6 +248,92 @@ def print_cost(rep):
             print(f"    {g['kind'][:8]:8s} {label[:40]:40s} requests={g['requests']:4d} {_money(g)}")
 
 
+# --- estimated cost per skill invocation (reads ~/.claude/projects only, writes nothing; prints skill names and numbers only)
+SKILL_HOW = ("each model-invoked Skill call gets the API responses after it until the next user prompt or Skill call; "
+             "the response that made the call stays with what came before. Main-session transcripts only: "
+             "subagent transcripts and skills typed as /slash commands are not counted. Tokens include cache reads.")
+
+
+def _is_prompt(e):
+    """A new user request (same rule as cost_report): tool results and injected skill bodies are not."""
+    return e.get("type") == "user" and not e.get("isMeta") and e.get("promptSource") != "system" and _text((e.get("message") or {}).get("content")).strip()
+
+
+def skill_cost_report(days, brl=None):
+    since = time.time() - days * 86400
+    seen_resp, seen_call, calls, window = set(), set(), [], _bucket()
+    for f in sorted(glob.glob(str(H / ".claude/projects/*/*.jsonl"))):
+        if os.path.getmtime(f) < since:
+            continue
+        cur = None
+        for line in open(f, errors="ignore"):
+            try:
+                e = json.loads(line)
+            except ValueError:
+                continue
+            msg, t = e.get("message") or {}, _ts(e.get("timestamp"))
+            if _is_prompt(e):
+                cur = None
+                continue
+            if e.get("type") != "assistant":
+                continue
+            mid = msg.get("id")
+            if msg.get("usage") and msg.get("model") not in SKIP_MODELS and t is not None and t >= since and not (mid and mid in seen_resp):
+                seen_resp.add(mid or object())  # one response is written as several rows with the same id and usage
+                _add(window, msg.get("model"), msg["usage"])
+                if cur is not None:
+                    _add(cur, msg.get("model"), msg["usage"])
+            for b in msg.get("content") if isinstance(msg.get("content"), list) else []:
+                if not (isinstance(b, dict) and b.get("type") == "tool_use" and b.get("name") == "Skill"):
+                    continue
+                cid = b.get("id")
+                if (cid and cid in seen_call) or t is None or t < since:
+                    cur = None  # repeated history of a resumed session, or outside the window
+                    continue
+                seen_call.add(cid or object())
+                name = (b.get("input") or {}).get("skill") if isinstance(b.get("input"), dict) else None
+                cur = {**_bucket(), "skill": re.sub(r"[^\w:.-]", "?", str(name or "?"))[:40]}
+                calls.append(cur)
+    per = {}
+    for c in calls:
+        per.setdefault(c["skill"], []).append(c)
+    out = []
+    for name, cs in per.items():
+        usd = sum(c["cost_usd"] for c in cs)
+        unknown = sorted(set().union(*(c["unknown"] for c in cs)))
+        v = {"skill": name, "invocations": len(cs), "cost_usd": round(usd, 6), "cost_per_invocation_usd": round(usd / len(cs), 6),
+             "median_tokens": statistics.median(sum(c["tokens"].values()) for c in cs),
+             "zero_response_invocations": sum(not any(c["tokens"].values()) for c in cs), "cost_partial": bool(unknown), "unknown_models": unknown}
+        if brl:
+            v["cost_brl"] = round(usd * brl, 6)
+        out.append(v)
+    out.sort(key=lambda v: -v["cost_usd"])
+    return {"days": days, "since": datetime.fromtimestamp(since, timezone.utc).isoformat(), "prices_as_of": PRICES_AS_OF, "usd_brl": brl,
+            "estimate": SKILL_HOW, "window_cost_usd": round(window["cost_usd"], 6), "skills": out}
+
+
+def print_skill_cost(rep):
+    print(f"== skill cost per invocation, last {rep['days']} days (estimate; API list prices as of {rep['prices_as_of']}; plan billing may differ)")
+    print(f"  how: {rep['estimate']}")
+    if not rep["skills"]:
+        print("  no Skill calls in the window")
+        return
+    print(f"  {'skill':40s} {'calls':>5s}  {'total':>12s}  {'per call':>12s}  {'median tok':>10s}")
+    for s in rep["skills"]:
+        brl = f"  R$ {s['cost_brl']:.2f}" if "cost_brl" in s else ""
+        part = f"  (partial: {', '.join(s['unknown_models'])} n/a)" if s["cost_partial"] else ""
+        print(f"  {s['skill']:40s} {s['invocations']:5d}  {f"US$ {s['cost_usd']:.2f}":>12s}  {f"US$ {s['cost_per_invocation_usd']:.2f}":>12s}  {s['median_tokens']:10.0f}{brl}{part}")
+    n, z = sum(s["invocations"] for s in rep["skills"]), sum(s["zero_response_invocations"] for s in rep["skills"])
+    print(f"  attributed US$ {sum(s['cost_usd'] for s in rep['skills']):.2f} of US$ {rep['window_cost_usd']:.2f} in the window; {z}/{n} calls got no response")
+
+
+if OPT.skills:
+    rep = skill_cost_report(DAYS, OPT.brl)
+    if OPT.json:
+        print(json.dumps(rep, indent=2))
+    else:
+        print_skill_cost(rep)
+    sys.exit(0)
 if OPT.json:
     print(json.dumps(cost_report(DAYS, OPT.brl), indent=2))
     sys.exit(0)
@@ -303,7 +392,6 @@ for t, v in size.most_common(8):
     print(f"  {t[:34]:34s} calls={cnt[t]:5d} ~tok={v // 4:8d} {100 * v / tot:3.0f}%")
 
 # --- harness usage over the last N days (default 7): is the setup being used and are replies short?
-import statistics
 
 days = DAYS
 skills, slash, words = C.Counter(), C.Counter(), []
