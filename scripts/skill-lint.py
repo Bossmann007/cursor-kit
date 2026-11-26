@@ -75,18 +75,37 @@ def check_length(body):
     return [f"body is {len(body)} lines (max {MAX_BODY_LINES - 1})"] if len(body) >= MAX_BODY_LINES else []
 
 
+def section_end(lines, i):
+    """Index of the first heading after line i at the same or a higher level than the heading on line i."""
+    level = len(HEADING.match(lines[i]).group(1))
+    for j in range(i + 1, len(lines)):
+        h = HEADING.match(lines[j])
+        if h and len(h.group(1)) <= level:
+            return j
+    return len(lines)
+
+
+def recovery_sections(lines):
+    """(start, end) line ranges of each error-recovery section, heading included."""
+    return [(i, section_end(lines, i)) for i, line in enumerate(lines) if RECOVERY_HEADING.match(line)]
+
+
 def steps(lines):
-    """Yield (label, block_lines) for each numbered step: a top-level `1.` list item or a `### 1.` heading."""
-    starts = [i for i, l in enumerate(lines) if STEP.match(l)]
+    """Yield (label, block_lines) for each numbered step: a top-level `1.` list item or a `### 1.` heading.
+    Numbered items inside an error-recovery section are recovery rows, not steps."""
+    skip = recovery_sections(lines)
+    starts = [i for i, l in enumerate(lines) if STEP.match(l) and not any(a <= i < b for a, b in skip)]
     for i in starts:
-        is_heading = lines[i].startswith("#")
-        block = [lines[i]]
-        for line in lines[i + 1 :]:
-            if STEP.match(line) or HEADING.match(line):
-                break
-            if not is_heading and line and not line[0].isspace() and line != "\0fence":
-                break  # a list item ends at the next unindented line
-            block.append(line)
+        if lines[i].startswith("#"):
+            block = lines[i : section_end(lines, i)]
+        else:
+            block = [lines[i]]
+            for line in lines[i + 1 :]:
+                if STEP.match(line) or HEADING.match(line):
+                    break
+                if line and not line[0].isspace() and line != "\0fence":
+                    break  # a list item ends at the next unindented line
+                block.append(line)
         yield re.sub(r"^#+\s+", "", lines[i]).split()[0].rstrip(".)"), block
 
 
@@ -110,6 +129,8 @@ def recovery_rows(section):
     rows, table_seen = [], False
     for line in section:
         s = line.strip()
+        if not s.startswith("|"):
+            table_seen = False  # the next table has its own header row
         if s.startswith("|"):
             cells = [c.strip() for c in s.strip("|").split("|")]
             if all(re.fullmatch(r":?-{2,}:?", c) for c in cells if c):
@@ -129,23 +150,14 @@ def recovery_rows(section):
 
 
 def check_recovery(lines):
-    for i, line in enumerate(lines):
-        if RECOVERY_HEADING.match(line):
-            level = len(HEADING.match(line).group(1))
-            section = []
-            for nxt in lines[i + 1 :]:
-                h = HEADING.match(nxt)
-                if h and len(h.group(1)) <= level:
-                    break
-                section.append(nxt)
-            if recovery_rows(section):
-                return []
+    if any(recovery_rows(lines[a + 1 : b]) for a, b in recovery_sections(lines)):
+        return []
     return ["no failure -> fix section"]
 
 
 def lint(path):
     """Return (errors_by_check, warnings) for one SKILL.md."""
-    fields, body = split_frontmatter(path.read_text(encoding="utf-8"))
+    fields, body = split_frontmatter(path.read_text(encoding="utf-8-sig"))
     clean = strip_fences(body)
     fm_errors, warns = check_frontmatter(fields)
     errors = {
@@ -170,8 +182,8 @@ def changed_skills(root, base):
     mb = git(root, "merge-base", base, "HEAD")
     if not mb:
         return None
-    paths = (git(root, "diff", "--name-only", "--diff-filter=d", mb.strip(), "--", "skills") or "").split()
-    paths += (git(root, "ls-files", "--others", "--exclude-standard", "--", "skills") or "").split()
+    paths = (git(root, "diff", "-z", "--name-only", "--diff-filter=d", mb.strip(), "--", "skills") or "").split("\0")
+    paths += (git(root, "ls-files", "-z", "--others", "--exclude-standard", "--", "skills") or "").split("\0")
     return {p.split("/")[1] for p in paths if re.fullmatch(r"skills/[^/]+/SKILL\.md", p)}
 
 
@@ -209,7 +221,8 @@ def main(argv=None):
             return 0
     gated = sorted(n for n in changed if n in failing)
     if gated:
-        print(f"skill-lint gate FAIL: changed skills failing: {', '.join(gated)}")
+        print(f"skill-lint gate FAIL: changed skills failing: {', '.join(gated)} "
+              f"(changed since merge-base with {args.base}; if you did not touch them, run `git fetch origin`)")
         return 1
     print(f"skill-lint gate ok: {len(changed & results.keys())} changed skill(s), none failing")
     return 0

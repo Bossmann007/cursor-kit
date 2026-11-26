@@ -83,6 +83,20 @@ class Checks(unittest.TestCase):
         text = GOOD.split("| Failure")[0] + "- `gh` times out → check `gh status`, then rerun with `--debug`\n"
         self.assertEqual(lint_text(text), ({}, []))
 
+    def test_numbered_recovery_list_is_not_counted_as_steps(self):
+        text = GOOD.split("| Failure")[0] + "1. `gh` not logged in → run `gh auth login`\n"
+        self.assertEqual(lint_text(text), ({}, []))
+
+    def test_heading_step_includes_its_subheadings(self):
+        text = GOOD.replace("1. Run `scripts/verify`.\n   Check: it exits 0 before step 2.", "### 1. Build\n\nRun `make`.\n\n#### Verify\n\nCheck: exit 0.")
+        text = text.replace("2. Open", "### 2. Ship\n\nOpen")
+        self.assertEqual(lint_text(text), ({}, []))
+
+    def test_second_table_header_is_not_a_fix(self):
+        text = GOOD.split("| Failure")[0] + "| Failure | Fix |\n|---|---|\n| `gh` hangs | Retry |\n\n| Failure | Fix |\n|---|---|\n"
+        errors, _ = lint_text(text)
+        self.assertEqual(list(errors), ["recovery"])
+
 
 class Gate(unittest.TestCase):
     def setUp(self):
@@ -98,7 +112,8 @@ class Gate(unittest.TestCase):
         self.tmp.cleanup()
 
     def git(self, *args):
-        subprocess.run(["git", "-C", str(self.root), "-c", "user.name=t", "-c", "user.email=t@t", *args], check=True)
+        subprocess.run(["git", "-C", str(self.root), "-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false",
+             "-c", "core.hooksPath=/dev/null", *args], check=True)
 
     def write(self, name, text):
         (self.root / "skills" / name).mkdir(parents=True, exist_ok=True)

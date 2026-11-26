@@ -42,7 +42,9 @@ Skip OMH/Hermes pipeline.
 
 `scripts/skill-lint.py` checks every `skills/<name>/SKILL.md`. `scripts/verify` runs it: it reports all skills, and
 fails only when a skill whose `SKILL.md` was added or changed against `origin/master` fails a check (no git base:
-report only, printed as `gate SKIPPED`). Run `python3 scripts/skill-lint.py` before a skill PR.
+report only, printed as `gate SKIPPED`). The gate is local: CI does not run `scripts/verify`, and the tarball run of
+`pr-head-review` has no git base, so it skips. Editing an existing skill means bringing it up to these checks in the
+same PR. Run `python3 scripts/skill-lint.py` before a skill PR.
 
 | Check | Passes when | Source |
 |---|---|---|
