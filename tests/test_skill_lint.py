@@ -97,6 +97,10 @@ class Checks(unittest.TestCase):
         errors, _ = lint_text(text)
         self.assertEqual(list(errors), ["recovery"])
 
+    def test_list_row_with_colon_and_arrow_to_try_again_fails(self):
+        errors, _ = lint_text(GOOD.split("| Failure")[0] + "- Error: `gh` timeout → try again\n")
+        self.assertEqual(list(errors), ["recovery"])
+
 
 class Gate(unittest.TestCase):
     def setUp(self):

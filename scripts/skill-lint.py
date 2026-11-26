@@ -143,7 +143,9 @@ def recovery_rows(section):
             continue
         m = re.match(r"^\s*(?:[-*+]|\d+[.)])\s+(.*)$", line)
         if m:
-            parts = re.split(r"\s*(?:→|->|=>|:\s| — | – )\s*", m.group(1), maxsplit=1)
+            parts = re.split(r"\s*(?:→|->|=>)\s*", m.group(1), maxsplit=1)  # arrows first, then ':' or a dash
+            if len(parts) == 1:
+                parts = re.split(r"\s*(?::\s| — | – )\s*", m.group(1), maxsplit=1)
             if len(parts) == 2 and parts[0] and parts[1]:
                 rows.append(parts[1])
     return [r for r in rows if not VAGUE_FIX.match(re.sub(r"[*_`]", "", r))]
