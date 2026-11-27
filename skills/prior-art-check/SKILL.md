@@ -28,9 +28,9 @@ Goal: do not build what already exists, better and maintained. Search cheap laye
    **The user's GitHub stars** (repos Enzo already picked as interesting; cheap, one call per 100 stars):
    `gh api --paginate 'user/starred?per_page=100' --jq '.[]|[.full_name,.stargazers_count,.pushed_at[:10],(.license.spdx_id//"none"),(.description//"")]|@tsv' | grep -i -E "<keywords>"`
    A starred repo is a lead, not an approval: check it with the full score below.
-2. **Claude app Customize tab (Connectors, Skills, Plugins) and the OpenBot marketplace.** Use the local commands below,
-   then search each part by hand in Claude > Customize > <part> and write "by hand" in the report. Run the ToolSearch
-   selects named below first: a tool it returns replaces the hand search for that part. Check and record name, publisher, permissions or scopes, and
+2. **Claude app Customize tab (Connectors, Skills, Plugins) and the OpenBot marketplace.** In this order: the local commands
+   below, then the ToolSearch selects named below, then a hand search in Claude > Customize > <part> only for parts no
+   tool covered (write "by hand" in the report). Check and record name, publisher, permissions or scopes, and
    always-on token cost when shown.
    - **Connectors:** connected ones are the `mcp__claude_ai_<Name>__*` tools and the "claude.ai <Name>" servers awaiting
      authentication in this session. Registry: ToolSearch `select:mcp__mcp-registry__search_mcp_registry,mcp__mcp-registry__suggest_connectors,mcp__mcp-registry__list_connectors`.
